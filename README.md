@@ -65,6 +65,11 @@ The API now exposes token issuance flows so the web UI (and CLI) can mint JWTs w
 - Retrieve depth snapshots via `GET /orderbook/depth?levels=10`.
 - Subscribe to real-time updates using the WebSocket feed at `/ws/depth?levels=10` (the UI connects automatically and falls back to manual refresh when needed).
 
+## Reference data maintenance
+
+- After modifying `.reference/testing_web3_full.csv`, normalize the canonical identifiers via `cargo run -p reference-tools -- normalize web3` before committing.
+- Sanity-check any `.reference` CSVs (detection, governance, protection, resilience, security, web3) with `cargo run -p reference-tools -- validate all` or limit the scope (e.g., `-- validate security`) to catch slug/count drift locally.
+
 ### Codex AI Assistant
 
 This project includes Codex AI assistant integration for rapid development:

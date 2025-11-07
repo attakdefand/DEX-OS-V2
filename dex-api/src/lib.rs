@@ -10,9 +10,7 @@ pub use auth::Claims;
 pub use challenge::ChallengeStore;
 pub use config::Config;
 
-use auth::{
-    clamp_ttl, normalize_address, verify_wallet_signature, AuthManager, AuthRejection,
-};
+use auth::{clamp_ttl, normalize_address, verify_wallet_signature, AuthManager, AuthRejection};
 use challenge::ChallengeError;
 use dex_core::{
     orderbook::OrderBook,
@@ -305,7 +303,8 @@ fn authenticated(
         .untuple_one()
 }
 
-fn optional_depth_query() -> impl Filter<Extract = (Option<String>,), Error = warp::Rejection> + Clone {
+fn optional_depth_query(
+) -> impl Filter<Extract = (Option<String>,), Error = warp::Rejection> + Clone {
     warp::query::raw().map(Some)
 }
 
@@ -1061,13 +1060,8 @@ mod validation {
     #[cfg(test)]
     mod auth_filter_tests {
         use crate::{
-            authenticated,
-            handle_rejection,
-            auth::AuthManager,
-            challenge::ChallengeStore,
-            ApiState,
-            Claims,
-            Config,
+            auth::AuthManager, authenticated, challenge::ChallengeStore, handle_rejection,
+            ApiState, Claims, Config,
         };
         use dex_core::orderbook::OrderBook;
         use dex_db::DatabaseManager;

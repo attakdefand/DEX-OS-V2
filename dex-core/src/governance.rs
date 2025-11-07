@@ -6,11 +6,11 @@
 //! It provides functionality for AI-driven governance proposals and
 //! global decentralized autonomous organization (DAO) operations.
 
-use crate::types::{TraderId, TokenId};
-use std::collections::HashMap;
-use thiserror::Error;
+use crate::types::{TokenId, TraderId};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
+use thiserror::Error;
 
 /// Represents a governance proposal
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -63,9 +63,7 @@ pub enum Proposer {
         rationale: String,
     },
     /// Human-generated proposal
-    Human {
-        trader_id: TraderId,
-    },
+    Human { trader_id: TraderId },
     /// Hybrid proposal (AI-assisted human proposal)
     Hybrid {
         trader_id: TraderId,
@@ -126,10 +124,7 @@ pub struct ExecutionPlan {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum GovernanceAction {
     /// Change a protocol parameter
-    SetParameter {
-        key: String,
-        value: String,
-    },
+    SetParameter { key: String, value: String },
     /// Transfer tokens from treasury
     TransferTreasury {
         to: TraderId,
@@ -271,10 +266,10 @@ impl GlobalDAO {
             total_voting_power: 0,
             parameters: GovernanceParameters {
                 min_proposal_power: 1000,
-                voting_period: 604800, // 7 days
-                quorum_percentage: 10, // 10%
+                voting_period: 604800,    // 7 days
+                quorum_percentage: 10,    // 10%
                 threshold_percentage: 51, // 51%
-                execution_delay: 86400, // 1 day
+                execution_delay: 86400,   // 1 day
                 max_active_proposals: 10,
             },
             ai_models: HashMap::new(),
@@ -308,16 +303,17 @@ impl GlobalDAO {
     ) -> Result<String, GovernanceError> {
         // Check if proposer has sufficient voting power
         let proposer_power = match &proposer {
-            Proposer::Human { trader_id } | Proposer::Hybrid { trader_id, .. } => {
-                self.members
-                    .get(trader_id)
-                    .map(|m| m.voting_power)
-                    .unwrap_or(0)
-            }
+            Proposer::Human { trader_id } | Proposer::Hybrid { trader_id, .. } => self
+                .members
+                .get(trader_id)
+                .map(|m| m.voting_power)
+                .unwrap_or(0),
             Proposer::AI { .. } => 0, // AI proposals don't need voting power
         };
 
-        if proposer_power < self.parameters.min_proposal_power && !matches!(proposer, Proposer::AI { .. }) {
+        if proposer_power < self.parameters.min_proposal_power
+            && !matches!(proposer, Proposer::AI { .. })
+        {
             return Err(GovernanceError::InsufficientVotingPower);
         }
 
@@ -524,7 +520,8 @@ impl GlobalDAO {
         let total_votes = yes_votes + no_votes;
 
         // Check quorum
-        let quorum_required = (self.total_voting_power * self.parameters.quorum_percentage as u64) / 100;
+        let quorum_required =
+            (self.total_voting_power * self.parameters.quorum_percentage as u64) / 100;
         if proposal.votes.total_voting_power < quorum_required {
             proposal.status = ProposalStatus::Rejected;
             return Ok(ProposalStatus::Rejected);
@@ -554,7 +551,11 @@ impl GlobalDAO {
     }
 
     /// Emergency pause a proposal (council-only function)
-    pub fn emergency_pause(&mut self, proposal_id: &str, council_member: &TraderId) -> Result<(), GovernanceError> {
+    pub fn emergency_pause(
+        &mut self,
+        proposal_id: &str,
+        council_member: &TraderId,
+    ) -> Result<(), GovernanceError> {
         if !self.emergency_council.contains(council_member) {
             return Err(GovernanceError::NotEmergencyCouncilMember);
         }
@@ -642,12 +643,12 @@ mod tests {
     fn test_add_member() {
         let mut dao = GlobalDAO::new();
         let trader_id = "trader1".to_string();
-        
+
         dao.add_member(trader_id.clone(), 1000, false);
-        
+
         assert_eq!(dao.members.len(), 1);
         assert_eq!(dao.total_voting_power, 1000);
-        
+
         let member = dao.members.get(&trader_id).unwrap();
         assert_eq!(member.trader_id, trader_id);
         assert_eq!(member.voting_power, 1000);
@@ -658,20 +659,20 @@ mod tests {
     fn test_create_proposal() {
         let mut dao = GlobalDAO::new();
         let trader_id = "trader1".to_string();
-        
+
         // Add member with sufficient voting power
         dao.add_member(trader_id.clone(), 2000, false);
-        
+
         let proposal_id = dao.create_proposal(
             "Test Proposal".to_string(),
             "This is a test proposal".to_string(),
             ProposalType::ParameterChange,
             Proposer::Human { trader_id },
         );
-        
+
         assert!(proposal_id.is_ok());
         let proposal_id = proposal_id.unwrap();
-        
+
         assert_eq!(dao.proposals.len(), 1);
         let proposal = dao.get_proposal(&proposal_id).unwrap();
         assert_eq!(proposal.title, "Test Proposal");
@@ -682,21 +683,23 @@ mod tests {
     fn test_submit_proposal() {
         let mut dao = GlobalDAO::new();
         let trader_id = "trader1".to_string();
-        
+
         // Add member
         dao.add_member(trader_id.clone(), 2000, false);
-        
+
         // Create proposal
-        let proposal_id = dao.create_proposal(
-            "Test Proposal".to_string(),
-            "This is a test proposal".to_string(),
-            ProposalType::ParameterChange,
-            Proposer::Human { trader_id },
-        ).unwrap();
-        
+        let proposal_id = dao
+            .create_proposal(
+                "Test Proposal".to_string(),
+                "This is a test proposal".to_string(),
+                ProposalType::ParameterChange,
+                Proposer::Human { trader_id },
+            )
+            .unwrap();
+
         // Submit proposal
         assert!(dao.submit_proposal(&proposal_id).is_ok());
-        
+
         let proposal = dao.get_proposal(&proposal_id).unwrap();
         assert_eq!(proposal.status, ProposalStatus::Active);
     }
@@ -706,27 +709,35 @@ mod tests {
         let mut dao = GlobalDAO::new();
         let trader1_id = "trader1".to_string();
         let trader2_id = "trader2".to_string();
-        
+
         // Add members
         dao.add_member(trader1_id.clone(), 1000, false);
         dao.add_member(trader2_id.clone(), 500, false);
-        
+
         // Create and submit proposal
-        let proposal_id = dao.create_proposal(
-            "Test Proposal".to_string(),
-            "This is a test proposal".to_string(),
-            ProposalType::ParameterChange,
-            Proposer::Human { trader_id: trader1_id.clone() },
-        ).unwrap();
-        
+        let proposal_id = dao
+            .create_proposal(
+                "Test Proposal".to_string(),
+                "This is a test proposal".to_string(),
+                ProposalType::ParameterChange,
+                Proposer::Human {
+                    trader_id: trader1_id.clone(),
+                },
+            )
+            .unwrap();
+
         dao.submit_proposal(&proposal_id).unwrap();
-        
+
         // Vote yes
-        assert!(dao.vote(&proposal_id, &trader1_id, true, 1000, None).is_ok());
-        
+        assert!(dao
+            .vote(&proposal_id, &trader1_id, true, 1000, None)
+            .is_ok());
+
         // Vote no
-        assert!(dao.vote(&proposal_id, &trader2_id, false, 500, None).is_ok());
-        
+        assert!(dao
+            .vote(&proposal_id, &trader2_id, false, 500, None)
+            .is_ok());
+
         let proposal = dao.get_proposal(&proposal_id).unwrap();
         assert_eq!(proposal.votes.yes_votes.len(), 1);
         assert_eq!(proposal.votes.no_votes.len(), 1);
@@ -737,23 +748,29 @@ mod tests {
     fn test_abstain_vote() {
         let mut dao = GlobalDAO::new();
         let trader_id = "trader1".to_string();
-        
+
         // Add member
         dao.add_member(trader_id.clone(), 1000, false);
-        
+
         // Create and submit proposal
-        let proposal_id = dao.create_proposal(
-            "Test Proposal".to_string(),
-            "This is a test proposal".to_string(),
-            ProposalType::ParameterChange,
-            Proposer::Human { trader_id: trader_id.clone() },
-        ).unwrap();
-        
+        let proposal_id = dao
+            .create_proposal(
+                "Test Proposal".to_string(),
+                "This is a test proposal".to_string(),
+                ProposalType::ParameterChange,
+                Proposer::Human {
+                    trader_id: trader_id.clone(),
+                },
+            )
+            .unwrap();
+
         dao.submit_proposal(&proposal_id).unwrap();
-        
+
         // Abstain vote
-        assert!(dao.abstain_vote(&proposal_id, &trader_id, 1000, None).is_ok());
-        
+        assert!(dao
+            .abstain_vote(&proposal_id, &trader_id, 1000, None)
+            .is_ok());
+
         let proposal = dao.get_proposal(&proposal_id).unwrap();
         assert_eq!(proposal.votes.abstain_votes.len(), 1);
         assert_eq!(proposal.votes.total_voting_power, 1000);
@@ -762,7 +779,7 @@ mod tests {
     #[test]
     fn test_ai_proposal() {
         let mut dao = GlobalDAO::new();
-        
+
         // Create AI proposal (no voting power required)
         let proposal_id = dao.create_proposal(
             "AI Generated Proposal".to_string(),
@@ -774,13 +791,17 @@ mod tests {
                 rationale: "Based on market analysis".to_string(),
             },
         );
-        
+
         assert!(proposal_id.is_ok());
         let proposal_id = proposal_id.unwrap();
-        
+
         let proposal = dao.get_proposal(&proposal_id).unwrap();
         match &proposal.proposer {
-            Proposer::AI { model_id, confidence, .. } => {
+            Proposer::AI {
+                model_id,
+                confidence,
+                ..
+            } => {
                 assert_eq!(model_id, "model_1");
                 assert_eq!(*confidence, 0.95);
             }
@@ -793,41 +814,49 @@ mod tests {
         let mut dao = GlobalDAO::new();
         let council_member = "council_member".to_string();
         let regular_member = "regular_member".to_string();
-        
+
         // Add members
         dao.add_member(council_member.clone(), 1000, true);
         dao.add_member(regular_member.clone(), 1000, false);
-        
+
         // Add to emergency council
         dao.add_emergency_council_member(council_member.clone());
-        
+
         // Create and submit proposal
-        let proposal_id = dao.create_proposal(
-            "Test Proposal".to_string(),
-            "This is a test proposal".to_string(),
-            ProposalType::ParameterChange,
-            Proposer::Human { trader_id: regular_member.clone() },
-        ).unwrap();
-        
+        let proposal_id = dao
+            .create_proposal(
+                "Test Proposal".to_string(),
+                "This is a test proposal".to_string(),
+                ProposalType::ParameterChange,
+                Proposer::Human {
+                    trader_id: regular_member.clone(),
+                },
+            )
+            .unwrap();
+
         dao.submit_proposal(&proposal_id).unwrap();
-        
+
         // Emergency pause by council member
         assert!(dao.emergency_pause(&proposal_id, &council_member).is_ok());
-        
+
         let proposal = dao.get_proposal(&proposal_id).unwrap();
         assert_eq!(proposal.status, ProposalStatus::Cancelled);
-        
+
         // Try emergency pause by regular member (should fail)
         let regular_member2 = "regular_member".to_string();
-        let proposal_id2 = dao.create_proposal(
-            "Test Proposal 2".to_string(),
-            "This is another test proposal".to_string(),
-            ProposalType::ParameterChange,
-            Proposer::Human { trader_id: regular_member2.clone() },
-        ).unwrap();
-        
+        let proposal_id2 = dao
+            .create_proposal(
+                "Test Proposal 2".to_string(),
+                "This is another test proposal".to_string(),
+                ProposalType::ParameterChange,
+                Proposer::Human {
+                    trader_id: regular_member2.clone(),
+                },
+            )
+            .unwrap();
+
         dao.submit_proposal(&proposal_id2).unwrap();
-        
+
         let result = dao.emergency_pause(&proposal_id2, &regular_member2);
         assert!(result.is_err());
     }
@@ -836,36 +865,42 @@ mod tests {
     fn test_proposal_filtering() {
         let mut dao = GlobalDAO::new();
         let trader_id = "trader1".to_string();
-        
+
         // Add member
         dao.add_member(trader_id.clone(), 1000, false);
-        
+
         // Create different types of proposals
-        let ai_proposal_id = dao.create_proposal(
-            "AI Proposal".to_string(),
-            "AI generated proposal".to_string(),
-            ProposalType::ParameterChange,
-            Proposer::AI {
-                model_id: "model_1".to_string(),
-                confidence: 0.9,
-                rationale: "AI analysis".to_string(),
-            },
-        ).unwrap();
-        
-        let human_proposal_id = dao.create_proposal(
-            "Human Proposal".to_string(),
-            "Human generated proposal".to_string(),
-            ProposalType::ParameterChange,
-            Proposer::Human { trader_id: trader_id.clone() },
-        ).unwrap();
-        
+        let ai_proposal_id = dao
+            .create_proposal(
+                "AI Proposal".to_string(),
+                "AI generated proposal".to_string(),
+                ProposalType::ParameterChange,
+                Proposer::AI {
+                    model_id: "model_1".to_string(),
+                    confidence: 0.9,
+                    rationale: "AI analysis".to_string(),
+                },
+            )
+            .unwrap();
+
+        let human_proposal_id = dao
+            .create_proposal(
+                "Human Proposal".to_string(),
+                "Human generated proposal".to_string(),
+                ProposalType::ParameterChange,
+                Proposer::Human {
+                    trader_id: trader_id.clone(),
+                },
+            )
+            .unwrap();
+
         // Check proposal filtering
         let ai_proposals = dao.get_proposals_by_type("AI");
         assert_eq!(ai_proposals.len(), 1);
-        
+
         let human_proposals = dao.get_proposals_by_type("Human");
         assert_eq!(human_proposals.len(), 1);
-        
+
         let hybrid_proposals = dao.get_proposals_by_type("Hybrid");
         assert_eq!(hybrid_proposals.len(), 0);
     }

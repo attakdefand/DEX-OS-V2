@@ -79,6 +79,7 @@ build_project() {
 # Function to run tests
 run_tests() {
     print_status "Running tests..."
+    run_reference_checks || return 1
     # Use WSL for testing as required
     wsl -d Ubuntu-24.04 -e bash -c "source ~/.cargo/env && cd /mnt/c/Users/USER/Documents/DEX-OS-V1 && cargo test"
     if [ $? -eq 0 ]; then
@@ -135,6 +136,21 @@ run_clippy() {
     fi
 }
 
+run_reference_checks() {
+    print_status "Normalizing Web3 reference data..."
+    if ! cargo run -p reference-tools -- normalize web3; then
+        print_error "Failed to normalize testing_web3_full.csv"
+        return 1
+    fi
+
+    print_status "Validating reference datasets..."
+    if ! cargo run -p reference-tools -- validate all; then
+        print_error "Reference dataset validation failed"
+        return 1
+    fi
+    print_status "Reference datasets are consistent!"
+}
+
 # Function to run cargo-audit
 run_audit() {
     print_status "Running cargo-audit (security advisories)..."
@@ -184,6 +200,35 @@ run_all() {
     run_nextest || return 1
     print_status "All checks completed successfully!"
 }
+
+# If a command is provided, run it directly and exit
+if [[ $# -gt 0 ]]; then
+    cmd="$1"
+    shift
+    case "$cmd" in
+        check_prerequisites) check_prerequisites "$@" ;;
+        build_project) build_project "$@" ;;
+        run_tests|test) run_tests "$@" ;;
+        build_wasm) build_wasm "$@" ;;
+        run_api) run_api "$@" ;;
+        check_format|fmt) check_format "$@" ;;
+        run_clippy|clippy) run_clippy "$@" ;;
+        run_audit|audit) run_audit "$@" ;;
+        run_deny|deny) run_deny "$@" ;;
+        run_nextest|nextest) run_nextest "$@" ;;
+        run_all|all) run_all "$@" ;;
+        run_reference_checks|reference) run_reference_checks "$@" ;;
+        menu|interactive) ;;
+        *)
+            print_error "Unknown command: $cmd"
+            echo "Available commands: check_prerequisites, build_project, run_tests, build_wasm, run_api, check_format, run_clippy, run_audit, run_deny, run_nextest, run_all, run_reference_checks"
+            exit 1
+            ;;
+    esac
+    if [[ "$cmd" != "menu" && "$cmd" != "interactive" ]]; then
+        exit $?
+    fi
+fi
 
 # Main menu
 show_menu() {

@@ -3,10 +3,10 @@
 //! This module implements the Priority 3 testing feature from DEX-OS-V2.csv:
 //! - Testing,Testing,Testing,Hash Map,Test Result Storage,Medium
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 use thiserror::Error;
-use serde::{Deserialize, Serialize};
 
 /// Test results storage manager
 #[derive(Debug, Clone)]
@@ -98,19 +98,19 @@ impl TestResultsManager {
         let suite_id = result.id.clone();
         let suite_name = result.suite_name.clone();
         let status = result.status.clone();
-        
+
         // Store the result
         self.results.insert(suite_id.clone(), result);
-        
+
         // Update indexes
         self.name_index.insert(suite_name, suite_id.clone());
-        
+
         // Update status index
         self.status_index
             .entry(status)
             .or_insert_with(Vec::new)
             .push(suite_id);
-        
+
         Ok(())
     }
 
@@ -131,9 +131,7 @@ impl TestResultsManager {
     /// Get all test suite results with a specific status
     pub fn get_results_by_status(&self, status: TestStatus) -> Vec<&TestSuiteResult> {
         if let Some(ids) = self.status_index.get(&status) {
-            ids.iter()
-                .filter_map(|id| self.results.get(id))
-                .collect()
+            ids.iter().filter_map(|id| self.results.get(id)).collect()
         } else {
             Vec::new()
         }
@@ -160,9 +158,9 @@ impl TestResultsManager {
             errored_tests: 0,
             average_duration_ms: 0,
         };
-        
+
         let mut total_duration = 0u64;
-        
+
         for result in self.results.values() {
             match result.status {
                 TestStatus::Passed => stats.passed_suites += 1,
@@ -171,11 +169,11 @@ impl TestResultsManager {
                 TestStatus::Running => stats.running_suites += 1,
                 TestStatus::Error => stats.errored_suites += 1,
             }
-            
+
             for test in &result.test_results {
                 stats.total_tests += 1;
                 total_duration += test.duration_ms;
-                
+
                 match test.status {
                     TestStatus::Passed => stats.passed_tests += 1,
                     TestStatus::Failed => stats.failed_tests += 1,
@@ -185,11 +183,11 @@ impl TestResultsManager {
                 }
             }
         }
-        
+
         if stats.total_tests > 0 {
             stats.average_duration_ms = total_duration / stats.total_tests as u64;
         }
-        
+
         stats
     }
 
@@ -199,33 +197,33 @@ impl TestResultsManager {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs();
-        
+
         let cutoff_time = now - older_than_seconds;
-        
+
         let mut to_remove = Vec::new();
-        
+
         // Find old results
         for (id, result) in &self.results {
             if result.finished_at < cutoff_time {
                 to_remove.push(id.clone());
             }
         }
-        
+
         let removed_count = to_remove.len();
-        
+
         // Remove old results and update indexes
         for id in to_remove {
             if let Some(result) = self.results.remove(&id) {
                 // Remove from name index
                 self.name_index.retain(|_, v| *v != id);
-                
+
                 // Remove from status index
                 if let Some(status_list) = self.status_index.get_mut(&result.status) {
                     status_list.retain(|x| *x != id);
                 }
             }
         }
-        
+
         removed_count
     }
 
@@ -300,22 +298,20 @@ mod tests {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs();
-        
+
         let result = TestSuiteResult {
             id: "suite_1".to_string(),
             suite_name: "Integration Tests".to_string(),
             started_at: now - 100,
             finished_at: now,
             status: TestStatus::Passed,
-            test_results: vec![
-                IndividualTestResult {
-                    name: "test_order_matching".to_string(),
-                    status: TestStatus::Passed,
-                    duration_ms: 50,
-                    error_message: None,
-                    data: HashMap::new(),
-                }
-            ],
+            test_results: vec![IndividualTestResult {
+                name: "test_order_matching".to_string(),
+                status: TestStatus::Passed,
+                duration_ms: 50,
+                error_message: None,
+                data: HashMap::new(),
+            }],
             metadata: TestMetadata {
                 version: "1.0.0".to_string(),
                 commit_hash: "abc123".to_string(),
@@ -324,10 +320,10 @@ mod tests {
                 custom: HashMap::new(),
             },
         };
-        
+
         // Store result
         assert!(manager.store_result(result.clone()).is_ok());
-        
+
         // Retrieve by ID
         let retrieved = manager.get_result("suite_1");
         assert!(retrieved.is_some());
@@ -339,7 +335,7 @@ mod tests {
         assert_eq!(retrieved.status, result.status);
         assert_eq!(retrieved.test_results.len(), result.test_results.len());
         assert_eq!(retrieved.metadata.version, result.metadata.version);
-        
+
         // Retrieve by name
         let retrieved = manager.get_result_by_name("Integration Tests");
         assert!(retrieved.is_some());
@@ -360,7 +356,7 @@ mod tests {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs();
-        
+
         // Add passed test suite
         let passed_result = TestSuiteResult {
             id: "suite_1".to_string(),
@@ -377,7 +373,7 @@ mod tests {
                 custom: HashMap::new(),
             },
         };
-        
+
         // Add failed test suite
         let failed_result = TestSuiteResult {
             id: "suite_2".to_string(),
@@ -394,15 +390,15 @@ mod tests {
                 custom: HashMap::new(),
             },
         };
-        
+
         manager.store_result(passed_result).unwrap();
         manager.store_result(failed_result).unwrap();
-        
+
         // Get passed results
         let passed_results = manager.get_results_by_status(TestStatus::Passed);
         assert_eq!(passed_results.len(), 1);
         assert_eq!(passed_results[0].suite_name, "Passed Tests");
-        
+
         // Get failed results
         let failed_results = manager.get_results_by_status(TestStatus::Failed);
         assert_eq!(failed_results.len(), 1);
@@ -416,7 +412,7 @@ mod tests {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs();
-        
+
         let result = TestSuiteResult {
             id: "suite_1".to_string(),
             suite_name: "Test Suite".to_string(),
@@ -444,7 +440,7 @@ mod tests {
                     duration_ms: 0,
                     error_message: None,
                     data: HashMap::new(),
-                }
+                },
             ],
             metadata: TestMetadata {
                 version: "1.0.0".to_string(),
@@ -454,9 +450,9 @@ mod tests {
                 custom: HashMap::new(),
             },
         };
-        
+
         manager.store_result(result).unwrap();
-        
+
         let stats = manager.get_statistics();
         assert_eq!(stats.total_suites, 1);
         assert_eq!(stats.passed_suites, 1);
@@ -474,7 +470,7 @@ mod tests {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs();
-        
+
         // Add old result (1 hour old)
         let old_result = TestSuiteResult {
             id: "old_suite".to_string(),
@@ -491,7 +487,7 @@ mod tests {
                 custom: HashMap::new(),
             },
         };
-        
+
         // Add recent result (1 minute old)
         let recent_result = TestSuiteResult {
             id: "recent_suite".to_string(),
@@ -508,14 +504,14 @@ mod tests {
                 custom: HashMap::new(),
             },
         };
-        
+
         manager.store_result(old_result).unwrap();
         manager.store_result(recent_result).unwrap();
-        
+
         // Remove results older than 30 minutes
         let removed_count = manager.remove_old_results(1800); // 30 minutes
         assert_eq!(removed_count, 1);
-        
+
         // Check that only recent result remains
         assert!(manager.get_result("old_suite").is_none());
         assert!(manager.get_result("recent_suite").is_some());
@@ -528,7 +524,7 @@ mod tests {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs();
-        
+
         let result = TestSuiteResult {
             id: "suite_1".to_string(),
             suite_name: "Test Suite".to_string(),
@@ -544,10 +540,10 @@ mod tests {
                 custom: HashMap::new(),
             },
         };
-        
+
         manager.store_result(result).unwrap();
         assert_eq!(manager.results.len(), 1);
-        
+
         manager.clear_all_results();
         assert!(manager.results.is_empty());
         assert!(manager.name_index.is_empty());

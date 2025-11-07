@@ -6,11 +6,11 @@
 //! It provides functionality for gas abstraction, AI-optimized transaction routing,
 //! and high-availability execution services.
 
-use crate::types::{TraderId, TokenId, Transaction};
-use std::collections::HashMap;
-use thiserror::Error;
+use crate::types::{TokenId, TraderId, Transaction};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
+use thiserror::Error;
 
 /// Gas abstraction service for zero-gas transactions
 #[derive(Debug, Clone)]
@@ -293,11 +293,11 @@ impl GasAbstractionService {
     /// Process the transaction queue
     pub fn process_queue(&mut self) -> Result<Vec<String>, GasAbstractionError> {
         let mut processed_txs = Vec::new();
-        
+
         // Sort transactions by priority (higher priority first)
         self.transaction_queue
             .sort_by(|a, b| b.priority.cmp(&a.priority));
-        
+
         // Process transactions with available relayers
         self.transaction_queue.retain(|tx| {
             if tx.status == TransactionStatus::InQueue {
@@ -318,16 +318,17 @@ impl GasAbstractionService {
                         return true;
                     }
                 };
-                
+
                 // Check if relayer is available
                 if let Some(relayer) = self.relayers.get_mut(&relayer_id) {
-                    if relayer.is_active && relayer.balance >= tx.estimated_gas 
-                        && relayer.current_tps < relayer.max_tps {
-                        
+                    if relayer.is_active
+                        && relayer.balance >= tx.estimated_gas
+                        && relayer.current_tps < relayer.max_tps
+                    {
                         // Submit transaction (simulated)
                         relayer.balance -= tx.estimated_gas;
                         relayer.current_tps += 1;
-                        
+
                         // Update transaction status
                         // In a real implementation, this would involve actual blockchain submission
                         processed_txs.push(format!("Processed transaction for user: {}", tx.user));
@@ -342,7 +343,7 @@ impl GasAbstractionService {
                 false // Remove from queue
             }
         });
-        
+
         Ok(processed_txs)
     }
 
@@ -362,13 +363,14 @@ impl GasAbstractionService {
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
                 .as_secs();
-            
+
             // Reset daily limit if needed
-            if now - sponsorship.last_reset > 86400 { // 24 hours
+            if now - sponsorship.last_reset > 86400 {
+                // 24 hours
                 // In a real implementation, this would be updated in the sponsorship
                 return Ok(true);
             }
-            
+
             Ok(sponsorship.used_gas < sponsorship.daily_limit)
         } else {
             Ok(false)
@@ -428,8 +430,9 @@ impl AIRouter {
         availability: &AvailabilityTracker,
     ) -> Option<String> {
         // Check if service is operational
-        if availability.current_status != ServiceStatus::Operational 
-            && availability.current_status != ServiceStatus::Degraded {
+        if availability.current_status != ServiceStatus::Operational
+            && availability.current_status != ServiceStatus::Degraded
+        {
             return None;
         }
 
@@ -437,8 +440,8 @@ impl AIRouter {
         let mut candidates: Vec<(&String, &Relayer)> = relayers
             .iter()
             .filter(|(_, relayer)| {
-                relayer.is_active 
-                    && relayer.balance >= estimated_gas 
+                relayer.is_active
+                    && relayer.balance >= estimated_gas
                     && relayer.current_tps < relayer.max_tps
             })
             .collect();
@@ -470,26 +473,28 @@ impl AIRouter {
     /// Record execution for learning
     pub fn record_execution(&mut self, record: ExecutionRecord) {
         self.history.push(record.clone());
-        
+
         // Update path metrics
-        let metrics = self.path_metrics.entry(record.path.clone()).or_insert_with(|| {
-            PathMetrics {
+        let metrics = self
+            .path_metrics
+            .entry(record.path.clone())
+            .or_insert_with(|| PathMetrics {
                 avg_execution_time: 0,
                 success_rate: 0.0,
                 avg_cost: 0,
                 last_updated: 0,
-            }
-        });
-        
+            });
+
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs();
-        
+
         // Update metrics (simplified averaging)
         metrics.avg_execution_time = (metrics.avg_execution_time + record.execution_time) / 2;
         metrics.avg_cost = (metrics.avg_cost + record.cost) / 2;
-        metrics.success_rate = (metrics.success_rate + if record.success { 1.0 } else { 0.0 }) / 2.0;
+        metrics.success_rate =
+            (metrics.success_rate + if record.success { 1.0 } else { 0.0 }) / 2.0;
         metrics.last_updated = now;
     }
 }
@@ -507,9 +512,9 @@ impl AvailabilityTracker {
             uptime_history: Vec::new(),
             current_status: ServiceStatus::Operational,
             alert_thresholds: AlertThresholds {
-                max_downtime: 2592, // 0.001% of a month (30 days)
+                max_downtime: 2592,            // 0.001% of a month (30 days)
                 response_time_threshold: 5000, // 5 seconds
-                error_rate_threshold: 0.001, // 0.1%
+                error_rate_threshold: 0.001,   // 0.1%
             },
         }
     }
@@ -520,14 +525,14 @@ impl AvailabilityTracker {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs();
-        
+
         let record = AvailabilityRecord {
             timestamp: now,
             status: status.clone(),
             incident,
             duration: 0, // Would be calculated in a real implementation
         };
-        
+
         self.uptime_history.push(record);
         self.current_status = status;
     }
@@ -539,19 +544,20 @@ impl AvailabilityTracker {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs();
-        
+
         let month_ago = now - 2592000; // 30 days ago
-        
-        let downtime: u64 = self.uptime_history
+
+        let downtime: u64 = self
+            .uptime_history
             .iter()
             .filter(|record| {
-                record.timestamp >= month_ago 
-                    && (record.status == ServiceStatus::Outage 
+                record.timestamp >= month_ago
+                    && (record.status == ServiceStatus::Outage
                         || record.status == ServiceStatus::Maintenance)
             })
             .map(|record| record.duration)
             .sum();
-        
+
         downtime <= self.alert_thresholds.max_downtime
     }
 
@@ -606,10 +612,10 @@ mod tests {
             current_tps: 0,
             is_active: true,
         };
-        
+
         service.add_relayer(relayer.clone());
         assert_eq!(service.relayers.len(), 1);
-        
+
         let stored_relayer = service.relayers.get("relayer1").unwrap();
         assert_eq!(stored_relayer.id, relayer.id);
         assert_eq!(stored_relayer.address, relayer.address);
@@ -632,13 +638,13 @@ mod tests {
             current_tps: 0,
             is_active: true,
         };
-        
+
         service.add_relayer(relayer);
         assert_eq!(service.relayers.len(), 1);
-        
+
         assert!(service.remove_relayer("relayer1").is_ok());
         assert_eq!(service.relayers.len(), 0);
-        
+
         // Try to remove non-existent relayer
         assert!(service.remove_relayer("nonexistent").is_err());
     }
@@ -657,10 +663,10 @@ mod tests {
                 .as_secs(),
             is_active: true,
         };
-        
+
         service.set_sponsorship(user.clone(), sponsorship.clone());
         assert_eq!(service.sponsorships.len(), 1);
-        
+
         let stored_sponsorship = service.sponsorships.get(&user).unwrap();
         assert_eq!(stored_sponsorship.sponsor_id, sponsorship.sponsor_id);
         assert_eq!(stored_sponsorship.daily_limit, sponsorship.daily_limit);
@@ -673,7 +679,7 @@ mod tests {
     fn test_submit_abstracted_transaction() {
         let mut service = GasAbstractionService::new();
         let user = "user1".to_string();
-        
+
         // Add a relayer
         let relayer = Relayer {
             id: "relayer1".to_string(),
@@ -685,7 +691,7 @@ mod tests {
             is_active: true,
         };
         service.add_relayer(relayer);
-        
+
         // Add sponsorship
         let sponsorship = GasSponsorship {
             sponsor_id: "dao".to_string(),
@@ -698,7 +704,7 @@ mod tests {
             is_active: true,
         };
         service.set_sponsorship(user.clone(), sponsorship);
-        
+
         // Create a transaction
         let transaction = Transaction {
             from: user.clone(),
@@ -707,11 +713,11 @@ mod tests {
             nonce: 1,
             signature: vec![],
         };
-        
+
         // Submit abstracted transaction
         let result = service.submit_abstracted_transaction(transaction, user.clone(), 5);
         assert!(result.is_ok());
-        
+
         // Check that transaction was added to queue
         assert_eq!(service.queue_size(), 1);
     }
@@ -720,7 +726,7 @@ mod tests {
     fn test_process_queue() {
         let mut service = GasAbstractionService::new();
         let user = "user1".to_string();
-        
+
         // Add a relayer
         let relayer = Relayer {
             id: "relayer1".to_string(),
@@ -732,7 +738,7 @@ mod tests {
             is_active: true,
         };
         service.add_relayer(relayer);
-        
+
         // Create a transaction
         let transaction = Transaction {
             from: user.clone(),
@@ -741,16 +747,16 @@ mod tests {
             nonce: 1,
             signature: vec![],
         };
-        
+
         // Submit abstracted transaction
         let tx_id = service.submit_abstracted_transaction(transaction, user.clone(), 5);
         assert!(tx_id.is_ok());
         assert_eq!(service.queue_size(), 1);
-        
+
         // Process queue
         let result = service.process_queue();
         assert!(result.is_ok());
-        
+
         // Queue should now be empty
         assert_eq!(service.queue_size(), 0);
     }
@@ -758,7 +764,7 @@ mod tests {
     #[test]
     fn test_estimate_gas() {
         let service = GasAbstractionService::new();
-        
+
         let transaction = Transaction {
             from: "user1".to_string(),
             to: "recipient".to_string(),
@@ -766,10 +772,10 @@ mod tests {
             nonce: 1,
             signature: vec![],
         };
-        
+
         let estimated_gas = service.estimate_gas(&transaction);
         assert!(estimated_gas.is_ok());
-        
+
         // Base gas (21000) + amount-based gas (5000/1000 = 5)
         assert_eq!(estimated_gas.unwrap(), 21005);
     }
@@ -778,35 +784,41 @@ mod tests {
     fn test_ai_router_selection() {
         let router = AIRouter::new();
         let mut relayers = HashMap::new();
-        
+
         // Add relayers
-        relayers.insert("relayer1".to_string(), Relayer {
-            id: "relayer1".to_string(),
-            address: "0x1234...".to_string(),
-            reputation: 0.95,
-            balance: 1000000,
-            max_tps: 100,
-            current_tps: 0,
-            is_active: true,
-        });
-        
-        relayers.insert("relayer2".to_string(), Relayer {
-            id: "relayer2".to_string(),
-            address: "0x5678...".to_string(),
-            reputation: 0.85,
-            balance: 1000000,
-            max_tps: 100,
-            current_tps: 0,
-            is_active: true,
-        });
-        
+        relayers.insert(
+            "relayer1".to_string(),
+            Relayer {
+                id: "relayer1".to_string(),
+                address: "0x1234...".to_string(),
+                reputation: 0.95,
+                balance: 1000000,
+                max_tps: 100,
+                current_tps: 0,
+                is_active: true,
+            },
+        );
+
+        relayers.insert(
+            "relayer2".to_string(),
+            Relayer {
+                id: "relayer2".to_string(),
+                address: "0x5678...".to_string(),
+                reputation: 0.85,
+                balance: 1000000,
+                max_tps: 100,
+                current_tps: 0,
+                is_active: true,
+            },
+        );
+
         let availability = AvailabilityTracker::new();
-        
+
         // Select relayer for normal priority transaction
         let selected = router.select_optimal_relayer(&relayers, 50000, 5, &availability);
         assert!(selected.is_some());
         assert_eq!(selected.unwrap(), "relayer1"); // Higher reputation should be selected
-        
+
         // Select relayer for high priority transaction
         let selected = router.select_optimal_relayer(&relayers, 50000, 9, &availability);
         assert!(selected.is_some());
@@ -816,18 +828,18 @@ mod tests {
     #[test]
     fn test_availability_tracker() {
         let mut tracker = AvailabilityTracker::new();
-        
+
         // Check initial status
         assert_eq!(tracker.get_current_status(), &ServiceStatus::Operational);
-        
+
         // Record an incident
         tracker.record_status(
-            ServiceStatus::Degraded, 
-            Some("Network congestion".to_string())
+            ServiceStatus::Degraded,
+            Some("Network congestion".to_string()),
         );
-        
+
         assert_eq!(tracker.get_current_status(), &ServiceStatus::Degraded);
-        
+
         // Check uptime requirements (should pass with no downtime recorded)
         assert!(tracker.check_uptime_requirements());
     }

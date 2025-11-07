@@ -56,10 +56,10 @@ impl<T: PartialOrd + Clone> AvlNode<T> {
         let mut new_root = node.left.take().unwrap();
         node.left = new_root.right.take();
         node.update_height();
-        
+
         new_root.right = Some(node);
         new_root.update_height();
-        
+
         new_root
     }
 
@@ -68,10 +68,10 @@ impl<T: PartialOrd + Clone> AvlNode<T> {
         let mut new_root = node.right.take().unwrap();
         node.right = new_root.left.take();
         node.update_height();
-        
+
         new_root.left = Some(node);
         new_root.update_height();
-        
+
         new_root
     }
 
@@ -138,10 +138,7 @@ impl<T: PartialOrd + Clone> AvlNode<T> {
     }
 
     /// Remove a value from the subtree
-    fn remove_from_subtree(
-        node: Option<Box<AvlNode<T>>>,
-        value: &T,
-    ) -> Option<Box<AvlNode<T>>> {
+    fn remove_from_subtree(node: Option<Box<AvlNode<T>>>, value: &T) -> Option<Box<AvlNode<T>>> {
         match node {
             None => None,
             Some(mut n) => {
@@ -149,8 +146,8 @@ impl<T: PartialOrd + Clone> AvlNode<T> {
                     Some(Ordering::Equal) => {
                         // Node to delete found
                         match (n.left.take(), n.right.take()) {
-                            (None, None) => None, // Leaf node
-                            (Some(left), None) => Some(left), // Only left child
+                            (None, None) => None,               // Leaf node
+                            (Some(left), None) => Some(left),   // Only left child
                             (None, Some(right)) => Some(right), // Only right child
                             (Some(left), Some(right)) => {
                                 // Node with two children
@@ -351,7 +348,7 @@ mod tests {
         tree.insert(10);
         tree.insert(20);
         tree.insert(30);
-        
+
         assert!(!tree.is_empty());
         assert_eq!(tree.len(), 3);
         assert!(tree.contains(&10));
@@ -365,18 +362,18 @@ mod tests {
         tree.insert(10);
         tree.insert(20);
         tree.insert(30);
-        
+
         assert!(tree.remove(&20));
         assert_eq!(tree.len(), 2);
         assert!(tree.contains(&10));
         assert!(!tree.contains(&20));
         assert!(tree.contains(&30));
-        
+
         assert!(tree.remove(&10));
         assert_eq!(tree.len(), 1);
         assert!(!tree.contains(&10));
         assert!(tree.contains(&30));
-        
+
         assert!(tree.remove(&30));
         assert!(tree.is_empty());
         assert_eq!(tree.len(), 0);
@@ -385,23 +382,23 @@ mod tests {
     #[test]
     fn test_avl_tree_balance() {
         let mut tree = AvlTree::new();
-        
+
         // Insert in ascending order to test balancing
         for i in 1..=10 {
             tree.insert(i);
         }
-        
+
         assert_eq!(tree.len(), 10);
         for i in 1..=10 {
             assert!(tree.contains(&i));
         }
-        
+
         // Insert in descending order to test balancing
         let mut tree2 = AvlTree::new();
         for i in (11..=20).rev() {
             tree2.insert(i);
         }
-        
+
         assert_eq!(tree2.len(), 10);
         for i in 11..=20 {
             assert!(tree2.contains(&i));
@@ -412,14 +409,14 @@ mod tests {
     fn test_avl_tree_in_order_traversal() {
         let mut tree = AvlTree::new();
         let values = vec![50, 30, 70, 20, 40, 60, 80];
-        
+
         for &value in &values {
             tree.insert(value);
         }
-        
+
         let mut result = Vec::new();
         tree.in_order_traversal(|&x| result.push(x));
-        
+
         // Values should be in sorted order
         let expected = vec![20, 30, 40, 50, 60, 70, 80];
         assert_eq!(result, expected);
@@ -428,33 +425,33 @@ mod tests {
     #[test]
     fn test_avl_price_level_tree() {
         let mut price_tree = AvlPriceLevelTree::new();
-        
+
         assert!(price_tree.is_empty());
         assert_eq!(price_tree.len(), 0);
-        
+
         // Insert price levels
         price_tree.insert_price_level(50000);
         price_tree.insert_price_level(49000);
         price_tree.insert_price_level(51000);
         price_tree.insert_price_level(48000);
-        
+
         assert!(!price_tree.is_empty());
         assert_eq!(price_tree.len(), 4);
         assert!(price_tree.contains_price_level(&50000));
         assert!(price_tree.contains_price_level(&49000));
         assert!(price_tree.contains_price_level(&51000));
         assert!(price_tree.contains_price_level(&48000));
-        
+
         // Get all price levels in sorted order
         let levels = price_tree.get_all_price_levels();
         let expected = vec![48000, 49000, 50000, 51000];
         assert_eq!(levels, expected);
-        
+
         // Remove a price level
         assert!(price_tree.remove_price_level(&49000));
         assert_eq!(price_tree.len(), 3);
         assert!(!price_tree.contains_price_level(&49000));
-        
+
         // Get all price levels again
         let levels = price_tree.get_all_price_levels();
         let expected = vec![48000, 50000, 51000];

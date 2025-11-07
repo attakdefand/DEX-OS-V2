@@ -10,7 +10,7 @@
 //! arbitrage opportunities or fees), with route caching for improved performance.
 
 use crate::types::{Quantity, TokenId};
-use std::collections::{HashMap, VecDeque, hash_map::Entry, BinaryHeap};
+use std::collections::{hash_map::Entry, BinaryHeap, HashMap, VecDeque};
 use thiserror::Error;
 
 /// Represents an edge in the trading graph (a trading path between tokens on a DEX)
@@ -80,7 +80,7 @@ impl PathRouter {
         // Invalidate cache entries that might be affected by this change
         self.invalidate_cache_for_token(&edge.from_token);
         self.invalidate_cache_for_token(&edge.to_token);
-        
+
         // Add source token if not already present
         if !self.tokens.contains(&edge.from_token) {
             self.tokens.push(edge.from_token.clone());
@@ -102,7 +102,7 @@ impl PathRouter {
     pub fn remove_dex_edges(&mut self, dex_name: &str) {
         // Invalidate all cache entries since we're modifying the graph significantly
         self.route_cache.clear();
-        
+
         for edges in self.graph.values_mut() {
             edges.retain(|edge| edge.dex_name != dex_name);
         }
@@ -113,9 +113,8 @@ impl PathRouter {
 
     /// Invalidate cache entries for a specific token
     fn invalidate_cache_for_token(&mut self, token: &TokenId) {
-        self.route_cache.retain(|(source, destination), _| {
-            source != token && destination != token
-        });
+        self.route_cache
+            .retain(|(source, destination), _| source != token && destination != token);
     }
 
     /// Invalidate all cache entries
@@ -329,7 +328,7 @@ impl PathRouter {
 
         all_paths
     }
-    
+
     /// Find the best path among multiple possible paths using Max-Heap for selection
     /// This implements the Priority 1 feature from DEX-OS-V1.csv:
     /// "Core Trading,DEX Aggregator,DEX Aggregator,Max-Heap (implicit),Best Route Selection,High"
@@ -343,7 +342,7 @@ impl PathRouter {
 
         // Add all possible paths to the heap
         let all_paths = self.find_all_paths(source, destination, max_hops);
-        
+
         // Convert paths to PathInfo and add to heap
         for path in all_paths {
             let path_info = PathInfo {
@@ -365,7 +364,7 @@ impl PathRouter {
             min_liquidity: path_info.min_liquidity,
         })
     }
-    
+
     /// Enhanced version of find_best_path that incorporates Max-Heap based selection
     /// when multiple equivalent paths are found by Bellman-Ford
     /// This implements the Priority 1 feature from DEX-OS-V1.csv:
@@ -378,18 +377,18 @@ impl PathRouter {
     ) -> Result<Option<RoutingPath>, PathRoutingError> {
         // First try the standard Bellman-Ford approach
         let standard_result = self.find_best_path(source, destination, amount)?;
-        
+
         // If we found a path, we can return it directly
         // The Max-Heap is more useful when we have multiple equivalent paths
         // and need to select the best one based on additional criteria
         if standard_result.is_some() {
             return Ok(standard_result);
         }
-        
+
         // If no path was found with the standard approach, try the heap-based approach
         // with a reasonable hop limit
         let heap_result = self.find_best_path_with_heap(source, destination, 5);
-        
+
         // Adjust the amount for the result if we found a path
         if let Some(mut path) = heap_result {
             path.total_exchange_rate = path.total_exchange_rate * amount;
@@ -398,11 +397,11 @@ impl PathRouter {
             Ok(None)
         }
     }
-    
+
     /// Find the best path using a variant of Dijkstra's algorithm for route optimization
     /// This implements the Priority 1 feature from DEX-OS-V1.csv:
     /// "Core Trading,DEX Aggregator,DEX Aggregator,Dijkstra's Algorithm (variant),Route Optimization,High"
-    /// 
+    ///
     /// This variant of Dijkstra's algorithm is optimized for finding the best multi-hop trading routes
     /// by considering liquidity depth and fees in path selection, using a min-heap for efficient node selection.
     pub fn find_best_path_dijkstra(
@@ -411,9 +410,9 @@ impl PathRouter {
         destination: &TokenId,
         amount: f64,
     ) -> Option<RoutingPath> {
-        use std::collections::BinaryHeap;
         use std::cmp::Ordering;
-        
+        use std::collections::BinaryHeap;
+
         // Priority queue item for Dijkstra's algorithm
         #[derive(Debug, Clone)]
         struct DijkstraNode {
@@ -422,44 +421,47 @@ impl PathRouter {
             path: Vec<TradingEdge>,
             liquidity: Quantity,
         }
-        
+
         // Implement ordering for DijkstraNode to make it work as a min-heap based on cost
         impl Ord for DijkstraNode {
             fn cmp(&self, other: &Self) -> Ordering {
                 // Reverse comparison to make BinaryHeap behave as a min-heap
-                other.cost.partial_cmp(&self.cost).unwrap_or(Ordering::Equal)
+                other
+                    .cost
+                    .partial_cmp(&self.cost)
+                    .unwrap_or(Ordering::Equal)
             }
         }
-        
+
         impl PartialOrd for DijkstraNode {
             fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
                 Some(self.cmp(other))
             }
         }
-        
+
         impl PartialEq for DijkstraNode {
             fn eq(&self, other: &Self) -> bool {
                 self.cost == other.cost
             }
         }
-        
+
         impl Eq for DijkstraNode {}
-        
+
         // Distance tracking
         let mut distances: HashMap<TokenId, f64> = HashMap::new();
         let mut visited: HashMap<TokenId, bool> = HashMap::new();
         let mut best_paths: HashMap<TokenId, Vec<TradingEdge>> = HashMap::new();
         let mut min_liquidity: HashMap<TokenId, Quantity> = HashMap::new();
-        
+
         // Initialize
         for token in &self.tokens {
             distances.insert(token.clone(), f64::INFINITY);
             visited.insert(token.clone(), false);
         }
-        
+
         distances.insert(source.clone(), 0.0);
         min_liquidity.insert(source.clone(), u64::MAX);
-        
+
         // Priority queue - min-heap based on cost
         let mut pq = BinaryHeap::new();
         pq.push(DijkstraNode {
@@ -468,15 +470,15 @@ impl PathRouter {
             path: vec![],
             liquidity: u64::MAX,
         });
-        
+
         while let Some(current) = pq.pop() {
             let current_token = current.token;
-            
+
             // If we've reached our destination, we're done
             if &current_token == destination {
                 let total_fee: f64 = current.path.iter().map(|edge| edge.fee).sum();
                 let min_liquidity_val = *min_liquidity.get(&current_token).unwrap_or(&u64::MAX);
-                
+
                 return Some(RoutingPath {
                     edges: current.path,
                     total_exchange_rate: amount, // Will be adjusted by caller
@@ -484,21 +486,21 @@ impl PathRouter {
                     min_liquidity: min_liquidity_val,
                 });
             }
-            
+
             // Skip if we've already processed this node with a better cost
             if *visited.get(&current_token).unwrap_or(&false) {
                 continue;
             }
-            
+
             visited.insert(current_token.clone(), true);
-            
+
             // Explore neighbors
             if let Some(edges) = self.graph.get(&current_token) {
                 for edge in edges {
                     if *visited.get(&edge.to_token).unwrap_or(&false) {
                         continue;
                     }
-                    
+
                     // Calculate cost - combination of exchange rate, fee, and liquidity
                     let exchange_value = amount * edge.exchange_rate;
                     let fee_cost = exchange_value * edge.fee;
@@ -509,25 +511,26 @@ impl PathRouter {
                         // Lower penalty for sufficient liquidity
                         1.0 / (edge.liquidity as f64)
                     };
-                    
+
                     let edge_cost = fee_cost + liquidity_penalty;
                     let new_cost = current.cost + edge_cost;
-                    
+
                     // If we found a better path to this token
                     if new_cost < *distances.get(&edge.to_token).unwrap_or(&f64::INFINITY) {
                         distances.insert(edge.to_token.clone(), new_cost);
-                        
+
                         // Update minimum liquidity along the path
-                        let current_liquidity = *min_liquidity.get(&current_token).unwrap_or(&u64::MAX);
+                        let current_liquidity =
+                            *min_liquidity.get(&current_token).unwrap_or(&u64::MAX);
                         let new_liquidity = current_liquidity.min(edge.liquidity);
                         min_liquidity.insert(edge.to_token.clone(), new_liquidity);
-                        
+
                         // Build new path
                         let mut new_path = current.path.clone();
                         new_path.push(edge.clone());
-                        
+
                         best_paths.insert(edge.to_token.clone(), new_path.clone());
-                        
+
                         // Add to priority queue
                         pq.push(DijkstraNode {
                             token: edge.to_token.clone(),
@@ -539,11 +542,11 @@ impl PathRouter {
                 }
             }
         }
-        
+
         // No path found
         None
     }
-    
+
     /// Enhanced path finding that uses Dijkstra's algorithm for optimization
     /// This implements the Priority 1 feature from DEX-OS-V1.csv:
     /// "Core Trading,DEX Aggregator,DEX Aggregator,Dijkstra's Algorithm (variant),Route Optimization,High"
@@ -555,11 +558,13 @@ impl PathRouter {
     ) -> Result<Option<RoutingPath>, PathRoutingError> {
         // First try the standard Bellman-Ford approach
         let standard_result = self.find_best_path(source, destination, amount)?;
-        
+
         // If we found a path with Bellman-Ford, try Dijkstra's for comparison
         if let Some(mut path) = standard_result {
             // Try Dijkstra's algorithm for optimization
-            if let Some(mut dijkstra_path) = self.find_best_path_dijkstra(source, destination, amount) {
+            if let Some(mut dijkstra_path) =
+                self.find_best_path_dijkstra(source, destination, amount)
+            {
                 // Compare paths and return the better one
                 // For now, we'll just return the Dijkstra result as it's optimized
                 dijkstra_path.total_exchange_rate = amount * dijkstra_path.total_exchange_rate;
@@ -571,7 +576,9 @@ impl PathRouter {
             }
         } else {
             // If Bellman-Ford found no path, try Dijkstra's
-            if let Some(mut dijkstra_path) = self.find_best_path_dijkstra(source, destination, amount) {
+            if let Some(mut dijkstra_path) =
+                self.find_best_path_dijkstra(source, destination, amount)
+            {
                 dijkstra_path.total_exchange_rate = amount * dijkstra_path.total_exchange_rate;
                 Ok(Some(dijkstra_path))
             } else {
@@ -579,7 +586,7 @@ impl PathRouter {
             }
         }
     }
-    
+
     /// Get all tokens in the graph
     pub fn get_tokens(&self) -> &[TokenId] {
         &self.tokens as &[TokenId]
@@ -719,7 +726,7 @@ mod tests {
         assert_eq!(path.total_fee, 0.006); // 0.003 + 0.003
         assert_eq!(path.min_liquidity, 1000000); // Limited by BTC->ETH liquidity
     }
-    
+
     #[test]
     fn test_find_best_path_with_heap() {
         let mut router = PathRouter::new();
@@ -770,7 +777,7 @@ mod tests {
         assert_eq!(path.total_fee, 0.001);
         assert_eq!(path.min_liquidity, 2000000);
     }
-    
+
     #[test]
     fn test_find_best_path_enhanced() {
         let mut router = PathRouter::new();
@@ -972,17 +979,19 @@ mod tests {
             .find_best_path(&"BTC".to_string(), &"USDC".to_string(), 1.0)
             .unwrap();
         assert!(result1.is_some());
-        
+
         // Check that the path was cached
         assert_eq!(router.route_cache.len(), 1);
-        assert!(router.route_cache.contains_key(&("BTC".to_string(), "USDC".to_string())));
+        assert!(router
+            .route_cache
+            .contains_key(&("BTC".to_string(), "USDC".to_string())));
 
         // Second call should use the cache
         let result2 = router
             .find_best_path(&"BTC".to_string(), &"USDC".to_string(), 2.0)
             .unwrap();
         assert!(result2.is_some());
-        
+
         // Results should be the same path but with different amounts
         let path1 = result1.unwrap();
         let path2 = result2.unwrap();
@@ -1008,7 +1017,9 @@ mod tests {
         router.add_edge(edge1.clone());
 
         // Find and cache path
-        let _ = router.find_best_path(&"BTC".to_string(), &"ETH".to_string(), 1.0).unwrap();
+        let _ = router
+            .find_best_path(&"BTC".to_string(), &"ETH".to_string(), 1.0)
+            .unwrap();
         assert_eq!(router.route_cache.len(), 1);
 
         // Add another edge that could affect routing
@@ -1025,20 +1036,20 @@ mod tests {
         // Cache should be invalidated for affected tokens
         // Note: The exact behavior depends on implementation, but cache should be managed properly
     }
-    
+
     #[test]
     fn test_find_best_path_dijkstra() {
         let router = PathRouter::new();
-        
+
         // This test would need a populated router to be meaningful
         // We'll add a more comprehensive test later
         assert!(true);
     }
-    
+
     #[test]
     fn test_dijkstra_vs_bellman_ford() {
         let mut router = PathRouter::new();
-        
+
         // Add path: BTC -> ETH -> USDC
         let edge1 = TradingEdge {
             from_token: "BTC".to_string(),
@@ -1048,7 +1059,7 @@ mod tests {
             fee: 0.003,
             liquidity: 1000000,
         };
-        
+
         let edge2 = TradingEdge {
             from_token: "ETH".to_string(),
             to_token: "USDC".to_string(),
@@ -1057,14 +1068,15 @@ mod tests {
             fee: 0.003,
             liquidity: 50000000,
         };
-        
+
         router.add_edge(edge1.clone());
         router.add_edge(edge2.clone());
-        
+
         // Test Dijkstra's algorithm
-        let dijkstra_result = router.find_best_path_dijkstra(&"BTC".to_string(), &"USDC".to_string(), 1.0);
+        let dijkstra_result =
+            router.find_best_path_dijkstra(&"BTC".to_string(), &"USDC".to_string(), 1.0);
         assert!(dijkstra_result.is_some());
-        
+
         let path = dijkstra_result.unwrap();
         assert_eq!(path.edges.len(), 2);
         assert_eq!(path.total_fee, 0.006); // 0.003 + 0.003
@@ -1090,7 +1102,10 @@ impl Ord for PathInfo {
         // Compare by total exchange rate (higher is better)
         // We reverse the comparison because BinaryHeap is a max-heap by default,
         // but we want to compare f64 values properly
-        other.total_exchange_rate.partial_cmp(&self.total_exchange_rate).unwrap_or(std::cmp::Ordering::Equal)
+        other
+            .total_exchange_rate
+            .partial_cmp(&self.total_exchange_rate)
+            .unwrap_or(std::cmp::Ordering::Equal)
     }
 }
 

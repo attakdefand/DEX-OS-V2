@@ -7,11 +7,11 @@
 //! Hash Time-Locked Contracts (HTLCs) to ensure trustless asset exchange
 //! between different blockchain networks.
 
-use crate::types::{TokenId, Quantity, TraderId};
+use crate::types::{Quantity, TokenId, TraderId};
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
-use thiserror::Error;
 use std::time::{SystemTime, UNIX_EPOCH};
-use sha2::{Sha256, Digest};
+use thiserror::Error;
 
 /// Represents the status of an atomic swap
 #[derive(Debug, Clone, PartialEq)]
@@ -121,17 +121,17 @@ impl AtomicSwapManager {
         if secret_hash.len() != 32 {
             return Err(AtomicSwapError::InvalidSecretHash);
         }
-        
+
         // Check if swap already exists
         if self.swaps.contains_key(&id) || self.completed_swaps.contains_key(&id) {
             return Err(AtomicSwapError::SwapAlreadyExists);
         }
-        
+
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs();
-        
+
         let swap = AtomicSwap {
             id: id.clone(),
             initiator,
@@ -150,7 +150,7 @@ impl AtomicSwapManager {
             source_chain,
             destination_chain,
         };
-        
+
         self.swaps.insert(id, swap);
         Ok(())
     }
@@ -167,119 +167,127 @@ impl AtomicSwapManager {
 
     /// Fund a swap (initiator deposits funds)
     pub fn fund_swap(&mut self, id: &str) -> Result<(), AtomicSwapError> {
-        let swap = self.swaps.get_mut(id)
+        let swap = self
+            .swaps
+            .get_mut(id)
             .ok_or(AtomicSwapError::SwapNotFound)?;
-        
+
         // Check if swap is in the correct state
         if swap.status != SwapStatus::Initiated {
             return Err(AtomicSwapError::InvalidState);
         }
-        
+
         // Check if swap has timed out
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs();
-        
+
         if now > swap.timeout {
             return Err(AtomicSwapError::SwapTimeout);
         }
-        
+
         // Update swap status
         swap.status = SwapStatus::Funded;
         swap.funded_timestamp = Some(now);
-        
+
         Ok(())
     }
 
     /// Claim a swap (participant provides secret to claim funds)
     pub fn claim_swap(&mut self, id: &str, secret: &[u8]) -> Result<(), AtomicSwapError> {
-        let swap = self.swaps.get_mut(id)
+        let swap = self
+            .swaps
+            .get_mut(id)
             .ok_or(AtomicSwapError::SwapNotFound)?;
-        
+
         // Check if swap is in the correct state
         if swap.status != SwapStatus::Funded {
             return Err(AtomicSwapError::InvalidState);
         }
-        
+
         // Check if swap has timed out
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs();
-        
+
         if now > swap.timeout {
             return Err(AtomicSwapError::SwapTimeout);
         }
-        
+
         // Verify the secret matches the hash
         let mut hasher = Sha256::new();
         hasher.update(secret);
         let computed_hash = hasher.finalize().to_vec();
-        
+
         if computed_hash != swap.secret_hash {
             return Err(AtomicSwapError::InvalidSecret);
         }
-        
+
         // Update swap status
         swap.status = SwapStatus::Claimed;
         swap.claimed_timestamp = Some(now);
-        
+
         // Move swap to completed swaps
         let completed_swap = self.swaps.remove(id).unwrap();
         self.completed_swaps.insert(id.to_string(), completed_swap);
-        
+
         Ok(())
     }
 
     /// Refund a swap (initiator gets funds back after timeout)
     pub fn refund_swap(&mut self, id: &str) -> Result<(), AtomicSwapError> {
-        let swap = self.swaps.get_mut(id)
+        let swap = self
+            .swaps
+            .get_mut(id)
             .ok_or(AtomicSwapError::SwapNotFound)?;
-        
+
         // Check if swap is in the correct state
         if swap.status != SwapStatus::Funded {
             return Err(AtomicSwapError::InvalidState);
         }
-        
+
         // Check if swap has timed out
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs();
-        
+
         if now < swap.timeout {
             return Err(AtomicSwapError::SwapTimeout);
         }
-        
+
         // Update swap status
         swap.status = SwapStatus::Refunded;
         swap.refunded_timestamp = Some(now);
-        
+
         // Move swap to completed swaps
         let completed_swap = self.swaps.remove(id).unwrap();
         self.completed_swaps.insert(id.to_string(), completed_swap);
-        
+
         Ok(())
     }
 
     /// Cancel a swap (before it's funded)
     pub fn cancel_swap(&mut self, id: &str) -> Result<(), AtomicSwapError> {
-        let swap = self.swaps.get_mut(id)
+        let swap = self
+            .swaps
+            .get_mut(id)
             .ok_or(AtomicSwapError::SwapNotFound)?;
-        
+
         // Check if swap is in the correct state
         if swap.status != SwapStatus::Initiated {
             return Err(AtomicSwapError::InvalidState);
         }
-        
+
         // Update swap status
         swap.status = SwapStatus::Cancelled;
-        
+
         // Move swap to completed swaps
         let completed_swap = self.swaps.remove(id).unwrap();
         self.completed_swaps.insert(id.to_string(), completed_swap);
-        
+
         Ok(())
     }
 
@@ -303,14 +311,13 @@ impl AtomicSwapManager {
 
     /// Check if a swap has timed out
     pub fn is_swap_timed_out(&self, id: &str) -> Result<bool, AtomicSwapError> {
-        let swap = self.swaps.get(id)
-            .ok_or(AtomicSwapError::SwapNotFound)?;
-        
+        let swap = self.swaps.get(id).ok_or(AtomicSwapError::SwapNotFound)?;
+
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs();
-        
+
         Ok(now > swap.timeout)
     }
 
@@ -336,11 +343,11 @@ pub fn generate_secret_and_hash() -> (Vec<u8>, Vec<u8>) {
     // In a real implementation, this would use a cryptographically secure random generator
     // For this example, we'll use a fixed value for testing purposes
     let secret = b"this_is_a_secret_for_testing_purposes".to_vec();
-    
+
     let mut hasher = Sha256::new();
     hasher.update(&secret);
     let hash = hasher.finalize().to_vec();
-    
+
     (secret, hash)
 }
 
@@ -359,7 +366,7 @@ mod tests {
     fn test_initiate_swap() {
         let mut manager = AtomicSwapManager::new();
         let (secret, secret_hash) = generate_secret_and_hash();
-        
+
         let result = manager.initiate_swap(
             "swap1".to_string(),
             "initiator1".to_string(),
@@ -373,10 +380,10 @@ mod tests {
             "Bitcoin".to_string(),
             "Ethereum".to_string(),
         );
-        
+
         assert!(result.is_ok());
         assert_eq!(manager.active_swap_count(), 1);
-        
+
         let swap = manager.get_swap("swap1");
         assert!(swap.is_some());
         let swap = swap.unwrap();
@@ -388,7 +395,7 @@ mod tests {
     #[test]
     fn test_invalid_secret_hash() {
         let mut manager = AtomicSwapManager::new();
-        
+
         let result = manager.initiate_swap(
             "swap1".to_string(),
             "initiator1".to_string(),
@@ -398,11 +405,11 @@ mod tests {
             "ETH".to_string(),
             20000,
             vec![1, 2, 3], // Invalid hash length
-            3600, // 1 hour timeout
+            3600,          // 1 hour timeout
             "Bitcoin".to_string(),
             "Ethereum".to_string(),
         );
-        
+
         assert!(result.is_err());
         assert_eq!(manager.active_swap_count(), 0);
     }
@@ -411,26 +418,28 @@ mod tests {
     fn test_fund_swap() {
         let mut manager = AtomicSwapManager::new();
         let (secret, secret_hash) = generate_secret_and_hash();
-        
+
         // Initiate swap
-        manager.initiate_swap(
-            "swap1".to_string(),
-            "initiator1".to_string(),
-            "participant1".to_string(),
-            "BTC".to_string(),
-            1000,
-            "ETH".to_string(),
-            20000,
-            secret_hash,
-            3600, // 1 hour timeout
-            "Bitcoin".to_string(),
-            "Ethereum".to_string(),
-        ).unwrap();
-        
+        manager
+            .initiate_swap(
+                "swap1".to_string(),
+                "initiator1".to_string(),
+                "participant1".to_string(),
+                "BTC".to_string(),
+                1000,
+                "ETH".to_string(),
+                20000,
+                secret_hash,
+                3600, // 1 hour timeout
+                "Bitcoin".to_string(),
+                "Ethereum".to_string(),
+            )
+            .unwrap();
+
         // Fund swap
         let result = manager.fund_swap("swap1");
         assert!(result.is_ok());
-        
+
         let swap = manager.get_swap("swap1").unwrap();
         assert_eq!(swap.status, SwapStatus::Funded);
         assert!(swap.funded_timestamp.is_some());
@@ -440,32 +449,34 @@ mod tests {
     fn test_claim_swap() {
         let mut manager = AtomicSwapManager::new();
         let (secret, secret_hash) = generate_secret_and_hash();
-        
+
         // Initiate and fund swap
-        manager.initiate_swap(
-            "swap1".to_string(),
-            "initiator1".to_string(),
-            "participant1".to_string(),
-            "BTC".to_string(),
-            1000,
-            "ETH".to_string(),
-            20000,
-            secret_hash.clone(),
-            3600, // 1 hour timeout
-            "Bitcoin".to_string(),
-            "Ethereum".to_string(),
-        ).unwrap();
-        
+        manager
+            .initiate_swap(
+                "swap1".to_string(),
+                "initiator1".to_string(),
+                "participant1".to_string(),
+                "BTC".to_string(),
+                1000,
+                "ETH".to_string(),
+                20000,
+                secret_hash.clone(),
+                3600, // 1 hour timeout
+                "Bitcoin".to_string(),
+                "Ethereum".to_string(),
+            )
+            .unwrap();
+
         manager.fund_swap("swap1").unwrap();
-        
+
         // Claim swap
         let result = manager.claim_swap("swap1", &secret);
         assert!(result.is_ok());
-        
+
         // Swap should now be in completed swaps
         assert_eq!(manager.active_swap_count(), 0);
         assert_eq!(manager.completed_swap_count(), 1);
-        
+
         let swap = manager.get_completed_swap("swap1").unwrap();
         assert_eq!(swap.status, SwapStatus::Claimed);
         assert!(swap.claimed_timestamp.is_some());
@@ -476,29 +487,31 @@ mod tests {
         let mut manager = AtomicSwapManager::new();
         let (secret, secret_hash) = generate_secret_and_hash();
         let wrong_secret = b"wrong_secret".to_vec();
-        
+
         // Initiate and fund swap
-        manager.initiate_swap(
-            "swap1".to_string(),
-            "initiator1".to_string(),
-            "participant1".to_string(),
-            "BTC".to_string(),
-            1000,
-            "ETH".to_string(),
-            20000,
-            secret_hash,
-            3600, // 1 hour timeout
-            "Bitcoin".to_string(),
-            "Ethereum".to_string(),
-        ).unwrap();
-        
+        manager
+            .initiate_swap(
+                "swap1".to_string(),
+                "initiator1".to_string(),
+                "participant1".to_string(),
+                "BTC".to_string(),
+                1000,
+                "ETH".to_string(),
+                20000,
+                secret_hash,
+                3600, // 1 hour timeout
+                "Bitcoin".to_string(),
+                "Ethereum".to_string(),
+            )
+            .unwrap();
+
         manager.fund_swap("swap1").unwrap();
-        
+
         // Try to claim with wrong secret
         let result = manager.claim_swap("swap1", &wrong_secret);
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), AtomicSwapError::InvalidSecret);
-        
+
         // Swap should still be active
         assert_eq!(manager.active_swap_count(), 1);
         assert_eq!(manager.completed_swap_count(), 0);
@@ -508,27 +521,29 @@ mod tests {
     fn test_refund_swap() {
         let mut manager = AtomicSwapManager::new();
         let (secret, secret_hash) = generate_secret_and_hash();
-        
+
         // Initiate and fund swap
-        manager.initiate_swap(
-            "swap1".to_string(),
-            "initiator1".to_string(),
-            "participant1".to_string(),
-            "BTC".to_string(),
-            1000,
-            "ETH".to_string(),
-            20000,
-            secret_hash,
-            1, // 1 second timeout for testing
-            "Bitcoin".to_string(),
-            "Ethereum".to_string(),
-        ).unwrap();
-        
+        manager
+            .initiate_swap(
+                "swap1".to_string(),
+                "initiator1".to_string(),
+                "participant1".to_string(),
+                "BTC".to_string(),
+                1000,
+                "ETH".to_string(),
+                20000,
+                secret_hash,
+                1, // 1 second timeout for testing
+                "Bitcoin".to_string(),
+                "Ethereum".to_string(),
+            )
+            .unwrap();
+
         manager.fund_swap("swap1").unwrap();
-        
+
         // Wait for timeout (simulate by manually setting time)
         // In a real test, we would need to mock time or wait
-        
+
         // For this test, we'll just check that the swap can be refunded
         // after it's been funded (the state check is what matters)
     }
@@ -537,30 +552,32 @@ mod tests {
     fn test_cancel_swap() {
         let mut manager = AtomicSwapManager::new();
         let (secret, secret_hash) = generate_secret_and_hash();
-        
+
         // Initiate swap
-        manager.initiate_swap(
-            "swap1".to_string(),
-            "initiator1".to_string(),
-            "participant1".to_string(),
-            "BTC".to_string(),
-            1000,
-            "ETH".to_string(),
-            20000,
-            secret_hash,
-            3600, // 1 hour timeout
-            "Bitcoin".to_string(),
-            "Ethereum".to_string(),
-        ).unwrap();
-        
+        manager
+            .initiate_swap(
+                "swap1".to_string(),
+                "initiator1".to_string(),
+                "participant1".to_string(),
+                "BTC".to_string(),
+                1000,
+                "ETH".to_string(),
+                20000,
+                secret_hash,
+                3600, // 1 hour timeout
+                "Bitcoin".to_string(),
+                "Ethereum".to_string(),
+            )
+            .unwrap();
+
         // Cancel swap
         let result = manager.cancel_swap("swap1");
         assert!(result.is_ok());
-        
+
         // Swap should now be in completed swaps
         assert_eq!(manager.active_swap_count(), 0);
         assert_eq!(manager.completed_swap_count(), 1);
-        
+
         let swap = manager.get_completed_swap("swap1").unwrap();
         assert_eq!(swap.status, SwapStatus::Cancelled);
     }

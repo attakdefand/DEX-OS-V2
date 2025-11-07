@@ -1,10 +1,10 @@
 //! Lending module for DEX-OS
-//! 
+//!
 //! This module implements lending functionality including:
 //! - Compound-style interest rate models
 //! - Loan accounting and tracking systems
-//! 
-//! This implements the Priority 2 feature from DEX-OS-V1.csv: 
+//!
+//! This implements the Priority 2 feature from DEX-OS-V1.csv:
 //! "2,Core Trading,Lending,Lending,Interest Rate Model,Compound-style Algorithm,High"
 //! and
 //! "2,Core Trading,Lending,Lending,Accounting System,Loan Tracking,High"
@@ -45,7 +45,7 @@ pub enum AssetType {
 }
 
 /// Interest rate model based on Compound Finance v2
-/// 
+///
 /// This model uses the formula:
 /// - Base Rate + (Utilization Rate * Multiplier)
 /// Where:
@@ -82,9 +82,14 @@ impl CompoundInterestRateModel {
     }
 
     /// Calculate the borrow interest rate based on utilization
-    /// 
+    ///
     /// This implements the Compound-style algorithm for interest rate calculation
-    pub fn calculate_borrow_rate(&self, cash: f64, borrows: f64, reserves: f64) -> Result<f64, LendingError> {
+    pub fn calculate_borrow_rate(
+        &self,
+        cash: f64,
+        borrows: f64,
+        reserves: f64,
+    ) -> Result<f64, LendingError> {
         if cash < 0.0 || borrows < 0.0 || reserves < 0.0 {
             return Err(LendingError::InvalidAmount);
         }
@@ -109,8 +114,20 @@ impl CompoundInterestRateModel {
     }
 
     /// Calculate the supply interest rate based on borrow rate and utilization
-    pub fn calculate_supply_rate(&self, borrow_rate: f64, cash: f64, borrows: f64, reserves: f64, reserve_factor: f64) -> Result<f64, LendingError> {
-        if cash < 0.0 || borrows < 0.0 || reserves < 0.0 || reserve_factor < 0.0 || reserve_factor > 1.0 {
+    pub fn calculate_supply_rate(
+        &self,
+        borrow_rate: f64,
+        cash: f64,
+        borrows: f64,
+        reserves: f64,
+        reserve_factor: f64,
+    ) -> Result<f64, LendingError> {
+        if cash < 0.0
+            || borrows < 0.0
+            || reserves < 0.0
+            || reserve_factor < 0.0
+            || reserve_factor > 1.0
+        {
             return Err(LendingError::InvalidAmount);
         }
 
@@ -220,9 +237,11 @@ impl LoanAccountingSystem {
         let cash = *self.total_supply.get(&asset).unwrap_or(&0.0);
         let borrows = *self.total_borrows.get(&asset).unwrap_or(&0.0);
         let reserves = *self.total_reserves.get(&asset).unwrap_or(&0.0);
-        
-        let interest_rate = self.interest_rate_model.calculate_borrow_rate(cash, borrows, reserves)?;
-        
+
+        let interest_rate = self
+            .interest_rate_model
+            .calculate_borrow_rate(cash, borrows, reserves)?;
+
         // Create loan
         let loan = Loan {
             id: id.clone(),
@@ -241,7 +260,7 @@ impl LoanAccountingSystem {
 
         // Update accounting
         *self.total_borrows.entry(asset.clone()).or_insert(0.0) += amount;
-        
+
         // Store loan
         self.loans.insert(id.clone(), loan);
 
@@ -250,8 +269,11 @@ impl LoanAccountingSystem {
 
     /// Repay a loan
     pub fn repay_loan(&mut self, loan_id: &str, amount: f64) -> Result<(), LendingError> {
-        let loan = self.loans.get_mut(loan_id).ok_or(LendingError::LoanNotFound)?;
-        
+        let loan = self
+            .loans
+            .get_mut(loan_id)
+            .ok_or(LendingError::LoanNotFound)?;
+
         if amount <= 0.0 {
             return Err(LendingError::InvalidAmount);
         }
@@ -262,7 +284,7 @@ impl LoanAccountingSystem {
 
         // Update amount owed
         loan.amount_owed -= amount;
-        
+
         // If fully repaid, update status
         if loan.amount_owed <= 0.0 {
             loan.status = LoanStatus::Repaid;
@@ -274,8 +296,11 @@ impl LoanAccountingSystem {
 
     /// Liquidate a loan that has fallen below health threshold
     pub fn liquidate_loan(&mut self, loan_id: &str) -> Result<(), LendingError> {
-        let loan = self.loans.get_mut(loan_id).ok_or(LendingError::LoanNotFound)?;
-        
+        let loan = self
+            .loans
+            .get_mut(loan_id)
+            .ok_or(LendingError::LoanNotFound)?;
+
         if loan.status != LoanStatus::Active {
             return Err(LendingError::LoanNotFound);
         }
@@ -301,9 +326,13 @@ impl LoanAccountingSystem {
     }
 
     /// Calculate interest accrued for a loan
-    pub fn calculate_interest(&self, loan_id: &str, current_time: u64) -> Result<f64, LendingError> {
+    pub fn calculate_interest(
+        &self,
+        loan_id: &str,
+        current_time: u64,
+    ) -> Result<f64, LendingError> {
         let loan = self.loans.get(loan_id).ok_or(LendingError::LoanNotFound)?;
-        
+
         if loan.status != LoanStatus::Active {
             return Ok(0.0);
         }
@@ -312,14 +341,21 @@ impl LoanAccountingSystem {
         // In a real implementation, this would use compounding
         let time_elapsed = (current_time - loan.created_at) as f64 / 31536000.0; // Convert to years
         let interest = loan.principal * loan.interest_rate * time_elapsed;
-        
+
         Ok(interest)
     }
 
     /// Update loan with accrued interest
-    pub fn accrue_interest(&mut self, loan_id: &str, current_time: u64) -> Result<(), LendingError> {
+    pub fn accrue_interest(
+        &mut self,
+        loan_id: &str,
+        current_time: u64,
+    ) -> Result<(), LendingError> {
         let interest = self.calculate_interest(loan_id, current_time)?;
-        let loan = self.loans.get_mut(loan_id).ok_or(LendingError::LoanNotFound)?;
+        let loan = self
+            .loans
+            .get_mut(loan_id)
+            .ok_or(LendingError::LoanNotFound)?;
         loan.amount_owed = loan.principal + interest;
         Ok(())
     }
@@ -335,7 +371,7 @@ impl LoanAccountingSystem {
     pub fn get_utilization_rate(&self, asset: &AssetType) -> f64 {
         let cash = *self.total_supply.get(asset).unwrap_or(&0.0);
         let borrows = *self.total_borrows.get(asset).unwrap_or(&0.0);
-        
+
         if cash + borrows == 0.0 {
             0.0
         } else {
@@ -348,8 +384,9 @@ impl LoanAccountingSystem {
         let cash = *self.total_supply.get(asset).unwrap_or(&0.0);
         let borrows = *self.total_borrows.get(asset).unwrap_or(&0.0);
         let reserves = *self.total_reserves.get(asset).unwrap_or(&0.0);
-        
-        self.interest_rate_model.calculate_borrow_rate(cash, borrows, reserves)
+
+        self.interest_rate_model
+            .calculate_borrow_rate(cash, borrows, reserves)
     }
 
     /// Get supply rate for an asset
@@ -358,7 +395,7 @@ impl LoanAccountingSystem {
         let cash = *self.total_supply.get(asset).unwrap_or(&0.0);
         let borrows = *self.total_borrows.get(asset).unwrap_or(&0.0);
         let reserves = *self.total_reserves.get(asset).unwrap_or(&0.0);
-        
+
         self.interest_rate_model.calculate_supply_rate(
             borrow_rate,
             cash,
@@ -373,7 +410,7 @@ impl LoanAccountingSystem {
         if amount <= 0.0 {
             return Err(LendingError::InvalidAmount);
         }
-        
+
         *self.total_supply.entry(asset).or_insert(0.0) += amount;
         Ok(())
     }
@@ -383,12 +420,12 @@ impl LoanAccountingSystem {
         if amount <= 0.0 {
             return Err(LendingError::InvalidAmount);
         }
-        
+
         let available = self.get_available_liquidity(&asset);
         if amount > available {
             return Err(LendingError::InsufficientLiquidity);
         }
-        
+
         *self.total_supply.entry(asset).or_insert(0.0) -= amount;
         Ok(())
     }
@@ -409,78 +446,126 @@ impl LoanAccountingSystem {
     }
 
     /// Calculate the health factor for a loan
-    /// 
+    ///
     /// Health factor = (Collateral Value * Liquidation Threshold) / Loan Value
     /// This implements the Priority 2 feature from DEX-OS-V1.csv:
     /// "2,Core Trading,Lending,Lending,Health Factor Calculation,Liquidation Prevention,High"
-    pub fn calculate_health_factor(&self, loan_id: &str, collateral_price: f64, loan_asset_price: f64, liquidation_threshold: f64) -> Result<f64, LendingError> {
+    pub fn calculate_health_factor(
+        &self,
+        loan_id: &str,
+        collateral_price: f64,
+        loan_asset_price: f64,
+        liquidation_threshold: f64,
+    ) -> Result<f64, LendingError> {
         let loan = self.loans.get(loan_id).ok_or(LendingError::LoanNotFound)?;
-        
-        if collateral_price <= 0.0 || loan_asset_price <= 0.0 || liquidation_threshold <= 0.0 || liquidation_threshold > 1.0 {
+
+        if collateral_price <= 0.0
+            || loan_asset_price <= 0.0
+            || liquidation_threshold <= 0.0
+            || liquidation_threshold > 1.0
+        {
             return Err(LendingError::InvalidAmount);
         }
-        
+
         if loan.status != LoanStatus::Active {
             return Err(LendingError::LoanNotFound);
         }
-        
+
         let collateral_value = loan.collateral_amount * collateral_price;
         let loan_value = loan.amount_owed * loan_asset_price;
-        
+
         if loan_value == 0.0 {
             return Ok(f64::INFINITY);
         }
-        
+
         let health_factor = (collateral_value * liquidation_threshold) / loan_value;
         Ok(health_factor)
     }
-    
+
     /// Update the health factor for a loan
-    /// 
+    ///
     /// This function updates the health factor stored in the loan object
-    pub fn update_health_factor(&mut self, loan_id: &str, collateral_price: f64, loan_asset_price: f64, liquidation_threshold: f64) -> Result<(), LendingError> {
-        let health_factor = self.calculate_health_factor(loan_id, collateral_price, loan_asset_price, liquidation_threshold)?;
-        let loan = self.loans.get_mut(loan_id).ok_or(LendingError::LoanNotFound)?;
+    pub fn update_health_factor(
+        &mut self,
+        loan_id: &str,
+        collateral_price: f64,
+        loan_asset_price: f64,
+        liquidation_threshold: f64,
+    ) -> Result<(), LendingError> {
+        let health_factor = self.calculate_health_factor(
+            loan_id,
+            collateral_price,
+            loan_asset_price,
+            liquidation_threshold,
+        )?;
+        let loan = self
+            .loans
+            .get_mut(loan_id)
+            .ok_or(LendingError::LoanNotFound)?;
         loan.health_factor = health_factor;
         Ok(())
     }
-    
+
     /// Check if a loan should be liquidated based on health factor
-    /// 
+    ///
     /// Returns true if the health factor is below the liquidation threshold
-    pub fn should_liquidate(&self, loan_id: &str, collateral_price: f64, loan_asset_price: f64, liquidation_threshold: f64, min_health_factor: f64) -> Result<bool, LendingError> {
-        let health_factor = self.calculate_health_factor(loan_id, collateral_price, loan_asset_price, liquidation_threshold)?;
+    pub fn should_liquidate(
+        &self,
+        loan_id: &str,
+        collateral_price: f64,
+        loan_asset_price: f64,
+        liquidation_threshold: f64,
+        min_health_factor: f64,
+    ) -> Result<bool, LendingError> {
+        let health_factor = self.calculate_health_factor(
+            loan_id,
+            collateral_price,
+            loan_asset_price,
+            liquidation_threshold,
+        )?;
         Ok(health_factor < min_health_factor)
     }
-    
+
     /// Get loans that are below the minimum health factor
-    /// 
+    ///
     /// Returns a vector of loan IDs that need to be liquidated
-    pub fn get_undercollateralized_loans(&self, collateral_prices: &HashMap<AssetType, f64>, loan_asset_prices: &HashMap<AssetType, f64>, liquidation_threshold: f64, min_health_factor: f64) -> Vec<String> {
+    pub fn get_undercollateralized_loans(
+        &self,
+        collateral_prices: &HashMap<AssetType, f64>,
+        loan_asset_prices: &HashMap<AssetType, f64>,
+        liquidation_threshold: f64,
+        min_health_factor: f64,
+    ) -> Vec<String> {
         let mut undercollateralized_loans = Vec::new();
-        
+
         for (loan_id, loan) in &self.loans {
             if loan.status != LoanStatus::Active {
                 continue;
             }
-            
+
             let collateral_price = match collateral_prices.get(&loan.collateral_asset) {
                 Some(price) => *price,
                 None => continue,
             };
-            
+
             let loan_asset_price = match loan_asset_prices.get(&loan.asset) {
                 Some(price) => *price,
                 None => continue,
             };
-            
-            if let Ok(should_liquidate) = self.should_liquidate(loan_id, collateral_price, loan_asset_price, liquidation_threshold, min_health_factor) {
+
+            if let Ok(should_liquidate) = self.should_liquidate(
+                loan_id,
+                collateral_price,
+                loan_asset_price,
+                liquidation_threshold,
+                min_health_factor,
+            ) {
                 if should_liquidate {
                     undercollateralized_loans.push(loan_id.clone());
                 }
             }
         }
-        
+
         undercollateralized_loans
     }
 }
@@ -493,11 +578,11 @@ mod tests {
     fn test_compound_interest_rate_model() {
         // Create a model similar to Compound's USDC market
         let model = CompoundInterestRateModel::new(
-            0.02,    // 2% base rate
-            0.1,     // 10% multiplier before kink
-            1.0,     // 100% max utilization
-            0.8,     // 80% kink
-            0.5,     // 50% multiplier after kink
+            0.02, // 2% base rate
+            0.1,  // 10% multiplier before kink
+            1.0,  // 100% max utilization
+            0.8,  // 80% kink
+            0.5,  // 50% multiplier after kink
         );
 
         // Test at 0% utilization
@@ -516,98 +601,99 @@ mod tests {
 
     #[test]
     fn test_supply_rate_calculation() {
-        let model = CompoundInterestRateModel::new(
-            0.02,
-            0.1,
-            1.0,
-            0.8,
-            0.5,
-        );
+        let model = CompoundInterestRateModel::new(0.02, 0.1, 1.0, 0.8, 0.5);
 
         let borrow_rate = 0.07; // 7%
-        let supply_rate = model.calculate_supply_rate(borrow_rate, 500.0, 500.0, 0.0, 0.1).unwrap();
+        let supply_rate = model
+            .calculate_supply_rate(borrow_rate, 500.0, 500.0, 0.0, 0.1)
+            .unwrap();
         let expected = 0.07 * 0.5 * 0.9; // 7% * 50% utilization * 90% (1 - 10% reserve factor)
         assert_eq!(supply_rate, expected);
     }
 
     #[test]
     fn test_loan_accounting_system() {
-        let interest_model = CompoundInterestRateModel::new(
-            0.02,
-            0.1,
-            1.0,
-            0.8,
-            0.5,
-        );
-        
+        let interest_model = CompoundInterestRateModel::new(0.02, 0.1, 1.0, 0.8, 0.5);
+
         let mut accounting = LoanAccountingSystem::new(interest_model, 0.1);
-        
+
         // Supply some assets first
-        accounting.supply_assets(AssetType::Token("USDC".to_string()), 1000.0).unwrap();
-        
+        accounting
+            .supply_assets(AssetType::Token("USDC".to_string()), 1000.0)
+            .unwrap();
+
         // Create a loan
-        let loan_id = accounting.create_loan(
-            "loan1".to_string(),
-            "borrower1".to_string(),
-            AssetType::Token("USDC".to_string()),
-            100.0,
-            AssetType::Token("ETH".to_string()),
-            0.5,
-            1000000,
-            10086400, // 100 days later
-        ).unwrap();
-        
+        let loan_id = accounting
+            .create_loan(
+                "loan1".to_string(),
+                "borrower1".to_string(),
+                AssetType::Token("USDC".to_string()),
+                100.0,
+                AssetType::Token("ETH".to_string()),
+                0.5,
+                1000000,
+                10086400, // 100 days later
+            )
+            .unwrap();
+
         assert_eq!(loan_id, "loan1");
-        
+
         // Check loan exists
         let loan = accounting.get_loan("loan1").unwrap();
         assert_eq!(loan.borrower, "borrower1");
         assert_eq!(loan.principal, 100.0);
         assert_eq!(loan.status, LoanStatus::Active);
-        
+
         // Check accounting
-        assert_eq!(accounting.get_total_supply(&AssetType::Token("USDC".to_string())), 1000.0);
-        assert_eq!(accounting.get_total_borrows(&AssetType::Token("USDC".to_string())), 100.0);
-        assert_eq!(accounting.get_available_liquidity(&AssetType::Token("USDC".to_string())), 900.0);
+        assert_eq!(
+            accounting.get_total_supply(&AssetType::Token("USDC".to_string())),
+            1000.0
+        );
+        assert_eq!(
+            accounting.get_total_borrows(&AssetType::Token("USDC".to_string())),
+            100.0
+        );
+        assert_eq!(
+            accounting.get_available_liquidity(&AssetType::Token("USDC".to_string())),
+            900.0
+        );
     }
 
     #[test]
     fn test_repay_loan() {
-        let interest_model = CompoundInterestRateModel::new(
-            0.02,
-            0.1,
-            1.0,
-            0.8,
-            0.5,
-        );
-        
+        let interest_model = CompoundInterestRateModel::new(0.02, 0.1, 1.0, 0.8, 0.5);
+
         let mut accounting = LoanAccountingSystem::new(interest_model, 0.1);
-        
+
         // Supply assets
-        accounting.supply_assets(AssetType::Token("USDC".to_string()), 1000.0).unwrap();
-        
+        accounting
+            .supply_assets(AssetType::Token("USDC".to_string()), 1000.0)
+            .unwrap();
+
         // Create a loan
-        accounting.create_loan(
-            "loan1".to_string(),
-            "borrower1".to_string(),
-            AssetType::Token("USDC".to_string()),
-            100.0,
-            AssetType::Token("ETH".to_string()),
-            0.5,
-            1000000,
-            10086400,
-        ).unwrap();
-        
+        accounting
+            .create_loan(
+                "loan1".to_string(),
+                "borrower1".to_string(),
+                AssetType::Token("USDC".to_string()),
+                100.0,
+                AssetType::Token("ETH".to_string()),
+                0.5,
+                1000000,
+                10086400,
+            )
+            .unwrap();
+
         // Repay part of the loan
         accounting.repay_loan("loan1", 50.0).unwrap();
-        
+
         let loan = accounting.get_loan("loan1").unwrap();
         assert_eq!(loan.amount_owed, 50.0);
         assert_eq!(loan.status, LoanStatus::Active);
-        
+
         // Repay remaining amount
         accounting.repay_loan("loan1", 50.0).unwrap();
-        
+
         let loan = accounting.get_loan("loan1").unwrap();
         assert_eq!(loan.amount_owed, 0.0);
         assert_eq!(loan.status, LoanStatus::Repaid);
@@ -615,50 +701,42 @@ mod tests {
 
     #[test]
     fn test_liquidate_loan() {
-        let interest_model = CompoundInterestRateModel::new(
-            0.02,
-            0.1,
-            1.0,
-            0.8,
-            0.5,
-        );
-        
+        let interest_model = CompoundInterestRateModel::new(0.02, 0.1, 1.0, 0.8, 0.5);
+
         let mut accounting = LoanAccountingSystem::new(interest_model, 0.1);
-        
+
         // Supply assets
-        accounting.supply_assets(AssetType::Token("USDC".to_string()), 1000.0).unwrap();
-        
+        accounting
+            .supply_assets(AssetType::Token("USDC".to_string()), 1000.0)
+            .unwrap();
+
         // Create a loan
-        accounting.create_loan(
-            "loan1".to_string(),
-            "borrower1".to_string(),
-            AssetType::Token("USDC".to_string()),
-            100.0,
-            AssetType::Token("ETH".to_string()),
-            0.5,
-            1000000,
-            10086400,
-        ).unwrap();
-        
+        accounting
+            .create_loan(
+                "loan1".to_string(),
+                "borrower1".to_string(),
+                AssetType::Token("USDC".to_string()),
+                100.0,
+                AssetType::Token("ETH".to_string()),
+                0.5,
+                1000000,
+                10086400,
+            )
+            .unwrap();
+
         // Liquidate the loan
         accounting.liquidate_loan("loan1").unwrap();
-        
+
         let loan = accounting.get_loan("loan1").unwrap();
         assert_eq!(loan.status, LoanStatus::Liquidated);
     }
 
     #[test]
     fn test_error_cases() {
-        let interest_model = CompoundInterestRateModel::new(
-            0.02,
-            0.1,
-            1.0,
-            0.8,
-            0.5,
-        );
-        
+        let interest_model = CompoundInterestRateModel::new(0.02, 0.1, 1.0, 0.8, 0.5);
+
         let mut accounting = LoanAccountingSystem::new(interest_model, 0.1);
-        
+
         // Try to create loan without sufficient liquidity
         let result = accounting.create_loan(
             "loan1".to_string(),
@@ -670,187 +748,186 @@ mod tests {
             1000000,
             10086400,
         );
-        
+
         assert_eq!(result, Err(LendingError::InsufficientLiquidity));
-        
+
         // Try to repay non-existent loan
         let result = accounting.repay_loan("nonexistent", 50.0);
         assert_eq!(result, Err(LendingError::LoanNotFound));
     }
-    
+
     #[test]
     fn test_health_factor_calculation() {
-        let interest_model = CompoundInterestRateModel::new(
-            0.02,
-            0.1,
-            1.0,
-            0.8,
-            0.5,
-        );
-        
+        let interest_model = CompoundInterestRateModel::new(0.02, 0.1, 1.0, 0.8, 0.5);
+
         let mut accounting = LoanAccountingSystem::new(interest_model, 0.1);
-        
+
         // Supply assets
-        accounting.supply_assets(AssetType::Token("USDC".to_string()), 1000.0).unwrap();
-        
+        accounting
+            .supply_assets(AssetType::Token("USDC".to_string()), 1000.0)
+            .unwrap();
+
         // Create a loan
-        accounting.create_loan(
-            "loan1".to_string(),
-            "borrower1".to_string(),
-            AssetType::Token("USDC".to_string()),
-            100.0,
-            AssetType::Token("ETH".to_string()),
-            0.5,
-            1000000,
-            10086400,
-        ).unwrap();
-        
+        accounting
+            .create_loan(
+                "loan1".to_string(),
+                "borrower1".to_string(),
+                AssetType::Token("USDC".to_string()),
+                100.0,
+                AssetType::Token("ETH".to_string()),
+                0.5,
+                1000000,
+                10086400,
+            )
+            .unwrap();
+
         // Calculate health factor
-        let health_factor = accounting.calculate_health_factor(
-            "loan1",
-            2000.0, // ETH price: $2000
-            1.0,    // USDC price: $1
-            0.8,    // 80% liquidation threshold
-        ).unwrap();
-        
+        let health_factor = accounting
+            .calculate_health_factor(
+                "loan1", 2000.0, // ETH price: $2000
+                1.0,    // USDC price: $1
+                0.8,    // 80% liquidation threshold
+            )
+            .unwrap();
+
         // Expected: (0.5 * 2000 * 0.8) / (100 * 1) = 800 / 100 = 8.0
         assert_eq!(health_factor, 8.0);
     }
-    
+
     #[test]
     fn test_health_factor_update() {
-        let interest_model = CompoundInterestRateModel::new(
-            0.02,
-            0.1,
-            1.0,
-            0.8,
-            0.5,
-        );
-        
+        let interest_model = CompoundInterestRateModel::new(0.02, 0.1, 1.0, 0.8, 0.5);
+
         let mut accounting = LoanAccountingSystem::new(interest_model, 0.1);
-        
+
         // Supply assets
-        accounting.supply_assets(AssetType::Token("USDC".to_string()), 1000.0).unwrap();
-        
+        accounting
+            .supply_assets(AssetType::Token("USDC".to_string()), 1000.0)
+            .unwrap();
+
         // Create a loan
-        accounting.create_loan(
-            "loan1".to_string(),
-            "borrower1".to_string(),
-            AssetType::Token("USDC".to_string()),
-            100.0,
-            AssetType::Token("ETH".to_string()),
-            0.5,
-            1000000,
-            10086400,
-        ).unwrap();
-        
+        accounting
+            .create_loan(
+                "loan1".to_string(),
+                "borrower1".to_string(),
+                AssetType::Token("USDC".to_string()),
+                100.0,
+                AssetType::Token("ETH".to_string()),
+                0.5,
+                1000000,
+                10086400,
+            )
+            .unwrap();
+
         // Update health factor
-        accounting.update_health_factor(
-            "loan1",
-            2000.0, // ETH price: $2000
-            1.0,    // USDC price: $1
-            0.8,    // 80% liquidation threshold
-        ).unwrap();
-        
+        accounting
+            .update_health_factor(
+                "loan1", 2000.0, // ETH price: $2000
+                1.0,    // USDC price: $1
+                0.8,    // 80% liquidation threshold
+            )
+            .unwrap();
+
         let loan = accounting.get_loan("loan1").unwrap();
         assert_eq!(loan.health_factor, 8.0);
     }
-    
+
     #[test]
     fn test_should_liquidate() {
-        let interest_model = CompoundInterestRateModel::new(
-            0.02,
-            0.1,
-            1.0,
-            0.8,
-            0.5,
-        );
-        
+        let interest_model = CompoundInterestRateModel::new(0.02, 0.1, 1.0, 0.8, 0.5);
+
         let mut accounting = LoanAccountingSystem::new(interest_model, 0.1);
-        
+
         // Supply assets
-        accounting.supply_assets(AssetType::Token("USDC".to_string()), 1000.0).unwrap();
-        
+        accounting
+            .supply_assets(AssetType::Token("USDC".to_string()), 1000.0)
+            .unwrap();
+
         // Create a loan
-        accounting.create_loan(
-            "loan1".to_string(),
-            "borrower1".to_string(),
-            AssetType::Token("USDC".to_string()),
-            100.0,
-            AssetType::Token("ETH".to_string()),
-            0.05, // Only 0.05 ETH as collateral
-            1000000,
-            10086400,
-        ).unwrap();
-        
+        accounting
+            .create_loan(
+                "loan1".to_string(),
+                "borrower1".to_string(),
+                AssetType::Token("USDC".to_string()),
+                100.0,
+                AssetType::Token("ETH".to_string()),
+                0.05, // Only 0.05 ETH as collateral
+                1000000,
+                10086400,
+            )
+            .unwrap();
+
         // Check if should liquidate (health factor should be < 1.0)
-        let should_liquidate = accounting.should_liquidate(
-            "loan1",
-            2000.0, // ETH price: $2000
-            1.0,    // USDC price: $1
-            0.8,    // 80% liquidation threshold
-            1.0,    // Minimum health factor
-        ).unwrap();
-        
+        let should_liquidate = accounting
+            .should_liquidate(
+                "loan1", 2000.0, // ETH price: $2000
+                1.0,    // USDC price: $1
+                0.8,    // 80% liquidation threshold
+                1.0,    // Minimum health factor
+            )
+            .unwrap();
+
         // Expected health factor: (0.05 * 2000 * 0.8) / (100 * 1) = 80 / 100 = 0.8
         // Since 0.8 < 1.0, should liquidate
         assert!(should_liquidate);
     }
-    
+
     #[test]
     fn test_get_undercollateralized_loans() {
-        let interest_model = CompoundInterestRateModel::new(
-            0.02,
-            0.1,
-            1.0,
-            0.8,
-            0.5,
-        );
-        
+        let interest_model = CompoundInterestRateModel::new(0.02, 0.1, 1.0, 0.8, 0.5);
+
         let mut accounting = LoanAccountingSystem::new(interest_model, 0.1);
-        
+
         // Supply assets
-        accounting.supply_assets(AssetType::Token("USDC".to_string()), 1000.0).unwrap();
-        accounting.supply_assets(AssetType::Token("DAI".to_string()), 1000.0).unwrap();
-        
+        accounting
+            .supply_assets(AssetType::Token("USDC".to_string()), 1000.0)
+            .unwrap();
+        accounting
+            .supply_assets(AssetType::Token("DAI".to_string()), 1000.0)
+            .unwrap();
+
         // Create a healthy loan
-        accounting.create_loan(
-            "loan1".to_string(),
-            "borrower1".to_string(),
-            AssetType::Token("USDC".to_string()),
-            100.0,
-            AssetType::Token("ETH".to_string()),
-            0.5,
-            1000000,
-            10086400,
-        ).unwrap();
-        
+        accounting
+            .create_loan(
+                "loan1".to_string(),
+                "borrower1".to_string(),
+                AssetType::Token("USDC".to_string()),
+                100.0,
+                AssetType::Token("ETH".to_string()),
+                0.5,
+                1000000,
+                10086400,
+            )
+            .unwrap();
+
         // Create an undercollateralized loan
-        accounting.create_loan(
-            "loan2".to_string(),
-            "borrower2".to_string(),
-            AssetType::Token("DAI".to_string()),
-            500.0,
-            AssetType::Token("ETH".to_string()),
-            0.1,
-            1000000,
-            10086400,
-        ).unwrap();
-        
+        accounting
+            .create_loan(
+                "loan2".to_string(),
+                "borrower2".to_string(),
+                AssetType::Token("DAI".to_string()),
+                500.0,
+                AssetType::Token("ETH".to_string()),
+                0.1,
+                1000000,
+                10086400,
+            )
+            .unwrap();
+
         let mut collateral_prices = HashMap::new();
         collateral_prices.insert(AssetType::Token("ETH".to_string()), 2000.0);
-        
+
         let mut loan_asset_prices = HashMap::new();
         loan_asset_prices.insert(AssetType::Token("USDC".to_string()), 1.0);
         loan_asset_prices.insert(AssetType::Token("DAI".to_string()), 1.0);
-        
+
         let undercollateralized = accounting.get_undercollateralized_loans(
             &collateral_prices,
             &loan_asset_prices,
             0.8, // 80% liquidation threshold
             1.0, // Minimum health factor
         );
-        
+
         // Only loan2 should be undercollateralized
         assert_eq!(undercollateralized.len(), 1);
         assert_eq!(undercollateralized[0], "loan2");

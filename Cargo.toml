@@ -6,6 +6,7 @@ members = [
     "dex-api",
     "run_security_tests",
     "global_identity_tests",
+    "reference-tools",
 ]
 resolver = "2"
 

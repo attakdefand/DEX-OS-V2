@@ -1,0 +1,38 @@
+name: Reference Validation
+
+on:
+  pull_request:
+    paths:
+      - '.reference/**'
+      - 'dex-core/tests/governance_reference.rs'
+      - 'dex-core/tests/reference_matrices.rs'
+      - 'dex-core/tests/reference_common.rs'
+      - 'dex-core/Cargo.toml'
+      - 'Cargo.lock'
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - '.reference/**'
+      - 'dex-core/tests/governance_reference.rs'
+      - 'dex-core/tests/reference_matrices.rs'
+      - 'dex-core/tests/reference_common.rs'
+      - 'dex-core/Cargo.toml'
+      - 'Cargo.lock'
+  workflow_dispatch:
+
+jobs:
+  reference-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Ensure testing_web3_full.csv normalized
+        run: |
+          cargo run -p reference-tools -- normalize web3
+          git diff --exit-code .reference/testing_web3_full.csv
+      - name: Run reference tool validation
+        run: cargo run -p reference-tools -- validate all
+      - name: Run reference validators
+        run: cargo test -p dex-core --test governance_reference --test reference_matrices

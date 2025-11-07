@@ -6,9 +6,9 @@
 //! It provides functionality for quadratic voting in governance decisions.
 
 use crate::types::TraderId;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use thiserror::Error;
-use serde::{Deserialize, Serialize};
 
 /// Quadratic Voting system
 #[derive(Debug, Clone)]
@@ -49,35 +49,40 @@ impl QuadraticVoting {
     }
 
     /// Cast a quadratic vote
-    pub fn cast_vote(&mut self, voter: TraderId, votes: u64, support: bool) -> Result<(), QuadraticVotingError> {
+    pub fn cast_vote(
+        &mut self,
+        voter: TraderId,
+        votes: u64,
+        support: bool,
+    ) -> Result<(), QuadraticVotingError> {
         // Check if voter has sufficient credits
         let available_credits = *self.credits.get(&voter).unwrap_or(&0);
         let cost = votes * votes;
-        
+
         if cost > available_credits {
             return Err(QuadraticVotingError::InsufficientCredits);
         }
-        
+
         // Check if voter has already voted
         if self.votes.contains_key(&voter) {
             return Err(QuadraticVotingError::AlreadyVoted);
         }
-        
+
         // Deduct credits
         let remaining_credits = available_credits - cost;
         self.credits.insert(voter.clone(), remaining_credits);
-        
+
         // Record vote
         let vote = QuadraticVote { votes, cost };
         self.votes.insert(voter.clone(), vote);
-        
+
         // Add to totals
         if support {
             self.votes_for_a += votes;
         } else {
             self.votes_against_b += votes;
         }
-        
+
         Ok(())
     }
 
@@ -154,7 +159,7 @@ mod tests {
     fn test_allocate_credits() {
         let mut qv = QuadraticVoting::new();
         let voter = "voter1".to_string();
-        
+
         qv.allocate_credits(voter.clone(), 100);
         assert_eq!(qv.get_remaining_credits(&voter), 100);
     }
@@ -163,18 +168,18 @@ mod tests {
     fn test_cast_vote() {
         let mut qv = QuadraticVoting::new();
         let voter = "voter1".to_string();
-        
+
         // Allocate credits
         qv.allocate_credits(voter.clone(), 100);
-        
+
         // Cast vote
         assert!(qv.cast_vote(voter.clone(), 5, true).is_ok());
-        
+
         // Check results
         assert_eq!(qv.votes_for_a, 5);
         assert_eq!(qv.votes_against_b, 0);
         assert_eq!(qv.get_remaining_credits(&voter), 75); // 100 - (5*5)
-        
+
         // Check stored vote
         let vote = qv.get_vote(&voter).unwrap();
         assert_eq!(vote.votes, 5);
@@ -185,47 +190,53 @@ mod tests {
     fn test_cast_vote_insufficient_credits() {
         let mut qv = QuadraticVoting::new();
         let voter = "voter1".to_string();
-        
+
         // Allocate insufficient credits
         qv.allocate_credits(voter.clone(), 10);
-        
+
         // Try to cast vote that costs more than available credits
         let result = qv.cast_vote(voter.clone(), 5, true); // Cost: 25 credits
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), QuadraticVotingError::InsufficientCredits));
+        assert!(matches!(
+            result.unwrap_err(),
+            QuadraticVotingError::InsufficientCredits
+        ));
     }
 
     #[test]
     fn test_cast_vote_already_voted() {
         let mut qv = QuadraticVoting::new();
         let voter = "voter1".to_string();
-        
+
         // Allocate credits
         qv.allocate_credits(voter.clone(), 100);
-        
+
         // Cast first vote
         assert!(qv.cast_vote(voter.clone(), 3, true).is_ok());
-        
+
         // Try to cast second vote
         let result = qv.cast_vote(voter.clone(), 2, false);
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), QuadraticVotingError::AlreadyVoted));
+        assert!(matches!(
+            result.unwrap_err(),
+            QuadraticVotingError::AlreadyVoted
+        ));
     }
 
     #[test]
     fn test_get_results() {
         let mut qv = QuadraticVoting::new();
-        
+
         // Allocate credits to voters
         qv.allocate_credits("voter1".to_string(), 100);
         qv.allocate_credits("voter2".to_string(), 100);
         qv.allocate_credits("voter3".to_string(), 100);
-        
+
         // Cast votes
         assert!(qv.cast_vote("voter1".to_string(), 4, true).is_ok()); // Cost: 16
         assert!(qv.cast_vote("voter2".to_string(), 3, true).is_ok()); // Cost: 9
         assert!(qv.cast_vote("voter3".to_string(), 2, false).is_ok()); // Cost: 4
-        
+
         let results = qv.get_results();
         assert_eq!(results.votes_for, 7); // 4 + 3
         assert_eq!(results.votes_against, 2);
@@ -236,13 +247,13 @@ mod tests {
     #[test]
     fn test_reset() {
         let mut qv = QuadraticVoting::new();
-        
+
         // Allocate credits and cast votes
         qv.allocate_credits("voter1".to_string(), 100);
         assert!(qv.cast_vote("voter1".to_string(), 5, true).is_ok());
         assert_eq!(qv.votes_for_a, 5);
         assert_eq!(qv.votes.len(), 1);
-        
+
         // Reset for new proposal
         qv.reset();
         assert_eq!(qv.votes_for_a, 0);

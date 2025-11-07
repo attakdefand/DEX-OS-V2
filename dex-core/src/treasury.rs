@@ -10,10 +10,10 @@
 //! - Autonomous execution of treasury operations
 //! - On-chain proposal management for treasury decisions
 
-use crate::types::{TokenId, Quantity, TraderId};
+use crate::types::{Quantity, TokenId, TraderId};
 use std::collections::HashMap;
-use thiserror::Error;
 use std::time::{SystemTime, UNIX_EPOCH};
+use thiserror::Error;
 
 /// Represents a market prediction for a specific token
 #[derive(Debug, Clone, PartialEq)]
@@ -189,7 +189,11 @@ impl AITreasury {
     }
 
     /// Get recent predictions for a token
-    pub fn get_predictions_for_token(&self, token_id: &TokenId, limit: usize) -> Vec<&MarketPrediction> {
+    pub fn get_predictions_for_token(
+        &self,
+        token_id: &TokenId,
+        limit: usize,
+    ) -> Vec<&MarketPrediction> {
         self.predictions
             .iter()
             .filter(|p| &p.token_id == token_id)
@@ -220,12 +224,12 @@ impl AITreasury {
     ) -> u64 {
         self.proposal_counter += 1;
         let proposal_id = self.proposal_counter;
-        
+
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs();
-        
+
         let proposal = TreasuryProposal {
             id: proposal_id,
             title,
@@ -242,7 +246,7 @@ impl AITreasury {
             votes_against: 0,
             required_quorum,
         };
-        
+
         self.proposals.insert(proposal_id, proposal);
         proposal_id
     }
@@ -253,20 +257,22 @@ impl AITreasury {
         proposal_id: u64,
         vote_for: bool,
     ) -> Result<(), AITreasuryError> {
-        let proposal = self.proposals.get_mut(&proposal_id)
+        let proposal = self
+            .proposals
+            .get_mut(&proposal_id)
             .ok_or(AITreasuryError::ProposalNotFound)?;
-        
+
         // Check if proposal is active
         if !matches!(proposal.status, ProposalStatus::Active) {
             return Err(AITreasuryError::ProposalNotActive);
         }
-        
+
         // Check if voting has ended
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs();
-        
+
         if now > proposal.voting_end_timestamp {
             // Update status to expired if quorum not reached
             if proposal.votes_for + proposal.votes_against < proposal.required_quorum {
@@ -278,14 +284,14 @@ impl AITreasury {
             }
             return Err(AITreasuryError::VotingEnded);
         }
-        
+
         // Record the vote
         if vote_for {
             proposal.votes_for += 1;
         } else {
             proposal.votes_against += 1;
         }
-        
+
         Ok(())
     }
 
@@ -304,25 +310,27 @@ impl AITreasury {
 
     /// Check if a proposal has passed (quorum reached and more votes for than against)
     pub fn is_proposal_passed(&self, proposal_id: u64) -> Result<bool, AITreasuryError> {
-        let proposal = self.proposals.get(&proposal_id)
+        let proposal = self
+            .proposals
+            .get(&proposal_id)
             .ok_or(AITreasuryError::ProposalNotFound)?;
-        
+
         // Check if voting has ended
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs();
-        
+
         if now <= proposal.voting_end_timestamp {
             return Ok(false); // Voting still active
         }
-        
+
         // Check quorum
         let total_votes = proposal.votes_for + proposal.votes_against;
         if total_votes < proposal.required_quorum {
             return Ok(false); // Quorum not reached
         }
-        
+
         // Check if more votes for than against
         Ok(proposal.votes_for > proposal.votes_against)
     }
@@ -331,17 +339,23 @@ impl AITreasury {
     pub fn execute_proposal(&mut self, proposal_id: u64) -> Result<(), AITreasuryError> {
         // First, get all the necessary data without borrowing
         let (action, token_id, amount) = {
-            let proposal = self.proposals.get(&proposal_id)
+            let proposal = self
+                .proposals
+                .get(&proposal_id)
                 .ok_or(AITreasuryError::ProposalNotFound)?;
-            
+
             // Check if proposal has passed
             if !matches!(proposal.status, ProposalStatus::Passed) {
                 return Err(AITreasuryError::ProposalNotActive);
             }
-            
-            (proposal.action.clone(), proposal.token_id.clone(), proposal.amount)
+
+            (
+                proposal.action.clone(),
+                proposal.token_id.clone(),
+                proposal.amount,
+            )
         };
-        
+
         // Execute the proposal action based on the cloned data
         match action.as_str() {
             "allocate" => {
@@ -350,32 +364,28 @@ impl AITreasury {
                 if amount > balance {
                     return Err(AITreasuryError::InsufficientFunds);
                 }
-                
+
                 // Deduct from treasury
-                self.assets.insert(
-                    token_id,
-                    balance - amount
-                );
-            },
+                self.assets.insert(token_id, balance - amount);
+            }
             "divest" => {
                 // Add to treasury
                 let balance = self.get_balance(&token_id);
-                self.assets.insert(
-                    token_id,
-                    balance + amount
-                );
-            },
+                self.assets.insert(token_id, balance + amount);
+            }
             _ => {
                 // For other actions, we might need custom logic
                 // For now, we'll just mark as executed
             }
         }
-        
+
         // Update proposal status
-        let proposal = self.proposals.get_mut(&proposal_id)
+        let proposal = self
+            .proposals
+            .get_mut(&proposal_id)
             .ok_or(AITreasuryError::ProposalNotFound)?;
         proposal.status = ProposalStatus::Executed;
-        
+
         Ok(())
     }
 
@@ -393,15 +403,15 @@ impl AITreasury {
         if priority < 1 || priority > 5 {
             return Err(AITreasuryError::InvalidOperationPriority);
         }
-        
+
         self.operation_counter += 1;
         let operation_id = self.operation_counter;
-        
+
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs();
-        
+
         let operation = AutonomousOperation {
             id: operation_id,
             operation_type,
@@ -413,7 +423,7 @@ impl AITreasury {
             execution_timestamp: now + execution_delay,
             status: OperationStatus::Pending,
         };
-        
+
         self.operations.insert(operation_id, operation);
         Ok(operation_id)
     }
@@ -435,91 +445,99 @@ impl AITreasury {
     pub fn execute_operation(&mut self, operation_id: u64) -> Result<(), AITreasuryError> {
         // First, get all the necessary data without borrowing
         let (operation_type, token_id, amount) = {
-            let operation = self.operations.get(&operation_id)
+            let operation = self
+                .operations
+                .get(&operation_id)
                 .ok_or(AITreasuryError::OperationNotFound)?;
-            
+
             // Check if operation is pending
             if !matches!(operation.status, OperationStatus::Pending) {
                 return Err(AITreasuryError::OperationNotPending);
             }
-            
+
             // Check if it's time to execute
             let now = SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
                 .as_secs();
-            
+
             if now < operation.execution_timestamp {
                 return Ok(()); // Not time to execute yet
             }
-            
-            (operation.operation_type.clone(), operation.token_id.clone(), operation.amount)
+
+            (
+                operation.operation_type.clone(),
+                operation.token_id.clone(),
+                operation.amount,
+            )
         };
-        
+
         // Mark as executing
         {
-            let operation = self.operations.get_mut(&operation_id)
+            let operation = self
+                .operations
+                .get_mut(&operation_id)
                 .ok_or(AITreasuryError::OperationNotFound)?;
             operation.status = OperationStatus::Executing;
         }
-        
+
         // Execute the operation based on the cloned data
         match operation_type.as_str() {
             "rebalance" => {
                 // Rebalancing logic would go here
                 // For now, we'll just mark as completed
-            },
+            }
             "allocate" => {
                 // Check if we have sufficient funds
                 let balance = self.get_balance(&token_id);
                 if amount > balance {
-                    let operation = self.operations.get_mut(&operation_id)
+                    let operation = self
+                        .operations
+                        .get_mut(&operation_id)
                         .ok_or(AITreasuryError::OperationNotFound)?;
                     operation.status = OperationStatus::Failed;
                     return Err(AITreasuryError::InsufficientFunds);
                 }
-                
+
                 // Deduct from treasury
-                self.assets.insert(
-                    token_id,
-                    balance - amount
-                );
-            },
+                self.assets.insert(token_id, balance - amount);
+            }
             "divest" => {
                 // Add to treasury
                 let balance = self.get_balance(&token_id);
-                self.assets.insert(
-                    token_id,
-                    balance + amount
-                );
-            },
+                self.assets.insert(token_id, balance + amount);
+            }
             _ => {
                 // For other operations, we might need custom logic
                 // For now, we'll just mark as completed
             }
         }
-        
+
         // Mark as completed
-        let operation = self.operations.get_mut(&operation_id)
+        let operation = self
+            .operations
+            .get_mut(&operation_id)
             .ok_or(AITreasuryError::OperationNotFound)?;
         operation.status = OperationStatus::Completed;
-        
+
         Ok(())
     }
 
     /// Cancel an autonomous operation
     pub fn cancel_operation(&mut self, operation_id: u64) -> Result<(), AITreasuryError> {
-        let operation = self.operations.get_mut(&operation_id)
+        let operation = self
+            .operations
+            .get_mut(&operation_id)
             .ok_or(AITreasuryError::OperationNotFound)?;
-        
+
         // Check if operation is pending
         if !matches!(operation.status, OperationStatus::Pending) {
             return Err(AITreasuryError::OperationNotPending);
         }
-        
+
         // Mark as cancelled
         operation.status = OperationStatus::Cancelled;
-        
+
         Ok(())
     }
 
@@ -556,11 +574,11 @@ mod tests {
         let mut treasury = AITreasury::new();
         let token_id = "BTC".to_string();
         let amount = 1000;
-        
+
         // Test deposit
         treasury.deposit(token_id.clone(), amount);
         assert_eq!(treasury.get_balance(&token_id), amount);
-        
+
         // Test get all balances
         let balances = treasury.get_all_balances();
         assert_eq!(balances.len(), 1);
@@ -571,7 +589,7 @@ mod tests {
     fn test_market_predictions() {
         let mut treasury = AITreasury::new();
         let token_id = "BTC".to_string();
-        
+
         let prediction = MarketPrediction {
             token_id: token_id.clone(),
             predicted_price: 50000.0,
@@ -579,14 +597,14 @@ mod tests {
             timestamp: 1234567890,
             horizon: 86400, // 1 day
         };
-        
+
         treasury.add_prediction(prediction.clone());
-        
+
         // Test getting predictions for token
         let predictions = treasury.get_predictions_for_token(&token_id, 5);
         assert_eq!(predictions.len(), 1);
         assert_eq!(predictions[0], &prediction);
-        
+
         // Test getting high confidence predictions
         let high_confidence = treasury.get_high_confidence_predictions(0.8);
         assert_eq!(high_confidence.len(), 1);
@@ -598,7 +616,7 @@ mod tests {
         let mut treasury = AITreasury::new();
         let creator = "creator1".to_string();
         let token_id = "BTC".to_string();
-        
+
         // Create a proposal
         let proposal_id = treasury.create_proposal(
             "Allocate BTC".to_string(),
@@ -609,12 +627,12 @@ mod tests {
             Some("investment_fund".to_string()),
             creator.clone(),
             86400, // 1 day voting
-            10, // required quorum
+            10,    // required quorum
         );
-        
+
         assert_eq!(proposal_id, 1);
         assert_eq!(treasury.proposal_count(), 1);
-        
+
         // Get the proposal
         let proposal = treasury.get_proposal(proposal_id);
         assert!(proposal.is_some());
@@ -622,11 +640,11 @@ mod tests {
         assert_eq!(proposal.title, "Allocate BTC");
         assert_eq!(proposal.creator, creator);
         assert_eq!(proposal.status, ProposalStatus::Active);
-        
+
         // Test voting
         assert!(treasury.vote_on_proposal(proposal_id, true).is_ok());
         assert!(treasury.vote_on_proposal(proposal_id, false).is_ok());
-        
+
         // Get updated proposal
         let proposal = treasury.get_proposal(proposal_id).unwrap();
         assert_eq!(proposal.votes_for, 1);
@@ -637,22 +655,22 @@ mod tests {
     fn test_autonomous_operations() {
         let mut treasury = AITreasury::new();
         let token_id = "BTC".to_string();
-        
+
         // Create an operation
         let result = treasury.create_autonomous_operation(
             "allocate".to_string(),
             token_id.clone(),
             100,
             Some("destination".to_string()),
-            1, // highest priority
+            1,    // highest priority
             3600, // execute in 1 hour
         );
-        
+
         assert!(result.is_ok());
         let operation_id = result.unwrap();
         assert_eq!(operation_id, 1);
         assert_eq!(treasury.operation_count(), 1);
-        
+
         // Get the operation
         let operation = treasury.get_operation(operation_id);
         assert!(operation.is_some());

@@ -1,7 +1,7 @@
 //! Orderbook implementation for the DEX-OS core engine
 
-use crate::merkle_tree::MerkleTree;
 use crate::avl_tree::AvlPriceLevelTree;
+use crate::merkle_tree::MerkleTree;
 use crate::types::{Order, OrderId, OrderSide, Price, Quantity, Trade};
 use std::cmp::Reverse;
 use std::collections::{BTreeMap, BinaryHeap, HashMap, VecDeque};
@@ -317,7 +317,7 @@ impl OrderBook {
         if let Some(price) = order.price {
             // Add to AVL tree for balanced price level tracking
             self.bid_price_levels.insert_price_level(price);
-            
+
             self.bids
                 .entry(price)
                 .and_modify(|level| {
@@ -342,7 +342,7 @@ impl OrderBook {
         if let Some(price) = order.price {
             // Add to AVL tree for balanced price level tracking
             self.ask_price_levels.insert_price_level(price);
-            
+
             self.asks
                 .entry(price)
                 .and_modify(|level| {
