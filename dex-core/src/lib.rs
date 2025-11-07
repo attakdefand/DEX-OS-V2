@@ -1,6 +1,7 @@
 //! DEX-OS core engine library
 
 pub mod amm;
+pub mod atomic_swaps;
 pub mod avl_tree;
 pub mod cross_chain_asset_mapping;
 pub mod fee_distribution;
@@ -16,6 +17,7 @@ pub mod quantum_consensus;
 pub mod reward_distribution;
 pub mod stableswap;
 pub mod trade_prevention;
+pub mod treasury;
 pub mod types;
 
 #[cfg(test)]

@@ -1,5 +1,27 @@
 # DEX-OS Change Log
 
+# [0.3.7] - 2025-11-07
+
+### Added
+- Implementation of additional Priority 2 AI Treasury features from DEX-OS-V1.csv:
+  * Prediction Engine for Forecasting (`dex-core/src/treasury.rs`)
+  * Autonomous Execution for Execution (`dex-core/src/treasury.rs`)
+  * On-Chain Proposals for Proposal Management (`dex-core/src/treasury.rs`)
+- Implementation of Priority 2 Universal Bridge feature from DEX-OS-V1.csv:
+  * Atomic Swaps for Atomic Swaps (`dex-core/src/atomic_swaps.rs`)
+- AI Treasury module with market prediction, autonomous operations, and proposal management
+- Atomic Swaps module with HTLC-based cross-chain asset exchange
+- Comprehensive unit tests for all new functionality
+
+### Changed
+- Extended core engine library with treasury and atomic swaps modules
+- Updated DEX-OS-V1.csv to mark Prediction Engine, Autonomous Execution, On-Chain Proposals, and Atomic Swaps as implemented
+
+### Security
+- Proper error handling and input validation in all new modules
+- Memory safety through Rust's ownership system
+- Implementation follows security guidelines from RULES.md
+
 # [0.3.6] - 2025-11-07
 
 ### Added

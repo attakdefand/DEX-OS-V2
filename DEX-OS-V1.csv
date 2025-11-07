@@ -42,10 +42,10 @@ Development Priority,Category,Component,Algorithm/Data Structure,Feature,Task Pr
 2,Core Trading,Lending,Lending,Health Factor Calculation,Liquidation Prevention,High [IMPLEMENTED]
 2,Core Components,Quantum Consensus (QBFT),Consensus,1,000,000 Shards,Sharding,High [IMPLEMENTED]
 2,Core Components,Quantum Consensus (QBFT),Consensus,Global Finality,Finality,High [IMPLEMENTED]
-2,Core Components,AI Treasury,Treasury,Prediction Engine,Forecasting,High
-2,Core Components,AI Treasury,Treasury,Autonomous Execution,Execution,High
-2,Core Components,AI Treasury,Treasury,On-Chain Proposals,Proposal Management,High
-2,Core Components,Universal Bridge,Bridge,Atomic Swaps,Atomic Swaps,High
+2,Core Components,AI Treasury,Treasury,Prediction Engine,Forecasting,High [IMPLEMENTED]
+2,Core Components,AI Treasury,Treasury,Autonomous Execution,Execution,High [IMPLEMENTED]
+2,Core Components,AI Treasury,Treasury,On-Chain Proposals,Proposal Management,High [IMPLEMENTED]
+2,Core Components,Universal Bridge,Bridge,Atomic Swaps,Atomic Swaps,High [IMPLEMENTED]
 
 2,Main Features,Universal Payments,Payments,One-Tap Transfers,Transfer Mechanism,High
 2,Main Features,Universal Payments,Payments,Free & Instant,Transaction Speed,High

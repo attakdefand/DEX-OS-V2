@@ -1444,3 +1444,23 @@ The DEX-OS development environment provides comprehensive tools and practices fo
 - **Concurrency Tools**: Race condition detection and thread analysis
 
 By following these guidelines for code modification and debugging, developers can maintain high-quality code that adheres to the DEX-OS project standards while efficiently identifying and resolving issues.
+
+## New Module References
+
+The following new modules have been added to the DEX-OS core engine:
+
+### AI Treasury Module
+- **Location**: `dex-core/src/treasury.rs`
+- **Purpose**: AI-driven treasury management including market prediction, autonomous operations, and on-chain proposal management
+- **Features Implemented**:
+  - Prediction Engine for Forecasting
+  - Autonomous Execution for Execution
+  - On-Chain Proposals for Proposal Management
+
+### Atomic Swaps Module
+- **Location**: `dex-core/src/atomic_swaps.rs`
+- **Purpose**: Secure cross-chain atomic swaps using Hash Time-Locked Contracts (HTLCs)
+- **Features Implemented**:
+  - Atomic Swaps for trustless cross-chain asset exchange
+
+These modules follow all the guidelines specified in this document and maintain consistency with the existing codebase architecture.
