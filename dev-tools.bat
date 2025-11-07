@@ -84,7 +84,7 @@ goto pause
 
 :build_project
 echo [STATUS] Building the project...
-wsl -d Ubuntu-24.04 -e bash -c "cd /mnt/c/Users/USER/Documents/DEX-OS-V1 && cargo build"
+wsl -d Ubuntu-24.04 -e bash -c "source ~/.cargo/env && cd /mnt/c/Users/USER/Documents/DEX-OS-V1 && cargo -Znext-lockfile-bump build"
 if %errorlevel% equ 0 (
     echo [STATUS] Project built successfully!
 ) else (
@@ -94,7 +94,7 @@ goto pause
 
 :run_tests
 echo [STATUS] Running tests...
-wsl -d Ubuntu-24.04 -e bash -c "cd /mnt/c/Users/USER/Documents/DEX-OS-V1 && cargo test"
+wsl -d Ubuntu-24.04 -e bash -c "source ~/.cargo/env && cd /mnt/c/Users/USER/Documents/DEX-OS-V1 && cargo -Znext-lockfile-bump test"
 if %errorlevel% equ 0 (
     echo [STATUS] All tests passed!
 ) else (
@@ -119,7 +119,7 @@ goto pause
 
 :check_format
 echo [STATUS] Checking code formatting...
-wsl -d Ubuntu-24.04 -e bash -c "cd /mnt/c/Users/USER/Documents/DEX-OS-V1 && cargo fmt -- --check"
+wsl -d Ubuntu-24.04 -e bash -c "source ~/.cargo/env && cd /mnt/c/Users/USER/Documents/DEX-OS-V1 && cargo fmt -- --check"
 if %errorlevel% equ 0 (
     echo [STATUS] Code is properly formatted!
 ) else (
@@ -129,7 +129,7 @@ goto pause
 
 :run_clippy
 echo [STATUS] Running Clippy linter...
-wsl -d Ubuntu-24.04 -e bash -c "cd /mnt/c/Users/USER/Documents/DEX-OS-V1 && cargo clippy -- -D warnings"
+wsl -d Ubuntu-24.04 -e bash -c "source ~/.cargo/env && cd /mnt/c/Users/USER/Documents/DEX-OS-V1 && cargo clippy -- -D warnings"
 if %errorlevel% equ 0 (
     echo [STATUS] No Clippy warnings found!
 ) else (
