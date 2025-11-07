@@ -104,7 +104,7 @@ goto pause
 
 :build_wasm
 echo [STATUS] Building WASM module...
-wasm-pack build dex-wasm --target web --out-dir ../pkg
+wsl -d Ubuntu-24.04 -e bash -c "source ~/.cargo/env && cd /mnt/c/Users/USER/Documents/DEX-OS-V1 && wasm-pack build dex-wasm --target web --out-dir ../pkg"
 if %errorlevel% equ 0 (
     echo [STATUS] WASM module built successfully!
 ) else (
@@ -114,7 +114,7 @@ goto pause
 
 :run_api
 echo [STATUS] Starting API server...
-cargo run -p dex-api
+wsl -d Ubuntu-24.04 -e bash -c "source ~/.cargo/env && cd /mnt/c/Users/USER/Documents/DEX-OS-V1 && cargo run -p dex-api"
 goto pause
 
 :check_format
