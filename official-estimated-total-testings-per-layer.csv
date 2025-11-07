@@ -5,4 +5,42 @@
 | 3️⃣  | **Protection**              | Contain anything unsafe              |                 ~5,000 |
 | 4️⃣  | **Detection & Response**    | See and react in real time           |                 ~4,800 |
 | 5️⃣  | **Resilience & Recovery**   | Heal and continue operations         |                   ~432 |
-| 6️⃣  | **Governance & Compliance** | Prove accountability and control     |                 ~5,400 |
+| 6️⃣  | **Governance & Compliance** | Prove accountability and control     |                 ~5,400 | 
+
+
+1. Done! Your Security matrix is ready with 3,000 tests ✅
+
+2. Done! Your Security matrix is ready with 2970 tests ✅
+
+3. Done! Your Security matrix is ready with 5,000 tests ✅
+
+4. Done! Your Detection & Response matrix is ready with 4,000 tests ✅
+
+5. Done! Your Resilience & Recovery matrix is ready with 432 tests ✅
+Download: resilience_recovery.csv
+Rows: 432 (8 components × 9 behaviors × 6 conditions)
+Columns: layer, component, behavior, condition, test_name
+
+```bash
+test_resilience_recovery__load_balancer__balances_load__under_load
+test_resilience_recovery__db_replica__replicates_state__during_failover
+test_resilience_recovery__snapshot_restore__restores_snapshot__after_recovery
+test_resilience_recovery__self_heal_agent__triggers_auto_heal__continuously
+
+```
+
+
+
+6. Done! Your Governance & Compliance matrix is generated with 5,400 tests ✅
+Download: governance_compliance_full.csv
+Rows: 5,400 (10 main types × 9 components × 10 behaviors × 6 conditions)
+Columns: main_type, component, behavior, condition, test_name
+```
+bash
+test_governance_compliance__governance_policy_and_framework__policy_engine__defines_policy__during_commit
+test_governance_compliance__change_management_and_approval_flow__approval_gate__approves_change__before_merge
+test_governance_compliance__audit_and_evidence_management__audit_logger__logs_evidence__quarterly_audit
+test_governance_compliance__dao_on_chain_governance__dao_governor__executes_vote__on_request
+
+```
+

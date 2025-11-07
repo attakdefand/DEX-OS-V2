@@ -32,12 +32,12 @@ check_prerequisites() {
     
     if ! command_exists rustc; then
         print_error "Rust is not installed. Please install Rust from https://rustup.rs/"
-        exit 1
+        return 1
     fi
     
     if ! command_exists cargo; then
         print_error "Cargo is not installed. Please install Rust from https://rustup.rs/"
-        exit 1
+        return 1
     fi
     
     if ! command_exists wasm-pack; then
@@ -66,90 +66,96 @@ check_prerequisites() {
 # Function to build the project
 build_project() {
     print_status "Building the project..."
-    cargo build
+    # Use WSL for building as required
+    wsl -d Ubuntu-24.04 -e bash -c "source ~/.cargo/env && cd /mnt/c/Users/USER/Documents/DEX-OS-V1 && cargo build"
     if [ $? -eq 0 ]; then
         print_status "Project built successfully!"
     else
         print_error "Failed to build the project"
-        exit 1
+        return 1
     fi
 }
 
 # Function to run tests
 run_tests() {
     print_status "Running tests..."
-    cargo test
+    # Use WSL for testing as required
+    wsl -d Ubuntu-24.04 -e bash -c "source ~/.cargo/env && cd /mnt/c/Users/USER/Documents/DEX-OS-V1 && cargo test"
     if [ $? -eq 0 ]; then
         print_status "All tests passed!"
     else
         print_error "Some tests failed"
-        exit 1
+        return 1
     fi
 }
 
 # Function to build WASM
 build_wasm() {
     print_status "Building WASM module..."
-    wasm-pack build dex-wasm --target web --out-dir ../pkg
+    # Use WSL for WASM build as required
+    wsl -d Ubuntu-24.04 -e bash -c "source ~/.cargo/env && cd /mnt/c/Users/USER/Documents/DEX-OS-V1 && wasm-pack build dex-wasm --target web --out-dir ../pkg"
     if [ $? -eq 0 ]; then
         print_status "WASM module built successfully!"
     else
         print_error "Failed to build WASM module"
-        exit 1
+        return 1
     fi
 }
 
 # Function to run the API server
 run_api() {
     print_status "Starting API server..."
-    cargo run -p dex-api
+    # Use WSL for running API as required
+    wsl -d Ubuntu-24.04 -e bash -c "source ~/.cargo/env && cd /mnt/c/Users/USER/Documents/DEX-OS-V1 && cargo run -p dex-api"
 }
 
 # Function to check code formatting
 check_format() {
     print_status "Checking code formatting..."
-    cargo fmt -- --check
+    # Use WSL for formatting check as required
+    wsl -d Ubuntu-24.04 -e bash -c "source ~/.cargo/env && cd /mnt/c/Users/USER/Documents/DEX-OS-V1 && cargo fmt -- --check"
     if [ $? -eq 0 ]; then
         print_status "Code is properly formatted!"
     else
         print_error "Code formatting issues found"
-        exit 1
+        return 1
     fi
 }
 
 # Function to run clippy for linting
 run_clippy() {
-print_status "Running Clippy linter..."
-cargo clippy -- -D warnings
-if [ $? -eq 0 ]; then
-    print_status "No Clippy warnings found!"
-else
-    print_error "Clippy found issues"
-    exit 1
-fi
+    print_status "Running Clippy linter..."
+    # Use WSL for clippy as required
+    wsl -d Ubuntu-24.04 -e bash -c "source ~/.cargo/env && cd /mnt/c/Users/USER/Documents/DEX-OS-V1 && cargo clippy -- -D warnings"
+    if [ $? -eq 0 ]; then
+        print_status "No Clippy warnings found!"
+    else
+        print_error "Clippy found issues"
+        return 1
+    fi
 }
 
 # Function to run cargo-audit
-security_audit() {
+run_audit() {
     print_status "Running cargo-audit (security advisories)..."
     cargo audit
     if [ $? -eq 0 ]; then
         print_status "No known security advisories found!"
     else
         print_error "Security advisories detected"
-        exit 1
+        return 1
     fi
 }
 
 # Function to run cargo-deny
-dependency_policies() {
-    print_status "Running cargo-deny (dependencies audit)..."
+run_deny() {
+    print_status "Running cargo-deny (dependency policies)..."
     cargo deny check
     if [ $? -eq 0 ]; then
         print_status "Dependency policies satisfied!"
     else
         print_error "cargo-deny reported issues"
-        exit 1
+        return 1
     fi
 }
 
@@ -161,8 +167,22 @@ run_nextest() {
         print_status "Nextest suite passed!"
     else
         print_error "Nextest reported failures"
-        exit 1
+        return 1
     fi
+}
+
+# Function to run all checks
+run_all() {
+    print_status "Running all checks..."
+    check_prerequisites || return 1
+    build_project || return 1
+    run_tests || return 1
+    check_format || return 1
+    run_clippy || return 1
+    run_audit || return 1
+    run_deny || return 1
+    run_nextest || return 1
+    print_status "All checks completed successfully!"
 }
 
 # Main menu
@@ -180,7 +200,7 @@ show_menu() {
     echo "8. Run cargo-audit (security advisories)"
     echo "9. Run cargo-deny (dependency policies)"
     echo "10. Run tests with cargo-nextest"
-    echo "11. Run full suite (build, test, format, clippy, audit, deny, nextest)"
+    echo "11. Run all checks (build, test, format, clippy, audit, deny, nextest)"
     echo "0. Exit"
     echo "=================================="
 }
@@ -213,28 +233,20 @@ while true; do
             run_clippy
             ;;
         8)
-            security_audit
-            ;;
-        0)
-            print_status "Goodbye!"
-            exit 0
+            run_audit
             ;;
         9)
-            dependency_policies
+            run_deny
             ;;
         10)
             run_nextest
             ;;
         11)
-            check_prerequisites
-            build_project
-            run_tests
-            check_format
-            run_clippy
-            security_audit
-            dependency_policies
-            run_nextest
-            print_status "All checks completed successfully!"
+            run_all
+            ;;
+        0)
+            print_status "Goodbye!"
+            exit 0
             ;;
         *)
             print_error "Invalid choice. Please try again."
