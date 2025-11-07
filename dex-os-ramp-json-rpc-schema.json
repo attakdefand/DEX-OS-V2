@@ -250,6 +250,106 @@
         }
       },
       "required": ["transactionId", "status"]
+    },
+    "oneTapTransferRequest": {
+      "type": "object",
+      "properties": {
+        "fromUser": {
+          "type": "string",
+          "description": "Source user identifier"
+        },
+        "toUser": {
+          "type": "string",
+          "description": "Destination user identifier"
+        },
+        "tokenId": {
+          "type": "string",
+          "description": "Token to transfer"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount to transfer"
+        },
+        "paymentMethod": {
+          "type": "string",
+          "enum": ["card", "bank_transfer", "ewallet", "cash"],
+          "description": "Payment method for fiat conversion (optional)"
+        },
+        "fiatCurrency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "description": "Fiat currency code for conversion (optional)"
+        }
+      },
+      "required": ["fromUser", "toUser", "tokenId", "amount"]
+    },
+    "oneTapTransferResponse": {
+      "type": "object",
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "description": "Unique identifier for the transaction"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "processing", "completed", "failed"],
+          "description": "Current status of the transaction"
+        },
+        "fees": {
+          "type": "number",
+          "description": "Transaction fees applied"
+        },
+        "estimatedCompletionTime": {
+          "type": "number",
+          "description": "Estimated completion timestamp"
+        }
+      },
+      "required": ["transactionId", "status"]
+    },
+    "batchTransfersRequest": {
+      "type": "object",
+      "properties": {
+        "transfers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "fromUser": {
+                "type": "string"
+              },
+              "toUser": {
+                "type": "string"
+              },
+              "tokenId": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "number"
+              }
+            },
+            "required": ["fromUser", "toUser", "tokenId", "amount"]
+          }
+        }
+      },
+      "required": ["transfers"]
+    },
+    "batchTransfersResponse": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "transactionId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "processing", "completed", "failed"]
+          },
+          "fees": {
+            "type": "number"
+          }
+        }
+      }
     }
   }
 }

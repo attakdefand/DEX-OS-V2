@@ -1,0 +1,8 @@
+| Step | Layer                       | Outcome                              | Estimated Total Tests* |
+| ---- | --------------------------- | ------------------------------------ | ---------------------: |
+| 1️⃣  | **Security**                | Define and enforce what “safe” means |                 ~3,000 |
+| 2️⃣  | **Testing**                 | Prove it behaves safely              |                 ~2,970 |
+| 3️⃣  | **Protection**              | Contain anything unsafe              |                 ~5,000 |
+| 4️⃣  | **Detection & Response**    | See and react in real time           |                 ~4,800 |
+| 5️⃣  | **Resilience & Recovery**   | Heal and continue operations         |                   ~432 |
+| 6️⃣  | **Governance & Compliance** | Prove accountability and control     |                 ~5,400 |

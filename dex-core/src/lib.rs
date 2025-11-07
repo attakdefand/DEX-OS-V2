@@ -19,6 +19,7 @@ pub mod stableswap;
 pub mod trade_prevention;
 pub mod treasury;
 pub mod types;
+pub mod payments;
 
 #[cfg(test)]
 mod tests {

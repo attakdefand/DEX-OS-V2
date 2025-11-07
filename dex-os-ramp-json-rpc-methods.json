@@ -124,6 +124,109 @@
           }
         }
       },
+      "payments": {
+        "oneTapTransfer": {
+          "description": "Execute a one-tap transfer with optional fiat/crypto conversion",
+          "params": {
+            "type": "object",
+            "properties": {
+              "fromUser": {
+                "type": "string",
+                "description": "Source user identifier"
+              },
+              "toUser": {
+                "type": "string",
+                "description": "Destination user identifier"
+              },
+              "tokenId": {
+                "type": "string",
+                "description": "Token to transfer"
+              },
+              "amount": {
+                "type": "number",
+                "description": "Amount to transfer"
+              },
+              "paymentMethod": {
+                "type": "string",
+                "enum": ["card", "bank_transfer", "ewallet", "cash"],
+                "description": "Payment method for fiat conversion (optional)"
+              },
+              "fiatCurrency": {
+                "type": "string",
+                "pattern": "^[A-Z]{3}$",
+                "description": "Fiat currency code for conversion (optional)"
+              }
+            },
+            "required": ["fromUser", "toUser", "tokenId", "amount"]
+          },
+          "result": {
+            "type": "object",
+            "properties": {
+              "transactionId": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["pending", "processing", "completed", "failed"]
+              },
+              "fees": {
+                "type": "number"
+              },
+              "estimatedCompletionTime": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "batchTransfers": {
+          "description": "Execute multiple transfers in a batch for cost efficiency",
+          "params": {
+            "type": "object",
+            "properties": {
+              "transfers": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "fromUser": {
+                      "type": "string"
+                    },
+                    "toUser": {
+                      "type": "string"
+                    },
+                    "tokenId": {
+                      "type": "string"
+                    },
+                    "amount": {
+                      "type": "number"
+                    }
+                  },
+                  "required": ["fromUser", "toUser", "tokenId", "amount"]
+                }
+              }
+            },
+            "required": ["transfers"]
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "transactionId": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": ["pending", "processing", "completed", "failed"]
+                },
+                "fees": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      },
       "amm": {
         "swap": {
           "description": "Execute a swap through the AMM",
