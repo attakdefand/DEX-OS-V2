@@ -10,13 +10,23 @@
 - Market depth REST endpoint (`/orderbook/depth`) and live WebSocket feed (`/ws/depth`) with broadcast updates after each orderbook mutation.
 - Config knobs for JWT issuer/TTL, wallet challenge TTL, and secret parsing with helpful validation errors.
 - Frontend auth helpers that call the new endpoints so users can mint tokens by secret or wallet signature without leaving the UI.
+- Implementation of Priority 1 DEX Aggregator features from DEX-OS-V1.csv:
+  * Graph for DEX Liquidity Network (`dex-core/src/path_routing.rs`)
+  * Hash Map for Route Caching (`dex-core/src/path_routing.rs`)
+- Enhanced path routing implementation with DEX liquidity network graph representation
+- Route caching mechanism using Hash Map for improved performance
+- Comprehensive tests for route caching functionality
 
 ### Changed
 - `AuthManager` can now sign tokens (encoding key + issuance helpers) while the UI persists issued tokens automatically.
 - Session panel in `dex-ui` was redesigned to surface token issuance tools alongside wallet/JWT fields.
+- Extended PathRouter struct with route caching capabilities
+- Updated DEX-OS-V1.csv to mark Graph DEX Liquidity Network and Hash Map Route Caching as implemented
 
 ### Security
 - Wallet challenges are single-use, time-boxed, and verified with `personal_sign`/secp256k1 recovery to avoid replay.
+- Implemented proper cache invalidation to prevent stale routing data
+- Added security considerations for route caching mechanism
 
 ## [0.3.2] - 2025-11-04
 

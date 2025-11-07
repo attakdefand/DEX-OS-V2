@@ -828,6 +828,30 @@ pub fn calculate_stable_swap_invariant(x: f64, y: f64) -> f64 {
 }
 ```
 
+Example implementation of Priority 1 DEX Aggregator features:
+
+```rust
+/// Implements Graph for DEX Liquidity Network and Hash Map for Route Caching
+/// as specified in DEX-OS-V1.csv for DEX Aggregator
+/// 
+/// This implements the Priority 1 features from DEX-OS-V1.csv:
+/// "Core Trading,DEX Aggregator,DEX Aggregator,Graph,DEX Liquidity Network,High"
+/// "Core Trading,DEX Aggregator,DEX Aggregator,Hash Map,Route Caching,High"
+impl PathRouter {
+    /// Find the best path from source to destination token using Bellman-Ford algorithm
+    /// with route caching for improved performance
+    pub fn find_best_path(
+        &mut self,
+        source: &TokenId,
+        destination: &TokenId,
+        amount: f64,
+    ) -> Result<Option<RoutingPath>, PathRoutingError> {
+        // Implementation using Graph for DEX Liquidity Network
+        // with Hash Map for Route Caching
+    }
+}
+```
+
 ### Verification Process
 
 Before committing code that implements algorithms or data structures:

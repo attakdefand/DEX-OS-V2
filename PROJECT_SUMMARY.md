@@ -8,6 +8,7 @@ This project implements a decentralized exchange (DEX) core engine using Rust wi
    - Orderbook management with BTreeMap-based storage
    - Price-time priority matching algorithm
    - Automated Market Maker (AMM) with constant product formula
+   - DEX Aggregator with liquidity network graph and route caching
    - Common types and data structures
 
 2. **WebAssembly Interface** (`dex-wasm`) - Provides WASM bindings for browser integration:
@@ -35,6 +36,12 @@ This project implements a decentralized exchange (DEX) core engine using Rust wi
 - Liquidity provision and removal
 - Token swapping with configurable fees
 - Price calculation
+
+### DEX Aggregator
+- Graph-based DEX liquidity network representation
+- Hash Map route caching for improved performance
+- Multi-hop pathfinding with Bellman-Ford algorithm
+- Route optimization with liquidity and fee considerations
 
 ### WebAssembly Support
 - WASM bindings for browser-based trading interfaces
@@ -69,6 +76,7 @@ DEX-OS-V1/
 │   ├── src/
 │   │   ├── amm.rs      # Automated Market Maker implementation
 │   │   ├── orderbook.rs # Orderbook implementation
+│   │   ├── path_routing.rs # DEX Aggregator path routing implementation
 │   │   ├── types.rs    # Common data structures
 │   │   └── lib.rs      # Main library file
 │   └── Cargo.toml      # Core dependencies
@@ -112,6 +120,8 @@ DEX-OS-V1/
 4. Set up a PostgreSQL database for persistence
 5. Extend the API with additional endpoints
 6. Implement additional DEX features from the DEX-OS-V1.csv specification
+7. Monitor performance of route caching implementation
+8. Extend DEX aggregator with additional optimization algorithms
 
 ## Notes
 
