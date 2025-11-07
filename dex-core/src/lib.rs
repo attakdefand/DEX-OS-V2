@@ -20,6 +20,13 @@ pub mod trade_prevention;
 pub mod treasury;
 pub mod types;
 pub mod payments;
+pub mod identity;
+pub mod governance;
+pub mod gas_abstraction;
+pub mod quadratic_voting;
+pub mod security;
+pub mod observability;
+pub mod test_results;
 
 #[cfg(test)]
 mod tests {

@@ -4,6 +4,8 @@ members = [
     "dex-wasm",
     "dex-db",
     "dex-api",
+    "run_security_tests",
+    "global_identity_tests",
 ]
 resolver = "2"
 

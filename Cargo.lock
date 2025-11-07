@@ -460,9 +460,11 @@ dependencies = [
 name = "dex-core"
 version = "0.1.0"
 dependencies = [
+ "regex",
  "serde",
  "serde_json",
  "sha2",
+ "sha3",
  "thiserror 1.0.69",
 ]
 
@@ -851,6 +853,13 @@ dependencies = [
  "libc",
  "r-efi",
  "wasip2",
+]
+
+[[package]]
+name = "global_identity_tests"
+version = "0.1.0"
+dependencies = [
+ "dex-core",
 ]
 
 [[package]]
@@ -1835,6 +1844,13 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "run_security_tests"
+version = "0.1.0"
+dependencies = [
+ "dex-core",
 ]
 
 [[package]]

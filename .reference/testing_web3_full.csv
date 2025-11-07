@@ -134,6 +134,16 @@ A. Core Logic & Contract-Level,Error/Require Test,component_c,edge_case,after_up
 A. Core Logic & Contract-Level,Error/Require Test,component_c,failure_mode,always,test_testing__a._core_logic_and_contract_level__error_require_test__component_c__failure_mode__always
 A. Core Logic & Contract-Level,Error/Require Test,component_c,failure_mode,under_load,test_testing__a._core_logic_and_contract_level__error_require_test__component_c__failure_mode__under_load
 A. Core Logic & Contract-Level,Error/Require Test,component_c,failure_mode,after_upgrade,test_testing__a._core_logic_and_contract_level__error_require_test__component_c__failure_mode__after_upgrade
+A. Core Logic & Contract-Level,Global Identity DID + Biometrics Test,identity_manager,happy_path,always,test_global_identity_did_plus_biometrics_feature
+A. Core Logic & Contract-Level,Global Identity DID + Biometrics Test,identity_manager,edge_case,always,test_global_identity_did_plus_biometrics_edge_cases
+A. Core Logic & Contract-Level,Global Identity DID + Biometrics Test,identity_manager,failure_mode,always,test_global_identity_did_plus_biometrics_failure_modes
+A. Core Logic & Contract-Level,Self-Sovereign Identity Test,identity_manager,happy_path,always,test_self_sovereign_identity_feature
+A. Core Logic & Contract-Level,Self-Sovereign Identity Test,identity_manager,edge_case,always,test_self_sovereign_identity_edge_cases
+A. Core Logic & Contract-Level,Self-Sovereign Identity Test,identity_manager,failure_mode,always,test_self_sovereign_identity_failure_modes
+A. Core Logic & Contract-Level,Quantum-Secure Identity Test,quantum_crypto,happy_path,always,test_quantum_secure_identity_feature
+A. Core Logic & Contract-Level,Quantum-Secure Identity Test,quantum_crypto,edge_case,always,test_quantum_secure_identity_edge_cases
+A. Core Logic & Contract-Level,Quantum-Secure Identity Test,quantum_crypto,failure_mode,always,test_quantum_secure_identity_failure_modes
+A. Core Logic & Contract-Level,Global Identity Integration Test,identity_manager,happy_path,always,test_global_identity_features_integration
 A. Core Logic & Contract-Level,Boundary / Edge Test,component_a,happy_path,always,test_testing__a._core_logic_and_contract_level__boundary___edge_test__component_a__happy_path__always
 A. Core Logic & Contract-Level,Boundary / Edge Test,component_a,happy_path,under_load,test_testing__a._core_logic_and_contract_level__boundary___edge_test__component_a__happy_path__under_load
 A. Core Logic & Contract-Level,Boundary / Edge Test,component_a,happy_path,after_upgrade,test_testing__a._core_logic_and_contract_level__boundary___edge_test__component_a__happy_path__after_upgrade

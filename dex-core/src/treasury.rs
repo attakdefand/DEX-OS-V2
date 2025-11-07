@@ -434,7 +434,7 @@ impl AITreasury {
     /// Execute an autonomous operation
     pub fn execute_operation(&mut self, operation_id: u64) -> Result<(), AITreasuryError> {
         // First, get all the necessary data without borrowing
-        let (operation_type, token_id, amount, execution_timestamp) = {
+        let (operation_type, token_id, amount) = {
             let operation = self.operations.get(&operation_id)
                 .ok_or(AITreasuryError::OperationNotFound)?;
             
@@ -453,7 +453,7 @@ impl AITreasury {
                 return Ok(()); // Not time to execute yet
             }
             
-            (operation.operation_type.clone(), operation.token_id.clone(), operation.amount, operation.execution_timestamp)
+            (operation.operation_type.clone(), operation.token_id.clone(), operation.amount)
         };
         
         // Mark as executing
