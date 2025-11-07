@@ -75,7 +75,7 @@ pub struct AtomicSwapManager {
 }
 
 /// Errors that can occur in atomic swaps
-#[derive(Debug, Error)]
+#[derive(Debug, Error, PartialEq)]
 pub enum AtomicSwapError {
     #[error("Swap not found")]
     SwapNotFound,

@@ -329,35 +329,40 @@ impl AITreasury {
 
     /// Execute a passed proposal
     pub fn execute_proposal(&mut self, proposal_id: u64) -> Result<(), AITreasuryError> {
-        let proposal = self.proposals.get_mut(&proposal_id)
-            .ok_or(AITreasuryError::ProposalNotFound)?;
+        // First, get all the necessary data without borrowing
+        let (action, token_id, amount) = {
+            let proposal = self.proposals.get(&proposal_id)
+                .ok_or(AITreasuryError::ProposalNotFound)?;
+            
+            // Check if proposal has passed
+            if !matches!(proposal.status, ProposalStatus::Passed) {
+                return Err(AITreasuryError::ProposalNotActive);
+            }
+            
+            (proposal.action.clone(), proposal.token_id.clone(), proposal.amount)
+        };
         
-        // Check if proposal has passed
-        if !matches!(proposal.status, ProposalStatus::Passed) {
-            return Err(AITreasuryError::ProposalNotActive);
-        }
-        
-        // Execute the proposal action
-        match proposal.action.as_str() {
+        // Execute the proposal action based on the cloned data
+        match action.as_str() {
             "allocate" => {
                 // Check if we have sufficient funds
-                let balance = self.get_balance(&proposal.token_id);
-                if proposal.amount > balance {
+                let balance = self.get_balance(&token_id);
+                if amount > balance {
                     return Err(AITreasuryError::InsufficientFunds);
                 }
                 
                 // Deduct from treasury
                 self.assets.insert(
-                    proposal.token_id.clone(),
-                    balance - proposal.amount
+                    token_id,
+                    balance - amount
                 );
             },
             "divest" => {
                 // Add to treasury
-                let balance = self.get_balance(&proposal.token_id);
+                let balance = self.get_balance(&token_id);
                 self.assets.insert(
-                    proposal.token_id.clone(),
-                    balance + proposal.amount
+                    token_id,
+                    balance + amount
                 );
             },
             _ => {
@@ -367,6 +372,8 @@ impl AITreasury {
         }
         
         // Update proposal status
+        let proposal = self.proposals.get_mut(&proposal_id)
+            .ok_or(AITreasuryError::ProposalNotFound)?;
         proposal.status = ProposalStatus::Executed;
         
         Ok(())
@@ -426,53 +433,64 @@ impl AITreasury {
 
     /// Execute an autonomous operation
     pub fn execute_operation(&mut self, operation_id: u64) -> Result<(), AITreasuryError> {
-        let operation = self.operations.get_mut(&operation_id)
-            .ok_or(AITreasuryError::OperationNotFound)?;
-        
-        // Check if operation is pending
-        if !matches!(operation.status, OperationStatus::Pending) {
-            return Err(AITreasuryError::OperationNotPending);
-        }
-        
-        // Check if it's time to execute
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs();
-        
-        if now < operation.execution_timestamp {
-            return Ok(()); // Not time to execute yet
-        }
+        // First, get all the necessary data without borrowing
+        let (operation_type, token_id, amount, execution_timestamp) = {
+            let operation = self.operations.get(&operation_id)
+                .ok_or(AITreasuryError::OperationNotFound)?;
+            
+            // Check if operation is pending
+            if !matches!(operation.status, OperationStatus::Pending) {
+                return Err(AITreasuryError::OperationNotPending);
+            }
+            
+            // Check if it's time to execute
+            let now = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs();
+            
+            if now < operation.execution_timestamp {
+                return Ok(()); // Not time to execute yet
+            }
+            
+            (operation.operation_type.clone(), operation.token_id.clone(), operation.amount, operation.execution_timestamp)
+        };
         
         // Mark as executing
-        operation.status = OperationStatus::Executing;
+        {
+            let operation = self.operations.get_mut(&operation_id)
+                .ok_or(AITreasuryError::OperationNotFound)?;
+            operation.status = OperationStatus::Executing;
+        }
         
-        // Execute the operation
-        match operation.operation_type.as_str() {
+        // Execute the operation based on the cloned data
+        match operation_type.as_str() {
             "rebalance" => {
                 // Rebalancing logic would go here
                 // For now, we'll just mark as completed
             },
             "allocate" => {
                 // Check if we have sufficient funds
-                let balance = self.get_balance(&operation.token_id);
-                if operation.amount > balance {
+                let balance = self.get_balance(&token_id);
+                if amount > balance {
+                    let operation = self.operations.get_mut(&operation_id)
+                        .ok_or(AITreasuryError::OperationNotFound)?;
                     operation.status = OperationStatus::Failed;
                     return Err(AITreasuryError::InsufficientFunds);
                 }
                 
                 // Deduct from treasury
                 self.assets.insert(
-                    operation.token_id.clone(),
-                    balance - operation.amount
+                    token_id,
+                    balance - amount
                 );
             },
             "divest" => {
                 // Add to treasury
-                let balance = self.get_balance(&operation.token_id);
+                let balance = self.get_balance(&token_id);
                 self.assets.insert(
-                    operation.token_id.clone(),
-                    balance + operation.amount
+                    token_id,
+                    balance + amount
                 );
             },
             _ => {
@@ -482,6 +500,8 @@ impl AITreasury {
         }
         
         // Mark as completed
+        let operation = self.operations.get_mut(&operation_id)
+            .ok_or(AITreasuryError::OperationNotFound)?;
         operation.status = OperationStatus::Completed;
         
         Ok(())

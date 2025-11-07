@@ -306,7 +306,7 @@ fn authenticated(
 }
 
 fn optional_depth_query() -> impl Filter<Extract = (Option<String>,), Error = warp::Rejection> + Clone {
-    warp::query::raw().optional()
+    warp::query::raw().map(Some)
 }
 
 /// Handler for creating orders
@@ -510,7 +510,7 @@ async fn handle_shared_token(
         }
     };
 
-    if secret.expose_secret() != req.secret {
+    if *secret.expose_secret() != req.secret {
         return Ok(error_reply(
             "unauthorized",
             "invalid trader credentials",
