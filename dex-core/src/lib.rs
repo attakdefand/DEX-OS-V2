@@ -24,6 +24,7 @@ pub mod reference_common;
 pub mod reward_distribution;
 pub mod security;
 pub mod stableswap;
+pub mod test_coverage;
 pub mod test_results;
 pub mod trade_prevention;
 pub mod treasury;

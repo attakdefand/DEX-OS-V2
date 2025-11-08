@@ -9,6 +9,8 @@
 pub mod reference;
 pub mod policy_engine;
 pub mod iam;
+pub mod compliance;
+pub mod risk;
 
 pub use reference::{
     load_governance_reference, Enrichment, GovernanceComponent, GovernanceDomain,
@@ -16,6 +18,8 @@ pub use reference::{
 };
 pub use policy_engine::{policy_for, parse_checkpoint, parse_effect, Checkpoint, PolicyEffect};
 pub use iam::{ApprovalGatePolicy, RoleManagerPolicy, IamError};
+pub use compliance::{build_compliance_report, render_report_json, ComplianceReport, ComplianceEntry, FrameworkRef};
+pub use risk::{RiskRegistry, RiskRegistryState, RiskItem, ExceptionRequest, Notification, RiskError};
 
 use crate::types::{TokenId, TraderId};
 use once_cell::sync::OnceCell;
