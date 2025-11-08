@@ -1,15 +1,15 @@
-# DEX-OS V2
+﻿# DEX-OS V2
 
 [![Rust CI](https://github.com/attakdefand/DEX-OS-V2/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/attakdefand/DEX-OS-V2/actions/workflows/rust-ci.yml)
 [![Reference Validation](https://github.com/attakdefand/DEX-OS-V2/actions/workflows/reference-validation.yml/badge.svg)](https://github.com/attakdefand/DEX-OS-V2/actions/workflows/reference-validation.yml)
 
-## Change Control (PR Gate) — Quick Start
+## Change Control (PR Gate) â€” Quick Start
 
-- Configure repo variables (Settings → Actions → Variables):
+- Configure repo variables (Settings â†’ Actions â†’ Variables):
   - `ENFORCE_CHANGE_CONTROL = true`
-  - `REQUIRED_APPROVERS = sengkeat, jonathanseng` (comma‑separated GitHub logins)
+  - `REQUIRED_APPROVERS = sengkeat, jonathanseng` (commaâ€‘separated GitHub logins)
   - Optional: `CHANGE_EVIDENCE_PATH` and `CHANGE_SIGNATURE_PATH` (defaults to `.change-control/signed_change_approval.json` and `.sig`)
-- Configure repo secrets (Settings → Actions → Secrets):
+- Configure repo secrets (Settings â†’ Actions â†’ Secrets):
   - Provide one verification method:
     - `COSIGN_PUBLIC_KEY` (static PEM), or `COSIGN_KEY` (KMS URI), or `COSIGN_CERT` + `COSIGN_CERT_CHAIN` (keyless cert)
 - In your PR:
@@ -19,7 +19,7 @@
   - Obtain approvals from users in `REQUIRED_APPROVERS`.
 - The workflow `.github/workflows/change-control.yml` enforces approvals and signature verification before merge.
 
-## After‑Deploy Gate — Quick Start
+## Afterâ€‘Deploy Gate â€” Quick Start
 
 - The `Deploy` workflow (`.github/workflows/deploy.yml`) runs on push to `main` and `workflow_dispatch`.
 - It generates `after_deploy_approval.json`, signs it keylessly (OIDC), and uploads the artifact.
@@ -155,3 +155,11 @@ For detailed instructions on installing Git, see [GIT-INSTALLATION-GUIDE.md](GIT
 
 
 This project is licensed under the MIT License.
+
+## Risk & Exception Register — Paths
+
+- Configure the exception register CSV path via environment variables:
+  - EXCEPTION_REGISTER_PATH (default: exception_register.csv)
+  - CI_EXCEPTION_REGISTER_PATH (used by CI if set, falls back to the above)
+- The Risk Registry (governance/risk.rs) automatically uses these for saving/loading.
+

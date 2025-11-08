@@ -550,6 +550,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "sha3",
+ "tempfile",
  "thiserror 1.0.69",
  "tokio",
  "tokio-test",
@@ -2737,6 +2738,13 @@ dependencies = [
  "once_cell",
  "rustix",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "test_coverage_demo"
+version = "0.1.0"
+dependencies = [
+ "sha3",
 ]
 
 [[package]]

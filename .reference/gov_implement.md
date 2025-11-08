@@ -5,14 +5,14 @@ Baseline the dataset – finalize .reference/governance_compliance_full_enriched
   3. Governance Policy & Framework – implement policy-engine logic that uses the scenarios (commit/merge/deploy
      checkpoints) and write Rust tests proving each CSV row toggles the expected policy.
   4. Access & Authorization Governance – wire IAM flows (role manager, approval gate) so least-privilege checks, approval     chains, and evidence artifacts come directly from the dataset; cover them with unit/integration tests.
-  
   5. Change Management & Approval Flow – integrate change-control steps (before merge, after deploy, etc.) into CI/CD    
      gates, validating signatures/approvals per scenario and testing those paths.
-  
   6. Compliance & Regulatory Alignment – map behaviors to external frameworks, generate reports/attestations using the   
      CSV metric/evidence fields, and add regression tests ensuring every required mapping exists.
   7. Risk & Exception Management – implement risk registry updates, exception approvals, and notifications aligned with  
      the matrix rows, plus tests verifying evidence and owner fields are honored.
+
+
   8. Audit & Evidence Management – back audit_logger scenarios with immutable evidence storage, enforce hashes/signatures     as specified, and test ingestion/verification for each relevant CSV entry.
 
  Policy-as-Code & Automation – hook policy_engine, rego_validator, etc., into automated policy runners (OPA,

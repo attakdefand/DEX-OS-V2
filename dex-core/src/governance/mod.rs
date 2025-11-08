@@ -10,7 +10,7 @@ pub mod reference;
 pub mod policy_engine;
 pub mod iam;
 pub mod compliance;
-pub mod risk;
+pub mod risk;`npub mod audit;
 
 pub use reference::{
     load_governance_reference, Enrichment, GovernanceComponent, GovernanceDomain,
@@ -19,7 +19,7 @@ pub use reference::{
 pub use policy_engine::{policy_for, parse_checkpoint, parse_effect, Checkpoint, PolicyEffect};
 pub use iam::{ApprovalGatePolicy, RoleManagerPolicy, IamError};
 pub use compliance::{build_compliance_report, render_report_json, ComplianceReport, ComplianceEntry, FrameworkRef};
-pub use risk::{RiskRegistry, RiskRegistryState, RiskItem, ExceptionRequest, Notification, RiskError};
+pub use risk::{RiskRegistry, RiskRegistryState, RiskItem, ExceptionRequest, Notification, RiskError};`npub use audit::{AuditStore, EvidenceRecord, AuditError};
 
 use crate::types::{TokenId, TraderId};
 use once_cell::sync::OnceCell;
@@ -29,7 +29,15 @@ use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use thiserror::Error;
 
-/// Represents a governance proposal
+
+/// Inputs to drive risk registry actions during submit.
+#[derive(Debug, Clone)]
+pub struct RiskInputs {
+    pub exception_id: Option<String>,
+    pub approver_login: Option<String>,
+    pub approver_role: Option<String>,
+    pub evidence_artifact: Option<String>,
+}/// Represents a governance proposal
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Proposal {
     /// Unique identifier for the proposal
@@ -448,125 +456,42 @@ pub struct ProposalContext {
     pub reference: Option<GovernanceScenario>,
 }
 
-#[derive(Debug, Clone, Serialize)]
-pub struct GovernanceControlMetrics {
-    pub total_reference_controls: usize,
-    pub entries: Vec<ControlMetricEntry>,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct ControlMetricEntry {
-    pub domain: GovernanceDomain,
-    pub component: GovernanceComponent,
-    pub owner: String,
-    pub proposal_ids: Vec<String>,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct GovernanceInsights {
-    pub proposals: Vec<ProposalSummary>,
-    pub control_metrics: GovernanceControlMetrics,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct ProposalSummary {
-    pub id: String,
-    pub title: String,
-    pub proposal_type: ProposalType,
-    pub status: ProposalStatus,
-    pub reference_owner: Option<String>,
-    pub reference_tool: Option<String>,
-    pub reference_metric: Option<String>,
-    pub reference_evidence: Option<String>,
-    pub reference_acknowledged: bool,
-}
-
-#[derive(Debug, Clone)]
-struct RequiredReference {
-    domain: GovernanceDomain,
-    component: GovernanceComponent,
-}
-
-impl RequiredReference {
-    fn new(domain: GovernanceDomain, component: GovernanceComponent) -> Self {
-        Self { domain, component }
-    }
-
-    fn matches(&self, scenario: &GovernanceScenario) -> bool {
-        scenario.domain == self.domain && scenario.component == self.component
-    }
-}
-
-impl GlobalDAO {
-    /// Create a new Global DAO with default parameters
-    pub fn new() -> Self {
-        Self::with_reference_data().expect("failed to load governance reference data for GlobalDAO")
-    }
-
-    /// Create a new Global DAO wired to the governance reference dataset.
-    pub fn with_reference_data() -> Result<Self, GovernanceReferenceError> {
-        let reference_index = GovernanceReferenceIndex::shared()?;
-
-        Ok(Self {
-            proposals: HashMap::new(),
-            members: HashMap::new(),
-            total_voting_power: 0,
-            parameters: GovernanceParameters {
-                min_proposal_power: 1000,
-                voting_period: 604800,    // 7 days
-                quorum_percentage: 10,    // 10%
-                threshold_percentage: 51, // 51%
-                execution_delay: 86400,   // 1 day
-                max_active_proposals: 10,
-            },
-            reference_index,
-            ai_models: HashMap::new(),
-            emergency_council: Vec::new(),
-        })
-    }
-
-    /// Add a new member to the DAO
-    pub fn add_member(&mut self, trader_id: TraderId, voting_power: u64, is_council_member: bool) {
-        let member = DAOMember {
-            trader_id: trader_id.clone(),
-            voting_power,
-            joined_at: SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_secs(),
-            is_council_member,
-        };
-
-        self.total_voting_power += voting_power;
-        self.members.insert(trader_id, member);
-    }
-
-    /// Returns the immutable governance reference index.
-    pub fn reference_index(&self) -> &GovernanceReferenceIndex {
-        self.reference_index.as_ref()
-    }
-
-    /// Attaches a governance reference control to an existing proposal.
-    pub fn attach_reference_control(
+#[derive(Debug, Clone, Serialize)]pub fn submit_proposal_with_risk(
         &mut self,
         proposal_id: &str,
-        domain: GovernanceDomain,
-        component: GovernanceComponent,
-        behavior: &str,
-        condition: &str,
+        registry: &mut super::risk::RiskRegistry,
+        risk: RiskInputs,
     ) -> Result<(), GovernanceError> {
-        let scenario = self
-            .reference_index
-            .find(&domain, &component, behavior, condition)
-            .cloned()
-            .ok_or(GovernanceError::ReferenceScenarioNotFound)?;
-
         let proposal = self
             .proposals
             .get_mut(proposal_id)
             .ok_or(GovernanceError::ProposalNotFound)?;
-        proposal.reference_control = Some(scenario);
-        proposal.reference_acknowledged = false;
+
+        if proposal.status != ProposalStatus::Draft {
+            return Err(GovernanceError::ProposalNotInDraft);
+        }
+
+        Self::enforce_reference_policy(proposal)?;
+
+        // If the proposal type requires RiskRegistry and reference is present, try approval
+        if let Some(required) = Self::required_reference_for(&proposal.proposal_type) {
+            if required.domain == GovernanceDomain::RiskExceptionManagement
+                && required.component == GovernanceComponent::RiskRegistry
+            {
+                if let (Some(id), Some(login), Some(role), Some(evidence)) = (
+                    risk.exception_id,
+                    risk.approver_login,
+                    risk.approver_role,
+                    risk.evidence_artifact,
+                ) {
+                    registry
+                        .approve_exception(&id, &login, &role, &evidence)
+                        .map_err(|_| GovernanceError::ReferenceControlMismatch)?;
+                }
+            }
+        }
+
+        proposal.status = ProposalStatus::Active;
         Ok(())
     }
 
@@ -618,6 +543,43 @@ impl GlobalDAO {
         }
 
         proposal.reference_acknowledged = true;
+        Ok(())
+    }pub fn submit_proposal_with_risk(
+        &mut self,
+        proposal_id: &str,
+        registry: &mut super::risk::RiskRegistry,
+        risk: RiskInputs,
+    ) -> Result<(), GovernanceError> {
+        let proposal = self
+            .proposals
+            .get_mut(proposal_id)
+            .ok_or(GovernanceError::ProposalNotFound)?;
+
+        if proposal.status != ProposalStatus::Draft {
+            return Err(GovernanceError::ProposalNotInDraft);
+        }
+
+        Self::enforce_reference_policy(proposal)?;
+
+        // If the proposal type requires RiskRegistry and reference is present, try approval
+        if let Some(required) = Self::required_reference_for(&proposal.proposal_type) {
+            if required.domain == GovernanceDomain::RiskExceptionManagement
+                && required.component == GovernanceComponent::RiskRegistry
+            {
+                if let (Some(id), Some(login), Some(role), Some(evidence)) = (
+                    risk.exception_id,
+                    risk.approver_login,
+                    risk.approver_role,
+                    risk.evidence_artifact,
+                ) {
+                    registry
+                        .approve_exception(&id, &login, &role, &evidence)
+                        .map_err(|_| GovernanceError::ReferenceControlMismatch)?;
+                }
+            }
+        }
+
+        proposal.status = ProposalStatus::Active;
         Ok(())
     }
 
@@ -838,6 +800,43 @@ impl GlobalDAO {
 
         proposal.status = ProposalStatus::Active;
         Ok(())
+    }pub fn submit_proposal_with_risk(
+        &mut self,
+        proposal_id: &str,
+        registry: &mut super::risk::RiskRegistry,
+        risk: RiskInputs,
+    ) -> Result<(), GovernanceError> {
+        let proposal = self
+            .proposals
+            .get_mut(proposal_id)
+            .ok_or(GovernanceError::ProposalNotFound)?;
+
+        if proposal.status != ProposalStatus::Draft {
+            return Err(GovernanceError::ProposalNotInDraft);
+        }
+
+        Self::enforce_reference_policy(proposal)?;
+
+        // If the proposal type requires RiskRegistry and reference is present, try approval
+        if let Some(required) = Self::required_reference_for(&proposal.proposal_type) {
+            if required.domain == GovernanceDomain::RiskExceptionManagement
+                && required.component == GovernanceComponent::RiskRegistry
+            {
+                if let (Some(id), Some(login), Some(role), Some(evidence)) = (
+                    risk.exception_id,
+                    risk.approver_login,
+                    risk.approver_role,
+                    risk.evidence_artifact,
+                ) {
+                    registry
+                        .approve_exception(&id, &login, &role, &evidence)
+                        .map_err(|_| GovernanceError::ReferenceControlMismatch)?;
+                }
+            }
+        }
+
+        proposal.status = ProposalStatus::Active;
+        Ok(())
     }
 
     /// Vote on a proposal
@@ -895,6 +894,43 @@ impl GlobalDAO {
 
         proposal.votes.total_voting_power += voting_power;
         Ok(())
+    }pub fn submit_proposal_with_risk(
+        &mut self,
+        proposal_id: &str,
+        registry: &mut super::risk::RiskRegistry,
+        risk: RiskInputs,
+    ) -> Result<(), GovernanceError> {
+        let proposal = self
+            .proposals
+            .get_mut(proposal_id)
+            .ok_or(GovernanceError::ProposalNotFound)?;
+
+        if proposal.status != ProposalStatus::Draft {
+            return Err(GovernanceError::ProposalNotInDraft);
+        }
+
+        Self::enforce_reference_policy(proposal)?;
+
+        // If the proposal type requires RiskRegistry and reference is present, try approval
+        if let Some(required) = Self::required_reference_for(&proposal.proposal_type) {
+            if required.domain == GovernanceDomain::RiskExceptionManagement
+                && required.component == GovernanceComponent::RiskRegistry
+            {
+                if let (Some(id), Some(login), Some(role), Some(evidence)) = (
+                    risk.exception_id,
+                    risk.approver_login,
+                    risk.approver_role,
+                    risk.evidence_artifact,
+                ) {
+                    registry
+                        .approve_exception(&id, &login, &role, &evidence)
+                        .map_err(|_| GovernanceError::ReferenceControlMismatch)?;
+                }
+            }
+        }
+
+        proposal.status = ProposalStatus::Active;
+        Ok(())
     }
 
     /// Cast an abstain vote
@@ -945,6 +981,43 @@ impl GlobalDAO {
 
         proposal.votes.abstain_votes.insert(voter_id.clone(), vote);
         proposal.votes.total_voting_power += voting_power;
+        Ok(())
+    }pub fn submit_proposal_with_risk(
+        &mut self,
+        proposal_id: &str,
+        registry: &mut super::risk::RiskRegistry,
+        risk: RiskInputs,
+    ) -> Result<(), GovernanceError> {
+        let proposal = self
+            .proposals
+            .get_mut(proposal_id)
+            .ok_or(GovernanceError::ProposalNotFound)?;
+
+        if proposal.status != ProposalStatus::Draft {
+            return Err(GovernanceError::ProposalNotInDraft);
+        }
+
+        Self::enforce_reference_policy(proposal)?;
+
+        // If the proposal type requires RiskRegistry and reference is present, try approval
+        if let Some(required) = Self::required_reference_for(&proposal.proposal_type) {
+            if required.domain == GovernanceDomain::RiskExceptionManagement
+                && required.component == GovernanceComponent::RiskRegistry
+            {
+                if let (Some(id), Some(login), Some(role), Some(evidence)) = (
+                    risk.exception_id,
+                    risk.approver_login,
+                    risk.approver_role,
+                    risk.evidence_artifact,
+                ) {
+                    registry
+                        .approve_exception(&id, &login, &role, &evidence)
+                        .map_err(|_| GovernanceError::ReferenceControlMismatch)?;
+                }
+            }
+        }
+
+        proposal.status = ProposalStatus::Active;
         Ok(())
     }
 
@@ -1035,6 +1108,43 @@ impl GlobalDAO {
             .ok_or(GovernanceError::ProposalNotFound)?;
 
         proposal.status = ProposalStatus::Cancelled;
+        Ok(())
+    }pub fn submit_proposal_with_risk(
+        &mut self,
+        proposal_id: &str,
+        registry: &mut super::risk::RiskRegistry,
+        risk: RiskInputs,
+    ) -> Result<(), GovernanceError> {
+        let proposal = self
+            .proposals
+            .get_mut(proposal_id)
+            .ok_or(GovernanceError::ProposalNotFound)?;
+
+        if proposal.status != ProposalStatus::Draft {
+            return Err(GovernanceError::ProposalNotInDraft);
+        }
+
+        Self::enforce_reference_policy(proposal)?;
+
+        // If the proposal type requires RiskRegistry and reference is present, try approval
+        if let Some(required) = Self::required_reference_for(&proposal.proposal_type) {
+            if required.domain == GovernanceDomain::RiskExceptionManagement
+                && required.component == GovernanceComponent::RiskRegistry
+            {
+                if let (Some(id), Some(login), Some(role), Some(evidence)) = (
+                    risk.exception_id,
+                    risk.approver_login,
+                    risk.approver_role,
+                    risk.evidence_artifact,
+                ) {
+                    registry
+                        .approve_exception(&id, &login, &role, &evidence)
+                        .map_err(|_| GovernanceError::ReferenceControlMismatch)?;
+                }
+            }
+        }
+
+        proposal.status = ProposalStatus::Active;
         Ok(())
     }
 
@@ -1876,3 +1986,8 @@ mod tests {
         }
     }
 }
+
+
+
+
+
