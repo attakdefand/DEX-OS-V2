@@ -81,7 +81,7 @@ impl ZkProofSystem {
     /// Verify a zero-knowledge proof
     pub fn verify(&self, proof: &ZkProof, public_input: &[u8]) -> bool {
         // Recompute the challenge
-        let challenge = self.hash_points(&[public_input, &proof.commitment]);
+        let challenge = self.hash_points_bytes(&[public_input, &proof.commitment]);
         
         // Check if the recomputed challenge matches the proof's challenge
         if challenge != proof.challenge {
@@ -100,11 +100,20 @@ impl ZkProofSystem {
     
     /// Compute public input from secret
     fn compute_public_input(&self, secret: &[u8]) -> Vec<u8> {
-        self.hash_points(&[&self.params.h, secret])
+        self.hash_points_bytes(&[&self.params.h, secret])
     }
     
     /// Hash multiple points together
     fn hash_points(&self, points: &[&Vec<u8>]) -> Vec<u8> {
+        let mut hasher = Sha3_256::new();
+        for point in points {
+            hasher.update(point);
+        }
+        hasher.finalize().to_vec()
+    }
+
+    /// Hash multiple byte slices together (more flexible helper)
+    fn hash_points_bytes(&self, points: &[&[u8]]) -> Vec<u8> {
         let mut hasher = Sha3_256::new();
         for point in points {
             hasher.update(point);

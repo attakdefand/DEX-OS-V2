@@ -246,8 +246,11 @@ impl GossipSyncNode {
         // over the network using TCP/UDP or another protocol
         let message = GossipSyncMessage::Gossip { nodes };
 
-        // Simulate network communication
-        self.handle_gossip_message(message).await;
+        // Simulate network communication without recursive async sizing issues
+        let this = self.clone();
+        tokio::spawn(async move {
+            this.handle_gossip_message(message).await;
+        });
     }
 
     /// Request data updates from a peer
@@ -285,7 +288,10 @@ impl GossipSyncNode {
             }
             GossipSyncMessage::SyncRequest { data_ids } => {
                 println!("Received sync request for {} data items", data_ids.len());
-                self.handle_sync_request(data_ids).await;
+                let this = self.clone();
+                tokio::spawn(async move {
+                    this.handle_sync_request(data_ids).await;
+                });
             }
             GossipSyncMessage::SyncResponse { data } => {
                 println!("Received sync response with {} data items", data.len());
@@ -322,8 +328,11 @@ impl GossipSyncNode {
             data: response_data,
         };
         
-        // Simulate handling the response
-        self.handle_gossip_message(response).await;
+        // Simulate handling the response without direct recursion
+        let this = self.clone();
+        tokio::spawn(async move {
+            this.handle_gossip_message(response).await;
+        });
     }
 
     /// Handle sync response from another node
@@ -364,8 +373,11 @@ impl GossipSyncNode {
         // In a real implementation, we would send this response back to the requesting node
         let response = GossipSyncMessage::DataUpdateResponse { data };
         
-        // Simulate handling the response
-        self.handle_gossip_message(response).await;
+        // Simulate handling the response without direct recursion
+        let this = self.clone();
+        tokio::spawn(async move {
+            this.handle_gossip_message(response).await;
+        });
     }
 
     /// Handle data update response from another node

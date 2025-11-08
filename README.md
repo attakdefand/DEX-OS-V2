@@ -3,13 +3,34 @@
 [![Rust CI](https://github.com/attakdefand/DEX-OS-V2/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/attakdefand/DEX-OS-V2/actions/workflows/rust-ci.yml)
 [![Reference Validation](https://github.com/attakdefand/DEX-OS-V2/actions/workflows/reference-validation.yml/badge.svg)](https://github.com/attakdefand/DEX-OS-V2/actions/workflows/reference-validation.yml)
 
-## Change Control (PR Gate) â€” Quick Start
+## Table of Contents
 
-- Configure repo variables (Settings â†’ Actions â†’ Variables):
+- [Change Control (PR Gate) - Quick Start](#change-control-pr-gate---quick-start)
+- [After-Deploy Gate - Quick Start](#after-deploy-gate---quick-start)
+- [Project Structure](#project-structure)
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Building](#building)
+  - [Core Engine](#core-engine)
+  - [WebAssembly Module](#webassembly-module)
+  - [Running the API Server](#running-the-api-server)
+  - [Authentication helpers](#authentication-helpers)
+  - [Market data streams](#market-data-streams)
+- [Reference data maintenance](#reference-data-maintenance)
+- [Codex AI Assistant](#codex-ai-assistant)
+- [Architecture](#architecture)
+- [Components](#components)
+- [Git Repository Initialization](#git-repository-initialization)
+- [License](#license)
+- [Risk & Exception Register - Paths](#risk--exception-register---paths)
+
+## Change Control (PR Gate) - Quick Start
+
+- Configure repo variables (Settings > Actions > Variables):
   - `ENFORCE_CHANGE_CONTROL = true`
-  - `REQUIRED_APPROVERS = sengkeat, jonathanseng` (commaâ€‘separated GitHub logins)
+  - `REQUIRED_APPROVERS = sengkeat, jonathanseng` (comma-separated GitHub logins)
   - Optional: `CHANGE_EVIDENCE_PATH` and `CHANGE_SIGNATURE_PATH` (defaults to `.change-control/signed_change_approval.json` and `.sig`)
-- Configure repo secrets (Settings â†’ Actions â†’ Secrets):
+- Configure repo secrets (Settings > Actions > Secrets):
   - Provide one verification method:
     - `COSIGN_PUBLIC_KEY` (static PEM), or `COSIGN_KEY` (KMS URI), or `COSIGN_CERT` + `COSIGN_CERT_CHAIN` (keyless cert)
 - In your PR:
@@ -19,7 +40,7 @@
   - Obtain approvals from users in `REQUIRED_APPROVERS`.
 - The workflow `.github/workflows/change-control.yml` enforces approvals and signature verification before merge.
 
-## Afterâ€‘Deploy Gate â€” Quick Start
+## After-Deploy Gate - Quick Start
 
 - The `Deploy` workflow (`.github/workflows/deploy.yml`) runs on push to `main` and `workflow_dispatch`.
 - It generates `after_deploy_approval.json`, signs it keylessly (OIDC), and uploads the artifact.

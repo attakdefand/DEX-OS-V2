@@ -18,7 +18,8 @@ pub use reference::{
     GovernanceReferenceError, GovernanceScenario,
 };
 pub use policy_engine::{policy_for, parse_checkpoint, parse_effect, Checkpoint, PolicyEffect};
-pub use iam::{ApprovalGatePolicy, RoleManagerPolicy, IamError};
+// IAM policies are not yet wired in this crate; omit re-exports to avoid unresolved symbols.
+// pub use iam::{ApprovalGatePolicy, RoleManagerPolicy, IamError};
 pub use compliance::{build_compliance_report, render_report_json, ComplianceReport, ComplianceEntry, FrameworkRef};
 pub use risk::{RiskRegistry, RiskRegistryState, RiskItem, ExceptionRequest, Notification, RiskError};
 pub use audit::{AuditStore, EvidenceRecord, AuditError};
@@ -31,6 +32,55 @@ use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use thiserror::Error;
 
+
+#[derive(Debug, Clone, Serialize)]
+pub struct GovernanceControlMetrics {
+    pub total_reference_controls: usize,
+    pub entries: Vec<ControlMetricEntry>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ControlMetricEntry {
+    pub domain: GovernanceDomain,
+    pub component: GovernanceComponent,
+    pub owner: String,
+    pub proposal_ids: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ProposalSummary {
+    pub id: String,
+    pub title: String,
+    pub proposal_type: ProposalType,
+    pub status: ProposalStatus,
+    pub reference_owner: Option<String>,
+    pub reference_tool: Option<String>,
+    pub reference_metric: Option<String>,
+    pub reference_evidence: Option<String>,
+    pub reference_acknowledged: bool,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct GovernanceInsights {
+    pub proposals: Vec<ProposalSummary>,
+    pub control_metrics: GovernanceControlMetrics,
+}
+
+#[derive(Debug, Clone)]
+struct RequiredReference {
+    domain: GovernanceDomain,
+    component: GovernanceComponent,
+}
+
+impl RequiredReference {
+    fn new(domain: GovernanceDomain, component: GovernanceComponent) -> Self {
+        Self { domain, component }
+    }
+
+    fn matches(&self, s: &GovernanceScenario) -> bool {
+        s.domain == self.domain && s.component == self.component
+    }
+}
 
 /// Inputs to drive risk registry actions during submit.
 #[derive(Debug, Clone)]
@@ -474,7 +524,7 @@ impl GlobalDAO {
     pub fn submit_proposal_with_risk(
         &mut self,
         proposal_id: &str,
-        registry: &mut super::risk::RiskRegistry,
+        registry: &mut risk::RiskRegistry,
         risk: RiskInputs,
     ) -> Result<(), GovernanceError> {
         let proposal = self
