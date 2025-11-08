@@ -6,6 +6,7 @@
 //! - Security,Security,Security,B+ Tree,Certificate Management,Medium
 //! - Security,Security,Security,Hash Map,Key Rotation,Medium
 //! - Security,Security,Security,Regular Expressions,PII Detection,Medium
+//! - Security,Security,Security,Bloom Filter,Access Control,Medium
 //! - Security,Orderbook,Orderbook,Event Logging,Security Auditing,Medium
 
 use crate::types::{TokenId, TraderId};
@@ -32,6 +33,8 @@ pub struct SecurityManager {
     pii_detector: PIIDetector,
     /// Event logging for security auditing
     event_logger: EventLogger,
+    /// Bloom filter for efficient access control
+    access_control_filter: BloomFilter,
 }
 
 /// Digital signature for evidence integrity
@@ -256,6 +259,7 @@ impl SecurityManager {
             key_rotation: KeyRotationManager::new(86400), // Rotate daily
             pii_detector: PIIDetector::new(),
             event_logger: EventLogger::new(10000), // Store up to 10,000 events
+            access_control_filter: BloomFilter::default(),
         }
     }
 
@@ -320,7 +324,7 @@ impl SecurityManager {
         }
     }
 
-    /// Classify data with a security level
+    /// Classify data with a security level and add owner to access control filter
     pub fn classify_data(
         &mut self,
         data_id: String,
@@ -330,8 +334,8 @@ impl SecurityManager {
     ) {
         let classification = DataClassification {
             level,
-            owner,
-            acl,
+            owner: owner.clone(),
+            acl: acl.clone(),
             timestamp: std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
@@ -339,6 +343,12 @@ impl SecurityManager {
         };
 
         self.data_classification.insert(data_id, classification);
+        
+        // Add owner and ACL users to the Bloom filter for efficient access control
+        self.access_control_filter.add(&owner);
+        for user in acl {
+            self.access_control_filter.add(&user);
+        }
     }
 
     /// Update access control list for classified data
@@ -348,7 +358,13 @@ impl SecurityManager {
         acl: Vec<TraderId>,
     ) -> Result<(), SecurityError> {
         if let Some(classification) = self.data_classification.get_mut(data_id) {
-            classification.acl = acl;
+            classification.acl = acl.clone();
+            
+            // Update the Bloom filter with new ACL members
+            for user in acl {
+                self.access_control_filter.add(&user);
+            }
+            
             Ok(())
         } else {
             Err(SecurityError::DataNotClassified)
@@ -359,7 +375,9 @@ impl SecurityManager {
     pub fn add_user_to_acl(&mut self, data_id: &str, user: TraderId) -> Result<(), SecurityError> {
         if let Some(classification) = self.data_classification.get_mut(data_id) {
             if !classification.acl.contains(&user) {
-                classification.acl.push(user);
+                classification.acl.push(user.clone());
+                // Add user to the Bloom filter
+                self.access_control_filter.add(&user);
             }
             Ok(())
         } else {
@@ -375,14 +393,22 @@ impl SecurityManager {
     ) -> Result<(), SecurityError> {
         if let Some(classification) = self.data_classification.get_mut(data_id) {
             classification.acl.retain(|u| u != user);
+            // Note: We cannot remove items from a Bloom filter, so we leave it as is
+            // This is a limitation of Bloom filters - they only support adding items
             Ok(())
         } else {
             Err(SecurityError::DataNotClassified)
         }
     }
 
-    /// Check if a user has access to classified data
+    /// Check if a user has access to classified data using Bloom filter for efficiency
     pub fn check_data_access(&self, data_id: &str, user: &TraderId) -> bool {
+        // First use Bloom filter for quick negative check (if Bloom filter says no, then definitely no)
+        if !self.access_control_filter.might_contain(user) {
+            return false;
+        }
+        
+        // If Bloom filter says maybe, do the full check
         if let Some(classification) = self.data_classification.get(data_id) {
             // Owner always has access
             if &classification.owner == user {
@@ -1242,6 +1268,67 @@ mod tests {
         let key_rotation_events = manager.get_events_by_type(EventType::KeyRotation);
         assert_eq!(key_rotation_events.len(), 1);
     }
+
+    #[test]
+    fn test_bloom_filter_access_control() {
+        let mut manager = SecurityManager::new();
+        let owner = "owner".to_string();
+        let user1 = "user1".to_string();
+        let user2 = "user2".to_string();
+        let user3 = "user3".to_string();
+
+        // Classify data
+        manager.classify_data(
+            "data1".to_string(),
+            ClassificationLevel::Confidential,
+            owner.clone(),
+            vec![user1.clone(), user2.clone()],
+        );
+
+        // Check access using Bloom filter optimization
+        assert!(manager.check_data_access("data1", &owner)); // Owner has access
+        assert!(manager.check_data_access("data1", &user1)); // ACL user has access
+        assert!(manager.check_data_access("data1", &user2)); // ACL user has access
+        assert!(!manager.check_data_access("data1", &user3)); // Other user doesn't have access
+
+        // Add user to ACL
+        assert!(manager.add_user_to_acl("data1", user3.clone()).is_ok());
+        assert!(manager.check_data_access("data1", &user3)); // Now user3 has access
+
+        // Public data (not classified) should be accessible
+        assert!(manager.check_data_access("public_data", &user1));
+    }
+
+    #[test]
+    fn test_bloom_filter_basic_functionality() {
+        let mut filter = BloomFilter::new(100, 3);
+        
+        // Test adding and checking items
+        filter.add("test_user_1");
+        filter.add("test_user_2");
+        
+        assert!(filter.might_contain("test_user_1"));
+        assert!(filter.might_contain("test_user_2"));
+        assert!(!filter.might_contain("test_user_3")); // Should definitely not contain this
+        
+        // Test with larger dataset
+        for i in 0..50 {
+            filter.add(&format!("user_{}", i));
+        }
+        
+        // All added items should be found
+        for i in 0..50 {
+            assert!(filter.might_contain(&format!("user_{}", i)));
+        }
+        
+        // Some non-added items might have false positives, but most should be negative
+        let false_positives = (50..100)
+            .filter(|i| filter.might_contain(&format!("user_{}", i)))
+            .count();
+        
+        // With a well-sized filter, false positives should be relatively rare
+        assert!(false_positives < 10); // Less than 20% false positive rate
+    }
 }
 
 /// B+ Tree node for certificate storage
@@ -1509,5 +1596,68 @@ where
 {
     fn default() -> Self {
         Self::new(4) // Default order of 4
+    }
+}
+
+/// Bloom filter for efficient probabilistic set membership testing
+#[derive(Debug, Clone)]
+pub struct BloomFilter {
+    /// Bit array for the filter
+    bits: Vec<bool>,
+    /// Number of hash functions
+    num_hash_functions: usize,
+    /// Size of the bit array
+    size: usize,
+}
+
+impl BloomFilter {
+    /// Create a new Bloom filter with the specified size and number of hash functions
+    pub fn new(size: usize, num_hash_functions: usize) -> Self {
+        Self {
+            bits: vec![false; size],
+            num_hash_functions,
+            size,
+        }
+    }
+
+    /// Add an item to the Bloom filter
+    pub fn add(&mut self, item: &str) {
+        for i in 0..self.num_hash_functions {
+            let hash = self.hash(item, i);
+            let index = hash % self.size;
+            self.bits[index] = true;
+        }
+    }
+
+    /// Check if an item might be in the set (with possible false positives)
+    pub fn might_contain(&self, item: &str) -> bool {
+        for i in 0..self.num_hash_functions {
+            let hash = self.hash(item, i);
+            let index = hash % self.size;
+            if !self.bits[index] {
+                return false;
+            }
+        }
+        true
+    }
+
+    /// Simple hash function using SHA3-256
+    fn hash(&self, item: &str, seed: usize) -> usize {
+        let mut hasher = Sha3_256::new();
+        hasher.update(item.as_bytes());
+        hasher.update(&[seed as u8]);
+        let result = hasher.finalize();
+        
+        // Convert first 8 bytes to usize
+        let mut bytes = [0u8; 8];
+        bytes.copy_from_slice(&result[..8]);
+        usize::from_le_bytes(bytes)
+    }
+}
+
+impl Default for BloomFilter {
+    fn default() -> Self {
+        // Default to a reasonably sized filter with 3 hash functions
+        Self::new(1000, 3)
     }
 }
