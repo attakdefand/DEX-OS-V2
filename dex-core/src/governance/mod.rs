@@ -16,7 +16,7 @@ pub use reference::{
 use crate::types::{TokenId, TraderId};
 use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use thiserror::Error;
@@ -86,6 +86,7 @@ enum ProposalTypeKind {
 }
 
 impl ProposalTypeKind {
+    #[cfg(test)]
     const CONTROLLED: [ProposalTypeKind; 11] = [
         ProposalTypeKind::ParameterChange,
         ProposalTypeKind::TreasuryAllocation,

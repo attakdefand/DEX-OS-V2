@@ -127,6 +127,7 @@ pub struct KeyPair {
     /// Key usage
     pub usage: KeyUsage,
 }
+
 /// Key usage types
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum KeyUsage {
@@ -211,6 +212,10 @@ pub struct SecurityEvent {
     pub timestamp: u64,
     /// Additional data
     pub data: HashMap<String, String>,
+    /// Evidence for the event (for integrity verification)
+    pub evidence: Option<Vec<u8>>,
+    /// Severity level of the event
+    pub severity: SeverityLevel,
 }
 
 /// Types of security events
@@ -222,6 +227,24 @@ pub enum EventType {
     SecurityAlert,
     SystemEvent,
     AuditTrail,
+    /// New event types for comprehensive security auditing
+    AccessViolation,
+    DataModification,
+    KeyRotation,
+    CertificateIssued,
+    CertificateRevoked,
+    PIIDetected,
+    PolicyViolation,
+    ConfigurationChange,
+}
+
+/// Severity levels for security events
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum SeverityLevel {
+    Info,
+    Warning,
+    Error,
+    Critical,
 }
 
 impl SecurityManager {
@@ -405,15 +428,28 @@ impl SecurityManager {
         self.pii_detector.detect(text)
     }
 
-    /// Log a security event
+    /// Log a security event with evidence
     pub fn log_event(
         &mut self,
         event_type: EventType,
         description: String,
         user: Option<TraderId>,
         data: HashMap<String, String>,
+        evidence: Option<Vec<u8>>,
+        severity: SeverityLevel,
     ) -> String {
-        self.event_logger.log(event_type, description, user, data)
+        self.event_logger.log(event_type, description, user, data, evidence, severity)
+    }
+
+    /// Log a security event with default severity (Info)
+    pub fn log_event_simple(
+        &mut self,
+        event_type: EventType,
+        description: String,
+        user: Option<TraderId>,
+        data: HashMap<String, String>,
+    ) -> String {
+        self.log_event(event_type, description, user, data, None, SeverityLevel::Info)
     }
 
     /// Get security events
@@ -424,6 +460,21 @@ impl SecurityManager {
     /// Get events of a specific type
     pub fn get_events_by_type(&self, event_type: EventType) -> Vec<&SecurityEvent> {
         self.event_logger.get_events_by_type(event_type)
+    }
+
+    /// Get events with a specific severity level
+    pub fn get_events_by_severity(&self, severity: SeverityLevel) -> Vec<&SecurityEvent> {
+        self.event_logger.get_events_by_severity(severity)
+    }
+
+    /// Get events for a specific user
+    pub fn get_events_for_user(&self, user: &TraderId) -> Vec<&SecurityEvent> {
+        self.event_logger.get_events_for_user(user)
+    }
+
+    /// Get events within a time range
+    pub fn get_events_in_time_range(&self, start: u64, end: u64) -> Vec<&SecurityEvent> {
+        self.event_logger.get_events_in_time_range(start, end)
     }
 
     /// Generate a new Ed25519 key pair for digital signatures
@@ -782,13 +833,15 @@ impl EventLogger {
         }
     }
 
-    /// Log a security event
+    /// Log a security event with all metadata
     pub fn log(
         &mut self,
         event_type: EventType,
         description: String,
         user: Option<TraderId>,
         data: HashMap<String, String>,
+        evidence: Option<Vec<u8>>,
+        severity: SeverityLevel,
     ) -> String {
         let timestamp = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -804,6 +857,8 @@ impl EventLogger {
             user,
             timestamp,
             data,
+            evidence,
+            severity,
         };
 
         self.events.push(event);
@@ -829,12 +884,49 @@ impl EventLogger {
             .collect()
     }
 
+    /// Get events with a specific severity level
+    pub fn get_events_by_severity(&self, severity: SeverityLevel) -> Vec<&SecurityEvent> {
+        self.events
+            .iter()
+            .filter(|event| event.severity == severity)
+            .collect()
+    }
+
     /// Get events for a specific user
     pub fn get_events_for_user(&self, user: &TraderId) -> Vec<&SecurityEvent> {
         self.events
             .iter()
             .filter(|event| event.user.as_ref() == Some(user))
             .collect()
+    }
+
+    /// Get events within a time range
+    pub fn get_events_in_time_range(&self, start: u64, end: u64) -> Vec<&SecurityEvent> {
+        self.events
+            .iter()
+            .filter(|event| event.timestamp >= start && event.timestamp <= end)
+            .collect()
+    }
+
+    /// Export events in a structured format for analysis
+    pub fn export_events(&self) -> String {
+        serde_json::to_string_pretty(&self.events).unwrap_or_else(|_| "[]".to_string())
+    }
+
+    /// Get event statistics
+    pub fn get_event_statistics(&self) -> HashMap<String, usize> {
+        let mut stats = HashMap::new();
+        
+        // Count by event type
+        for event in &self.events {
+            let count = stats.entry(format!("type_{:?}", event.event_type)).or_insert(0);
+            *count += 1;
+            
+            let count = stats.entry(format!("severity_{:?}", event.severity)).or_insert(0);
+            *count += 1;
+        }
+        
+        stats
     }
 }
 
@@ -896,10 +988,9 @@ mod tests {
     fn test_sign_and_verify_data() {
         let mut manager = SecurityManager::new();
         let data = b"important data to sign";
-        let private_key = b"private_key";
-        let public_key = b"public_key";
+        let (private_key, public_key) = SecurityManager::generate_key_pair();
 
-        let signature_id = manager.sign_data(data, private_key, public_key);
+        let signature_id = manager.sign_data(data, &private_key, &public_key);
         assert!(!signature_id.is_empty());
 
         // Verify correct data
@@ -1071,6 +1162,8 @@ mod tests {
             "User login attempt".to_string(),
             Some(user.clone()),
             data,
+            None,
+            SeverityLevel::Info,
         );
 
         assert!(!event_id.is_empty());
@@ -1083,6 +1176,7 @@ mod tests {
         assert_eq!(event.event_type, EventType::LoginAttempt);
         assert_eq!(event.user, Some(user.clone()));
         assert_eq!(event.data.len(), 2);
+        assert_eq!(event.severity, SeverityLevel::Info);
 
         // Check events by type
         let login_events = manager.get_events_by_type(EventType::LoginAttempt);
@@ -1091,5 +1185,57 @@ mod tests {
         // Check events for user
         let user_events = manager.event_logger.get_events_for_user(&user);
         assert_eq!(user_events.len(), 1);
+
+        // Check events by severity
+        let info_events = manager.get_events_by_severity(SeverityLevel::Info);
+        assert_eq!(info_events.len(), 1);
+    }
+
+    #[test]
+    fn test_comprehensive_event_logging() {
+        let mut manager = SecurityManager::new();
+        let user = "user1".to_string();
+
+        // Log different types of events
+        let mut data = HashMap::new();
+        data.insert("resource".to_string(), "sensitive_data".to_string());
+        
+        // Log access violation
+        manager.log_event(
+            EventType::AccessViolation,
+            "Unauthorized access attempt".to_string(),
+            Some(user.clone()),
+            data.clone(),
+            Some(b"evidence_data".to_vec()),
+            SeverityLevel::Error,
+        );
+
+        // Log key rotation
+        manager.log_event(
+            EventType::KeyRotation,
+            "User key rotated".to_string(),
+            Some(user.clone()),
+            HashMap::new(),
+            None,
+            SeverityLevel::Info,
+        );
+
+        // Check events
+        let events = manager.get_events();
+        assert_eq!(events.len(), 2);
+
+        // Check events by severity
+        let error_events = manager.get_events_by_severity(SeverityLevel::Error);
+        assert_eq!(error_events.len(), 1);
+
+        let info_events = manager.get_events_by_severity(SeverityLevel::Info);
+        assert_eq!(info_events.len(), 1);
+
+        // Check events by type
+        let access_violation_events = manager.get_events_by_type(EventType::AccessViolation);
+        assert_eq!(access_violation_events.len(), 1);
+
+        let key_rotation_events = manager.get_events_by_type(EventType::KeyRotation);
+        assert_eq!(key_rotation_events.len(), 1);
     }
 }

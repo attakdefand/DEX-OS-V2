@@ -7,6 +7,7 @@ use dex_core::{
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct SecurityRow {
     layer: String,
     component: String,
@@ -86,6 +87,8 @@ fn security_reference_vault_logs_evidence_events() {
         format!("{} evidence recorded", row.test_name),
         None,
         data,
+        Some(vec![0, 1, 2, 3]),
+        dex_core::security::SeverityLevel::Warning,
     );
 
     let events = manager.get_events();

@@ -247,6 +247,8 @@ pub fn test_security__governance_and_policy__snapshot__logs_evidence__on_request
         "Voting snapshot created for proposal".to_string(),
         Some("system".to_string()),
         event_data,
+        None,
+        dex_core::security::SeverityLevel::Info,
     );
 
     assert!(!event_id.is_empty());
@@ -434,6 +436,8 @@ pub fn test_security__governance_and_policy__keeper__logs_evidence__on_request()
         "Service health check performed".to_string(),
         Some("keeper".to_string()),
         event_data,
+        None,
+        dex_core::security::SeverityLevel::Info,
     );
 
     assert!(!event_id.is_empty());
@@ -672,6 +676,8 @@ pub fn test_security__governance_and_policy__indexer__logs_evidence__on_request(
         "Data indexed by indexer service".to_string(),
         Some("indexer".to_string()),
         event_data,
+        None,
+        dex_core::security::SeverityLevel::Info,
     );
 
     assert!(!event_id.is_empty());
