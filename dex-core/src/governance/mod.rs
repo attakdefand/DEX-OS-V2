@@ -521,6 +521,65 @@ pub struct ProposalContext {
 }
 
 impl GlobalDAO {
+    /// Create a new DAO with default parameters and a shared governance reference index.
+    pub fn new() -> Self {
+        let reference_index = GovernanceReferenceIndex::shared()
+            .or_else(|_| GovernanceReferenceIndex::load().map(Arc::new))
+            .unwrap();
+
+        Self {
+            proposals: HashMap::new(),
+            members: HashMap::new(),
+            total_voting_power: 0,
+            parameters: GovernanceParameters {
+                min_proposal_power: 100,
+                voting_period: 3600,
+                quorum_percentage: 20,
+                threshold_percentage: 50,
+                execution_delay: 3600,
+                max_active_proposals: 10,
+            },
+            reference_index,
+            ai_models: HashMap::new(),
+            emergency_council: Vec::new(),
+        }
+    }
+
+    /// Return a reference to the governance reference index.
+    pub fn reference_index(&self) -> &GovernanceReferenceIndex { &self.reference_index }
+
+    /// Add a DAO member and adjust total voting power. Optionally flag as council member.
+    pub fn add_member(&mut self, trader_id: TraderId, voting_power: u64, is_council_member: bool) {
+        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+        let member = DAOMember { trader_id: trader_id.clone(), voting_power, joined_at: now, is_council_member };
+        self.members.insert(trader_id.clone(), member);
+        self.total_voting_power = self.members.values().map(|m| m.voting_power).sum();
+        if is_council_member && !self.emergency_council.contains(&trader_id) {
+            self.emergency_council.push(trader_id);
+        }
+    }
+
+    /// Attach a governance reference control by selector from the dataset to a proposal.
+    pub fn attach_reference_control(
+        &mut self,
+        proposal_id: &str,
+        domain: GovernanceDomain,
+        component: GovernanceComponent,
+        behavior: &str,
+        condition: &str,
+    ) -> Result<(), GovernanceError> {
+        let scenario = self
+            .reference_index
+            .find(&domain, &component, behavior, condition)
+            .ok_or(GovernanceError::ReferenceScenarioNotFound)?
+            .clone();
+        let proposal = self
+            .proposals
+            .get_mut(proposal_id)
+            .ok_or(GovernanceError::ProposalNotFound)?;
+        proposal.reference_control = Some(scenario);
+        Ok(())
+    }
     pub fn submit_proposal_with_risk(
         &mut self,
         proposal_id: &str,

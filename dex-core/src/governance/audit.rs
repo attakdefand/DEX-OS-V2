@@ -116,7 +116,6 @@ impl AuditStore {
         let rec = self.find_by_id(id)?.ok_or_else(|| AuditError::Io("evidence id not found".into()))?;
         let mut file = File::open(self.base_dir.join(&rec.content_hash)).map_err(|e| AuditError::Io(e.to_string()))?;
         let mut buf = Vec::new();
-        use std::io::Read as _;
         file.read_to_end(&mut buf).map_err(|e| AuditError::Io(e.to_string()))?;
         let hash = Self::content_hash(&buf);
         if hash != rec.content_hash { return Err(AuditError::Io("content hash mismatch".into())); }
