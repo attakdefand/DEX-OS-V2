@@ -7,6 +7,7 @@ members = [
     "run_security_tests",
     "global_identity_tests",
     "reference-tools",
+    "run_certificate_security_tests",
 ]
 resolver = "2"
 

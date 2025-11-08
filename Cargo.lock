@@ -2061,6 +2061,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "run_certificate_security_tests"
+version = "0.1.0"
+dependencies = [
+ "dex-core",
+]
+
+[[package]]
 name = "run_security_tests"
 version = "0.1.0"
 dependencies = [
