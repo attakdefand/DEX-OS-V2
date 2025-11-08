@@ -5,5 +5,7 @@
 //! - Infrastructure,Network,Network,Gossip Protocol,Node Discovery,Medium
 
 pub mod gossip;
+pub mod gossip_sync;
 
 pub use gossip::{GossipConfig, GossipError, GossipNode};
+pub use gossip_sync::{GossipSyncConfig, GossipSyncError, GossipSyncNode, SyncData};

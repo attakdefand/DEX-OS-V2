@@ -3,6 +3,33 @@
 [![Rust CI](https://github.com/attakdefand/DEX-OS-V2/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/attakdefand/DEX-OS-V2/actions/workflows/rust-ci.yml)
 [![Reference Validation](https://github.com/attakdefand/DEX-OS-V2/actions/workflows/reference-validation.yml/badge.svg)](https://github.com/attakdefand/DEX-OS-V2/actions/workflows/reference-validation.yml)
 
+## Change Control (PR Gate) — Quick Start
+
+- Configure repo variables (Settings → Actions → Variables):
+  - `ENFORCE_CHANGE_CONTROL = true`
+  - `REQUIRED_APPROVERS = sengkeat, jonathanseng` (comma‑separated GitHub logins)
+  - Optional: `CHANGE_EVIDENCE_PATH` and `CHANGE_SIGNATURE_PATH` (defaults to `.change-control/signed_change_approval.json` and `.sig`)
+- Configure repo secrets (Settings → Actions → Secrets):
+  - Provide one verification method:
+    - `COSIGN_PUBLIC_KEY` (static PEM), or `COSIGN_KEY` (KMS URI), or `COSIGN_CERT` + `COSIGN_CERT_CHAIN` (keyless cert)
+- In your PR:
+  - Edit `.change-control/signed_change_approval.json` with change details.
+  - Sign it with cosign and commit the signature:
+    - `cosign sign-blob --key cosign.key --output-signature .change-control/signed_change_approval.json.sig .change-control/signed_change_approval.json`
+  - Obtain approvals from users in `REQUIRED_APPROVERS`.
+- The workflow `.github/workflows/change-control.yml` enforces approvals and signature verification before merge.
+
+## After‑Deploy Gate — Quick Start
+
+- The `Deploy` workflow (`.github/workflows/deploy.yml`) runs on push to `main` and `workflow_dispatch`.
+- It generates `after_deploy_approval.json`, signs it keylessly (OIDC), and uploads the artifact.
+- Enable the gate by setting repo variable `ENFORCE_AFTER_DEPLOY = true`.
+- Optional variables (defaults shown):
+  - `AFTER_DEPLOY_ARTIFACT_NAME=after-deploy-approval`
+  - `AFTER_DEPLOY_EVIDENCE_FILE=after_deploy_approval.json`
+  - `AFTER_DEPLOY_SIGNATURE_FILE=after_deploy_approval.json.sig`
+- The gate at `.github/workflows/after-deploy-gate.yml` verifies the signature after a successful deploy.
+
 A high-performance decentralized exchange core engine built with Rust, WebAssembly, and modern database technologies.
 
 ## Project Structure

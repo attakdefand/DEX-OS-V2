@@ -31,6 +31,7 @@ pub mod types;
 
 // New modules for Priority 3 features
 pub mod consensus;
+pub mod crypto;
 pub mod indexer;
 pub mod keeper;
 pub mod network;

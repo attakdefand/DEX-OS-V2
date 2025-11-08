@@ -1,0 +1,33 @@
+[package]
+name = "bloom_filter_access_control"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sha3 = "0.10"
+
+[lib]
+name = "bloom_filter_access_control"
+path = "src/lib.rs"
+
+[workspace]
+members = [
+    "dex-core",
+    "dex-wasm",
+    "dex-db",
+    "dex-api",
+    "run_security_tests",
+    "global_identity_tests",
+    "reference-tools",
+    "run_certificate_security_tests",
+]
+resolver = "2"
+
+[workspace.dependencies]
+tokio = { version = "1.0", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+js-sys = "0.3"
+serde-wasm-bindgen = "0.4"

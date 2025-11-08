@@ -18,3 +18,5 @@ tokio = { workspace = true }
 ed25519-dalek = "2.0"
 rand = "0.8"
 zeroize = "1.6"
+
+tokio-test = "0.4"
