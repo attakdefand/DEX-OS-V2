@@ -545,6 +545,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "dex-api-minimal"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tokio",
+ "warp",
+]
+
+[[package]]
 name = "dex-core"
 version = "0.1.0"
 dependencies = [

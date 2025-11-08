@@ -266,11 +266,12 @@ pub fn routes(
         .or(health)
         .with(cors)
         .recover(handle_rejection)
+        .boxed()
 }
 
 fn auth_routes(
     state: ApiState,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> warp::filters::BoxedFilter<(impl warp::Reply,)> {
     let shared = warp::path("auth")
         .and(warp::path("token"))
         .and(warp::path("shared"))
@@ -297,7 +298,7 @@ fn auth_routes(
         .and(warp::body::json())
         .and_then(handle_wallet_token);
 
-    shared.or(challenge).or(wallet_token)
+    shared.or(challenge).or(wallet_token).boxed()
 }
 
 /// Helper to pass state to handlers
@@ -338,9 +339,11 @@ async fn handle_create_order(
     let order_for_storage = order.clone();
 
     if claims.sub != order_for_storage.trader_id {
-        return Ok(error_reply(
-            "forbidden",
-            "trader_id does not match authenticated subject",
+        return Ok(warp::reply::with_status(
+            warp::reply::json(&ErrorResponse {
+                code: "forbidden",
+                message: "trader_id does not match authenticated subject".to_string(),
+            }),
             StatusCode::FORBIDDEN,
         ));
     }
@@ -352,9 +355,11 @@ async fn handle_create_order(
     let mut trades = match result {
         Ok(trades) => trades,
         Err(err) => {
-            return Ok(error_reply(
-                "order_book_error",
-                err.to_string(),
+            return Ok(warp::reply::with_status(
+                warp::reply::json(&ErrorResponse {
+                    code: "order_book_error",
+                    message: err.to_string(),
+                }),
                 StatusCode::CONFLICT,
             ))
         }
@@ -362,9 +367,11 @@ async fn handle_create_order(
 
     if let Err(err) = state.database.save_order(&order_for_storage).await {
         eprintln!("failed to persist order {}: {}", order_id, err);
-        return Ok(error_reply(
-            "storage_error",
-            "failed to persist order",
+        return Ok(warp::reply::with_status(
+            warp::reply::json(&ErrorResponse {
+                code: "storage_error",
+                message: "failed to persist order".to_string(),
+            }),
             StatusCode::INTERNAL_SERVER_ERROR,
         ));
     }
@@ -376,9 +383,11 @@ async fn handle_create_order(
         trade.id = trade_id;
         if let Err(err) = state.database.save_trade(trade).await {
             eprintln!("failed to persist trade {}: {}", trade_id, err);
-            return Ok(error_reply(
-                "storage_error",
-                "failed to persist trade",
+            return Ok(warp::reply::with_status(
+                warp::reply::json(&ErrorResponse {
+                    code: "storage_error",
+                    message: "failed to persist trade".to_string(),
+                }),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ));
         }
@@ -507,28 +516,38 @@ async fn handle_shared_token(
     state: ApiState,
     req: SharedTokenRequest,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    if state.config.trader_secrets.is_empty() {
+    if req.trader_id.is_empty() || req.secret.is_empty() {
         return Ok(error_reply(
-            "unauthorized",
-            "shared secret token issuance is disabled",
-            StatusCode::UNAUTHORIZED,
+            "invalid_request",
+            "trader_id and secret are required",
+            StatusCode::BAD_REQUEST,
         ));
     }
-    let secret = match state.config.trader_secrets.get(&req.trader_id) {
-        Some(secret) => secret,
-        None => {
+
+    // Normalize trader_id (copy of validation::normalize_trader_id)
+    let trader_id = {
+        let trimmed = req.trader_id.trim();
+        if trimmed.len() < 3 || trimmed.len() > 64 || !trimmed.is_ascii() {
             return Ok(error_reply(
-                "unauthorized",
-                "invalid trader credentials",
-                StatusCode::UNAUTHORIZED,
+                "invalid_trader_id",
+                "trader_id must be between 3 and 64 visible characters",
+                StatusCode::BAD_REQUEST,
             ))
         }
+        trimmed.to_string()
     };
 
-    if *secret.expose_secret() != req.secret {
+    // Check if the trader_id exists in the config and if the secret matches
+    let secret_valid = if let Some(expected_secret) = state.config.trader_secrets.get(&trader_id) {
+        expected_secret.expose_secret() == &req.secret
+    } else {
+        false
+    };
+
+    if !secret_valid {
         return Ok(error_reply(
-            "unauthorized",
-            "invalid trader credentials",
+            "invalid_secret",
+            "invalid shared secret",
             StatusCode::UNAUTHORIZED,
         ));
     }
@@ -538,9 +557,10 @@ async fn handle_shared_token(
         state.config.jwt_default_ttl_seconds,
         state.config.jwt_max_ttl_seconds,
     );
+
     let issued = match state
         .auth
-        .issue_token(req.trader_id.clone(), ttl, req.audience.clone())
+        .issue_token(trader_id, ttl, req.audience.clone())
     {
         Ok(token) => token,
         Err(err) => {
@@ -557,7 +577,10 @@ async fn handle_shared_token(
         token: issued.token,
         expires_at: issued.expires_at,
     };
-    Ok(warp::reply::json(&response))
+    Ok(warp::reply::with_status(
+        warp::reply::json(&response),
+        StatusCode::OK,
+    ))
 }
 
 async fn handle_wallet_challenge(
@@ -579,7 +602,10 @@ async fn handle_wallet_challenge(
         challenge: issued.challenge,
         expires_at: issued.expires_at,
     };
-    Ok(warp::reply::json(&response))
+    Ok(warp::reply::with_status(
+        warp::reply::json(&response),
+        StatusCode::OK,
+    ))
 }
 
 async fn handle_wallet_token(
@@ -649,7 +675,10 @@ async fn handle_wallet_token(
         token: issued.token,
         expires_at: issued.expires_at,
     };
-    Ok(warp::reply::json(&response))
+    Ok(warp::reply::with_status(
+        warp::reply::json(&response),
+        StatusCode::OK,
+    ))
 }
 
 async fn depth_ws_session(socket: WebSocket, state: ApiState, levels: usize) {
@@ -873,6 +902,7 @@ mod validation {
     use thiserror::Error;
 
     /// Result of validating a `CreateOrderRequest`.
+    #[derive(Debug)]
     pub struct ValidatedCreateOrder {
         pub trader_id: TraderId,
         pub pair: TradingPair,
@@ -1164,7 +1194,7 @@ mod validation {
             let secret = SecretString::from(TEST_SECRET.to_string());
             let auth = Arc::new(AuthManager::new(&secret, "test-issuer"));
             let mut trader_secrets = HashMap::new();
-            trader_secrets.insert("alice".into(), SecretString::from("shared-secret"));
+            trader_secrets.insert("alice".to_string(), SecretString::from("shared-secret".to_string()));
             let config = Config {
                 database_url: SecretString::from(TEST_DB_URL.to_string()),
                 jwt_secret: secret.clone(),
