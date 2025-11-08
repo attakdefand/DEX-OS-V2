@@ -30,8 +30,10 @@ pub mod treasury;
 pub mod types;
 
 // New modules for Priority 3 features
+pub mod consensus;
 pub mod indexer;
 pub mod keeper;
+pub mod network;
 pub mod snapshot;
 
 #[cfg(test)]

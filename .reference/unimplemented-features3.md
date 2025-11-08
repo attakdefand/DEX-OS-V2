@@ -23,10 +23,11 @@ Based on my analysis of the DEX-OS-V2.csv file, here are the unimplemented Prior
 ## Unimplemented Priority 3 Features
 
 ### Core Trading
-1. **Governance** - Quadratic Voting for Decision Making
-2. **Governance** - Snapshot Mechanism for Off-chain Voting
-3. **Keeper** - Health Check for Service Monitoring
-4. **Indexer** - Filtering Engine for Selective Data Capture
+1. **Governance** - Quadratic Voting for Decision Making [implemented]
+2. **Governance** - Snapshot Mechanism for Off-chain Voting [implemented]
+3. **Keeper** - Health Check for Service Monitoring [implemented]
+4. **Indexer** - Filtering Engine for Selective Data Capture [implemented]
+
 
 ### Infrastructure
 5. **Database** - Sharding for Data Partitioning

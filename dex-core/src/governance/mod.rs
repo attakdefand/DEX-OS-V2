@@ -14,8 +14,10 @@ pub use reference::{
 };
 
 use crate::types::{TokenId, TraderId};
+use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use thiserror::Error;
 
@@ -59,6 +61,8 @@ pub enum ProposalType {
     NewMarketListing,
     FeeStructureChange,
     EmergencyPause,
+    TreasuryAutomation,
+    ObservabilityUpgrade,
     Other(String),
 }
 
@@ -205,7 +209,7 @@ pub struct GlobalDAO {
     /// Governance parameters
     parameters: GovernanceParameters,
     /// Governance control matrix derived from the reference dataset
-    reference_index: GovernanceReferenceIndex,
+    reference_index: Arc<GovernanceReferenceIndex>,
     /// AI models used for governance
     ai_models: HashMap<String, AIModel>,
     /// Emergency council members (with special powers)
@@ -276,11 +280,23 @@ pub struct GovernanceReferenceIndex {
     test_index: HashMap<String, usize>,
 }
 
+static GOVERNANCE_REFERENCE_CACHE: OnceCell<Arc<GovernanceReferenceIndex>> = OnceCell::new();
+
 impl GovernanceReferenceIndex {
     /// Loads the governance reference CSV and builds a searchable index.
     pub fn load() -> Result<Self, GovernanceReferenceError> {
         let scenarios = load_governance_reference()?;
         Ok(Self::from_scenarios(scenarios))
+    }
+
+    /// Returns a shared, cached instance of the governance reference index.
+    pub fn shared() -> Result<Arc<Self>, GovernanceReferenceError> {
+        GOVERNANCE_REFERENCE_CACHE
+            .get_or_try_init(|| {
+                let index = GovernanceReferenceIndex::load()?;
+                Ok(Arc::new(index))
+            })
+            .map(Arc::clone)
     }
 
     fn from_scenarios(scenarios: Vec<GovernanceScenario>) -> Self {
@@ -361,6 +377,22 @@ impl From<&GovernanceScenario> for ReferenceKey {
     }
 }
 
+#[derive(Debug, Clone)]
+struct RequiredReference {
+    domain: GovernanceDomain,
+    component: GovernanceComponent,
+}
+
+impl RequiredReference {
+    fn new(domain: GovernanceDomain, component: GovernanceComponent) -> Self {
+        Self { domain, component }
+    }
+
+    fn matches(&self, scenario: &GovernanceScenario) -> bool {
+        scenario.domain == self.domain && scenario.component == self.component
+    }
+}
+
 impl GlobalDAO {
     /// Create a new Global DAO with default parameters
     pub fn new() -> Self {
@@ -369,7 +401,7 @@ impl GlobalDAO {
 
     /// Create a new Global DAO wired to the governance reference dataset.
     pub fn with_reference_data() -> Result<Self, GovernanceReferenceError> {
-        let reference_index = GovernanceReferenceIndex::load()?;
+        let reference_index = GovernanceReferenceIndex::shared()?;
 
         Ok(Self {
             proposals: HashMap::new(),
@@ -407,7 +439,7 @@ impl GlobalDAO {
 
     /// Returns the immutable governance reference index.
     pub fn reference_index(&self) -> &GovernanceReferenceIndex {
-        &self.reference_index
+        self.reference_index.as_ref()
     }
 
     /// Attaches a governance reference control to an existing proposal.
@@ -443,6 +475,61 @@ impl GlobalDAO {
             .get(proposal_id)
             .ok_or(GovernanceError::ProposalNotFound)?;
         Ok(proposal.reference_control.as_ref())
+    }
+
+    fn enforce_reference_policy(proposal: &Proposal) -> Result<(), GovernanceError> {
+        let Some(required) = Self::required_reference_for(&proposal.proposal_type) else {
+            return Ok(());
+        };
+
+        let reference = proposal
+            .reference_control
+            .as_ref()
+            .ok_or(GovernanceError::ReferenceControlMissing)?;
+
+        if required.matches(reference) {
+            Ok(())
+        } else {
+            Err(GovernanceError::ReferenceControlMismatch)
+        }
+    }
+
+    fn required_reference_for(proposal_type: &ProposalType) -> Option<RequiredReference> {
+        match proposal_type {
+            ProposalType::ParameterChange => Some(RequiredReference::new(
+                GovernanceDomain::GovernancePolicyFramework,
+                GovernanceComponent::PolicyEngine,
+            )),
+            ProposalType::TreasuryAllocation => Some(RequiredReference::new(
+                GovernanceDomain::RiskExceptionManagement,
+                GovernanceComponent::RiskRegistry,
+            )),
+            ProposalType::ProtocolUpgrade => Some(RequiredReference::new(
+                GovernanceDomain::AuditEvidenceManagement,
+                GovernanceComponent::AuditLogger,
+            )),
+            ProposalType::EmergencyPause => Some(RequiredReference::new(
+                GovernanceDomain::DaoOnChainGovernance,
+                GovernanceComponent::DaoGovernor,
+            )),
+            ProposalType::NewMarketListing => Some(RequiredReference::new(
+                GovernanceDomain::ComplianceRegulatoryAlignment,
+                GovernanceComponent::ComplianceMapper,
+            )),
+            ProposalType::FeeStructureChange => Some(RequiredReference::new(
+                GovernanceDomain::PolicyAsCodeAutomation,
+                GovernanceComponent::RegoValidator,
+            )),
+            ProposalType::TreasuryAutomation => Some(RequiredReference::new(
+                GovernanceDomain::RiskExceptionManagement,
+                GovernanceComponent::RiskRegistry,
+            )),
+            ProposalType::ObservabilityUpgrade => Some(RequiredReference::new(
+                GovernanceDomain::TransparencyReporting,
+                GovernanceComponent::ReportDashboard,
+            )),
+            _ => None,
+        }
     }
 
     /// Create a new governance proposal
@@ -522,6 +609,8 @@ impl GlobalDAO {
         if proposal.status != ProposalStatus::Draft {
             return Err(GovernanceError::ProposalNotInDraft);
         }
+
+        Self::enforce_reference_policy(proposal)?;
 
         proposal.status = ProposalStatus::Active;
         Ok(())
@@ -780,6 +869,10 @@ pub enum GovernanceError {
     NotEmergencyCouncilMember,
     #[error("reference scenario not found for the requested selector")]
     ReferenceScenarioNotFound,
+    #[error("proposal requires an attached governance reference control")]
+    ReferenceControlMissing,
+    #[error("attached governance reference control does not satisfy policy requirements")]
+    ReferenceControlMismatch,
 }
 
 #[cfg(test)]
@@ -787,6 +880,31 @@ mod tests {
     use super::*;
 
     const POLICY_REFERENCE_TEST: &str = "test_governance_compliance__governance_policy_and_framework__policy_engine__defines_policy__during_commit";
+
+    fn attach_reference(
+        dao: &mut GlobalDAO,
+        proposal_id: &str,
+        domain: GovernanceDomain,
+        component: GovernanceComponent,
+    ) {
+        dao.attach_reference_control(
+            proposal_id,
+            domain,
+            component,
+            "defines_policy",
+            "during_commit",
+        )
+        .expect("failed to attach governance control");
+    }
+
+    fn attach_policy_reference(dao: &mut GlobalDAO, proposal_id: &str) {
+        attach_reference(
+            dao,
+            proposal_id,
+            GovernanceDomain::GovernancePolicyFramework,
+            GovernanceComponent::PolicyEngine,
+        );
+    }
 
     #[test]
     fn test_global_dao_creation() {
@@ -855,6 +973,8 @@ mod tests {
             )
             .unwrap();
 
+        attach_policy_reference(&mut dao, &proposal_id);
+
         // Submit proposal
         assert!(dao.submit_proposal(&proposal_id).is_ok());
 
@@ -884,6 +1004,7 @@ mod tests {
             )
             .unwrap();
 
+        attach_policy_reference(&mut dao, &proposal_id);
         dao.submit_proposal(&proposal_id).unwrap();
 
         // Vote yes
@@ -922,6 +1043,7 @@ mod tests {
             )
             .unwrap();
 
+        attach_policy_reference(&mut dao, &proposal_id);
         dao.submit_proposal(&proposal_id).unwrap();
 
         // Abstain vote
@@ -992,6 +1114,7 @@ mod tests {
             )
             .unwrap();
 
+        attach_policy_reference(&mut dao, &proposal_id);
         dao.submit_proposal(&proposal_id).unwrap();
 
         // Emergency pause by council member
@@ -1013,6 +1136,7 @@ mod tests {
             )
             .unwrap();
 
+        attach_policy_reference(&mut dao, &proposal_id2);
         dao.submit_proposal(&proposal_id2).unwrap();
 
         let result = dao.emergency_pause(&proposal_id2, &regular_member2);
@@ -1107,5 +1231,180 @@ mod tests {
             .expect("proposal exists")
             .expect("reference control should be present");
         assert_eq!(lookup.test_name, reference.test_name);
+    }
+
+    #[test]
+    fn test_submit_requires_reference_for_parameter_change() {
+        let mut dao = GlobalDAO::new();
+        let trader_id = "trader_policy".to_string();
+
+        dao.add_member(trader_id.clone(), 2_000, false);
+        let proposal_id = dao
+            .create_proposal(
+                "Policy change".to_string(),
+                "Adjusts policy enforcement".to_string(),
+                ProposalType::ParameterChange,
+                Proposer::Human {
+                    trader_id: trader_id.clone(),
+                },
+            )
+            .unwrap();
+
+        let err = dao.submit_proposal(&proposal_id).unwrap_err();
+        assert!(matches!(err, GovernanceError::ReferenceControlMissing));
+
+        attach_policy_reference(&mut dao, &proposal_id);
+        assert!(dao.submit_proposal(&proposal_id).is_ok());
+    }
+
+    #[test]
+    fn test_reference_control_mismatch_blocks_submission() {
+        let mut dao = GlobalDAO::new();
+        let trader_id = "trader_bad_reference".to_string();
+        dao.add_member(trader_id.clone(), 2_000, false);
+
+        let proposal_id = dao
+            .create_proposal(
+                "Policy change".to_string(),
+                "Adjust a parameter".to_string(),
+                ProposalType::ParameterChange,
+                Proposer::Human {
+                    trader_id: trader_id.clone(),
+                },
+            )
+            .unwrap();
+
+        // Manually attach a mismatched control (report_dashboard) to simulate a violation.
+        let mismatched_control = dao
+            .reference_index()
+            .scenarios()
+            .iter()
+            .find(|scenario| scenario.component == GovernanceComponent::ReportDashboard)
+            .cloned()
+            .expect("expected to find report_dashboard scenario");
+
+        dao.proposals
+            .get_mut(&proposal_id)
+            .unwrap()
+            .reference_control = Some(mismatched_control);
+
+        let err = dao.submit_proposal(&proposal_id).unwrap_err();
+        assert!(matches!(err, GovernanceError::ReferenceControlMismatch));
+    }
+
+    #[test]
+    fn test_fee_structure_change_requires_policy_as_code_reference() {
+        let mut dao = GlobalDAO::new();
+        let trader_id = "fee_reference".to_string();
+        dao.add_member(trader_id.clone(), 2_000, false);
+
+        let proposal_id = dao
+            .create_proposal(
+                "Update fee tiers".to_string(),
+                "Align fee model with policy gates".to_string(),
+                ProposalType::FeeStructureChange,
+                Proposer::Human {
+                    trader_id: trader_id.clone(),
+                },
+            )
+            .unwrap();
+
+        let err = dao.submit_proposal(&proposal_id).unwrap_err();
+        assert!(matches!(err, GovernanceError::ReferenceControlMissing));
+
+        attach_reference(
+            &mut dao,
+            &proposal_id,
+            GovernanceDomain::PolicyAsCodeAutomation,
+            GovernanceComponent::RegoValidator,
+        );
+        assert!(dao.submit_proposal(&proposal_id).is_ok());
+    }
+
+    #[test]
+    fn test_new_market_listing_requires_compliance_reference() {
+        let mut dao = GlobalDAO::new();
+        let trader_id = "listing_reference".to_string();
+        dao.add_member(trader_id.clone(), 2_000, false);
+
+        let proposal_id = dao
+            .create_proposal(
+                "List new market".to_string(),
+                "Add asset pair pending compliance review".to_string(),
+                ProposalType::NewMarketListing,
+                Proposer::Human {
+                    trader_id: trader_id.clone(),
+                },
+            )
+            .unwrap();
+
+        let err = dao.submit_proposal(&proposal_id).unwrap_err();
+        assert!(matches!(err, GovernanceError::ReferenceControlMissing));
+
+        attach_reference(
+            &mut dao,
+            &proposal_id,
+            GovernanceDomain::ComplianceRegulatoryAlignment,
+            GovernanceComponent::ComplianceMapper,
+        );
+        assert!(dao.submit_proposal(&proposal_id).is_ok());
+    }
+
+    #[test]
+    fn test_treasury_automation_requires_risk_reference() {
+        let mut dao = GlobalDAO::new();
+        let trader_id = "treasury_automation".to_string();
+        dao.add_member(trader_id.clone(), 2_000, false);
+
+        let proposal_id = dao
+            .create_proposal(
+                "Automate treasury operations".to_string(),
+                "Tie payouts to automated policies".to_string(),
+                ProposalType::TreasuryAutomation,
+                Proposer::Human {
+                    trader_id: trader_id.clone(),
+                },
+            )
+            .unwrap();
+
+        let err = dao.submit_proposal(&proposal_id).unwrap_err();
+        assert!(matches!(err, GovernanceError::ReferenceControlMissing));
+
+        attach_reference(
+            &mut dao,
+            &proposal_id,
+            GovernanceDomain::RiskExceptionManagement,
+            GovernanceComponent::RiskRegistry,
+        );
+        assert!(dao.submit_proposal(&proposal_id).is_ok());
+    }
+
+    #[test]
+    fn test_observability_upgrade_requires_reporting_reference() {
+        let mut dao = GlobalDAO::new();
+        let trader_id = "observability_reference".to_string();
+        dao.add_member(trader_id.clone(), 2_000, false);
+
+        let proposal_id = dao
+            .create_proposal(
+                "Upgrade observability stack".to_string(),
+                "Add mandatory dashboards and alerts".to_string(),
+                ProposalType::ObservabilityUpgrade,
+                Proposer::Human {
+                    trader_id: trader_id.clone(),
+                },
+            )
+            .unwrap();
+
+        let err = dao.submit_proposal(&proposal_id).unwrap_err();
+        assert!(matches!(err, GovernanceError::ReferenceControlMissing));
+
+        attach_reference(
+            &mut dao,
+            &proposal_id,
+            GovernanceDomain::TransparencyReporting,
+            GovernanceComponent::ReportDashboard,
+        );
+        assert!(dao.submit_proposal(&proposal_id).is_ok());
     }
 }

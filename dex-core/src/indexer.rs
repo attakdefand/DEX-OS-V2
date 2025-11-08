@@ -2,13 +2,14 @@
 //!
 //! This module implements the Priority 3 feature from DEX-OS-V2.csv:
 //! - Core Trading,Indexer,Indexer,Filtering Engine,Selective Data Capture,Medium
+//! - Infrastructure,Indexer,Indexer,Materialized Views,Data Aggregation,Medium
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 use thiserror::Error;
 
-/// Indexer service with filtering capabilities
+/// Indexer service with filtering capabilities and materialized views
 #[derive(Debug, Clone)]
 pub struct IndexerService {
     /// Data filters
@@ -17,6 +18,8 @@ pub struct IndexerService {
     entries: Vec<IndexedData>,
     /// Index for quick lookup by filter
     filter_index: HashMap<String, Vec<usize>>,
+    /// Materialized views for aggregated data
+    materialized_views: HashMap<String, MaterializedView>,
     /// Maximum number of entries to store
     max_entries: usize,
 }
@@ -72,6 +75,36 @@ pub struct IndexedData {
     pub metadata: HashMap<String, String>,
 }
 
+/// Materialized view for aggregated data
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MaterializedView {
+    /// View identifier
+    pub id: String,
+    /// View name
+    pub name: String,
+    /// Filter ID this view is based on
+    pub filter_id: String,
+    /// Aggregated data
+    pub aggregated_data: String,
+    /// Last update timestamp
+    pub last_updated: u64,
+    /// View configuration
+    pub config: MaterializedViewConfig,
+}
+
+/// Configuration for materialized views
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MaterializedViewConfig {
+    /// Aggregation function to apply
+    pub aggregation_function: String,
+    /// Group by fields
+    pub group_by: Vec<String>,
+    /// Refresh interval in seconds (0 for manual refresh only)
+    pub refresh_interval: u64,
+    /// Whether to automatically refresh when new data arrives
+    pub auto_refresh: bool,
+}
+
 impl IndexerService {
     /// Create a new indexer service
     pub fn new(max_entries: usize) -> Self {
@@ -79,6 +112,7 @@ impl IndexerService {
             filters: HashMap::new(),
             entries: Vec::new(),
             filter_index: HashMap::new(),
+            materialized_views: HashMap::new(),
             max_entries,
         }
     }
@@ -121,6 +155,10 @@ impl IndexerService {
         for entry in &mut self.entries {
             entry.matched_filters.retain(|id| id != filter_id);
         }
+
+        // Remove any materialized views based on this filter
+        self.materialized_views
+            .retain(|_, view| view.filter_id != filter_id);
 
         Ok(())
     }
@@ -174,6 +212,9 @@ impl IndexerService {
                 index.push(self.entries.len() - 1);
             }
         }
+
+        // Refresh materialized views that auto-refresh
+        self.refresh_auto_materialized_views()?;
 
         // Trim entries if we exceed max_entries
         if self.entries.len() > self.max_entries {
@@ -247,6 +288,89 @@ impl IndexerService {
         self.entries.iter().skip(skip).collect()
     }
 
+    /// Create a materialized view
+    pub fn create_materialized_view(
+        &mut self,
+        id: String,
+        name: String,
+        filter_id: String,
+        config: MaterializedViewConfig,
+    ) -> Result<(), IndexerError> {
+        if !self.filters.contains_key(&filter_id) {
+            return Err(IndexerError::FilterNotFound);
+        }
+
+        if self.materialized_views.contains_key(&id) {
+            return Err(IndexerError::ViewAlreadyExists);
+        }
+
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+
+        // Create initial aggregated data
+        let aggregated_data = self.aggregate_data(&filter_id, &config)?;
+
+        let view = MaterializedView {
+            id: id.clone(),
+            name,
+            filter_id,
+            aggregated_data,
+            last_updated: now,
+            config,
+        };
+
+        self.materialized_views.insert(id, view);
+        Ok(())
+    }
+
+    /// Refresh a materialized view
+    pub fn refresh_materialized_view(&mut self, view_id: &str) -> Result<(), IndexerError> {
+        if !self.materialized_views.contains_key(view_id) {
+            return Err(IndexerError::ViewNotFound);
+        }
+
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+
+        let view = self
+            .materialized_views
+            .get(&view_id.to_string())
+            .unwrap()
+            .clone();
+        let aggregated_data = self.aggregate_data(&view.filter_id, &view.config)?;
+
+        // Update the view
+        let view = self.materialized_views.get_mut(view_id).unwrap();
+        view.aggregated_data = aggregated_data;
+        view.last_updated = now;
+
+        Ok(())
+    }
+
+    /// Get a materialized view
+    pub fn get_materialized_view(&self, view_id: &str) -> Option<&MaterializedView> {
+        self.materialized_views.get(view_id)
+    }
+
+    /// Get all materialized views
+    pub fn get_all_materialized_views(&self) -> Vec<&MaterializedView> {
+        self.materialized_views.values().collect()
+    }
+
+    /// Remove a materialized view
+    pub fn remove_materialized_view(&mut self, view_id: &str) -> Result<(), IndexerError> {
+        if !self.materialized_views.contains_key(view_id) {
+            return Err(IndexerError::ViewNotFound);
+        }
+
+        self.materialized_views.remove(view_id);
+        Ok(())
+    }
+
     /// Find which filters match given data characteristics
     fn find_matching_filters(
         &self,
@@ -308,6 +432,44 @@ impl IndexerService {
         matching_filters
     }
 
+    /// Aggregate data for a materialized view
+    fn aggregate_data(
+        &self,
+        filter_id: &str,
+        config: &MaterializedViewConfig,
+    ) -> Result<String, IndexerError> {
+        let entries = self.find_entries_by_filter(filter_id)?;
+
+        // For now, we'll implement a simple count aggregation as an example
+        // In a real implementation, this would be more sophisticated
+        let count = entries.len();
+
+        // Group by implementation would go here
+        // For now, we'll just return a simple JSON representation
+        let result = format!(
+            "{{\"count\": {}, \"aggregation_function\": \"{}\"}}",
+            count, config.aggregation_function
+        );
+
+        Ok(result)
+    }
+
+    /// Refresh materialized views that are set to auto-refresh
+    fn refresh_auto_materialized_views(&mut self) -> Result<(), IndexerError> {
+        let view_ids: Vec<String> = self
+            .materialized_views
+            .iter()
+            .filter(|(_, view)| view.config.auto_refresh)
+            .map(|(id, _)| id.clone())
+            .collect();
+
+        for view_id in view_ids {
+            self.refresh_materialized_view(&view_id)?;
+        }
+
+        Ok(())
+    }
+
     /// Trim old entries to maintain max_entries limit
     fn trim_entries(&mut self) {
         let excess = self.entries.len() - self.max_entries;
@@ -351,4 +513,8 @@ pub enum IndexerError {
     FilterAlreadyExists,
     #[error("Filter not found")]
     FilterNotFound,
+    #[error("View already exists")]
+    ViewAlreadyExists,
+    #[error("View not found")]
+    ViewNotFound,
 }
