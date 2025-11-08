@@ -208,7 +208,7 @@ impl PrivacyProtectionService {
     }
     
     /// Generate a range proof
-    pub fn prove_value_range(&self, value: u64, min: u64, max:64) -> ZkProof {
+    pub fn prove_value_range(&self, value: u64, min: u64, max: u64) -> ZkProof {
         self.zk_system.prove_range(value, min, max)
     }
     

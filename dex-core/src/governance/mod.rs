@@ -39,7 +39,19 @@ pub struct RiskInputs {
     pub approver_login: Option<String>,
     pub approver_role: Option<String>,
     pub evidence_artifact: Option<String>,
-}/// Represents a governance proposal
+}
+
+/// Inputs to drive audit evidence ingestion during submit.
+#[derive(Debug, Clone)]
+pub struct AuditInputs {
+    pub id: String,
+    pub filename: String,
+    pub content: Vec<u8>,
+    pub signature: Vec<u8>,
+    pub public_key: Vec<u8>,
+}
+
+/// Represents a governance proposal
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Proposal {
     /// Unique identifier for the proposal
@@ -458,7 +470,8 @@ pub struct ProposalContext {
     pub reference: Option<GovernanceScenario>,
 }
 
-pub fn submit_proposal_with_risk(
+impl GlobalDAO {
+    pub fn submit_proposal_with_risk(
         &mut self,
         proposal_id: &str,
         registry: &mut super::risk::RiskRegistry,
@@ -490,6 +503,57 @@ pub fn submit_proposal_with_risk(
                         .approve_exception(&id, &login, &role, &evidence)
                         .map_err(|_| GovernanceError::ReferenceControlMismatch)?;
                 }
+            }
+        }
+
+        proposal.status = ProposalStatus::Active;
+        Ok(())
+    }
+
+    /// Submit a proposal and, if the required reference is AuditLogger, ingest evidence into the AuditStore.
+    pub fn submit_proposal_with_audit(
+        &mut self,
+        proposal_id: &str,
+        store: &AuditStore,
+        audit: AuditInputs,
+    ) -> Result<(), GovernanceError> {
+        let proposal = self
+            .proposals
+            .get_mut(proposal_id)
+            .ok_or(GovernanceError::ProposalNotFound)?;
+
+        if proposal.status != ProposalStatus::Draft {
+            return Err(GovernanceError::ProposalNotInDraft);
+        }
+
+        // Enforce that any required reference control is attached and correct
+        Self::enforce_reference_policy(proposal)?;
+
+        if let Some(required) = Self::required_reference_for(&proposal.proposal_type) {
+            if required.domain == GovernanceDomain::AuditEvidenceManagement
+                && required.component == GovernanceComponent::AuditLogger
+            {
+                let reference = proposal
+                    .reference_control
+                    .as_ref()
+                    .ok_or(GovernanceError::ReferenceControlMissing)?;
+
+                // Enforce filename per enrichment evidence field
+                if reference.enrichment.evidence != audit.filename {
+                    return Err(GovernanceError::ReferenceControlMismatch);
+                }
+
+                // Ingest evidence (signature verified inside)
+                store
+                    .ingest(
+                        &audit.id,
+                        &audit.filename,
+                        &audit.content,
+                        &audit.signature,
+                        &audit.public_key,
+                        None,
+                    )
+                    .map_err(|_| GovernanceError::ReferenceControlMismatch)?;
             }
         }
 
