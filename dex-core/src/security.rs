@@ -408,6 +408,11 @@ impl SecurityManager {
         self.certificates.get_certificate(cert_id)
     }
 
+    /// Check whether a certificate is currently valid
+    pub fn is_certificate_valid(&self, cert_id: &str) -> bool {
+        self.certificates.is_certificate_valid(cert_id)
+    }
+
     /// Revoke a certificate
     pub fn revoke_certificate(&mut self, cert_id: &str) -> Result<(), SecurityError> {
         self.certificates.revoke_certificate(cert_id)
@@ -438,7 +443,8 @@ impl SecurityManager {
         evidence: Option<Vec<u8>>,
         severity: SeverityLevel,
     ) -> String {
-        self.event_logger.log(event_type, description, user, data, evidence, severity)
+        self.event_logger
+            .log(event_type, description, user, data, evidence, severity)
     }
 
     /// Log a security event with default severity (Info)
@@ -449,7 +455,14 @@ impl SecurityManager {
         user: Option<TraderId>,
         data: HashMap<String, String>,
     ) -> String {
-        self.log_event(event_type, description, user, data, None, SeverityLevel::Info)
+        self.log_event(
+            event_type,
+            description,
+            user,
+            data,
+            None,
+            SeverityLevel::Info,
+        )
     }
 
     /// Get security events
@@ -916,16 +929,20 @@ impl EventLogger {
     /// Get event statistics
     pub fn get_event_statistics(&self) -> HashMap<String, usize> {
         let mut stats = HashMap::new();
-        
+
         // Count by event type
         for event in &self.events {
-            let count = stats.entry(format!("type_{:?}", event.event_type)).or_insert(0);
+            let count = stats
+                .entry(format!("type_{:?}", event.event_type))
+                .or_insert(0);
             *count += 1;
-            
-            let count = stats.entry(format!("severity_{:?}", event.severity)).or_insert(0);
+
+            let count = stats
+                .entry(format!("severity_{:?}", event.severity))
+                .or_insert(0);
             *count += 1;
         }
-        
+
         stats
     }
 }
@@ -1199,7 +1216,7 @@ mod tests {
         // Log different types of events
         let mut data = HashMap::new();
         data.insert("resource".to_string(), "sensitive_data".to_string());
-        
+
         // Log access violation
         manager.log_event(
             EventType::AccessViolation,

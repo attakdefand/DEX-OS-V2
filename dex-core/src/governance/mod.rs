@@ -1172,6 +1172,13 @@ mod tests {
         );
     }
 
+    fn fast_forward_to_voting_end(dao: &mut GlobalDAO, proposal_id: &str) {
+        if let Some(proposal) = dao.proposals.get_mut(proposal_id) {
+            proposal.voting_start = 0;
+            proposal.voting_end = 0;
+        }
+    }
+
     #[test]
     fn test_global_dao_creation() {
         let dao = GlobalDAO::new();
@@ -1759,6 +1766,87 @@ mod tests {
             GovernanceComponent::PolicyEngine,
         );
         assert!(dao.submit_proposal(&proposal_id).is_ok());
+    }
+
+    #[test]
+    fn test_reference_owner_acknowledgement_required_for_pass() {
+        let mut dao = GlobalDAO::new();
+        let proposer = "owner_ack".to_string();
+
+        dao.add_member(proposer.clone(), 2_000, false);
+
+        let proposal_id = dao
+            .create_proposal(
+                "Owner ack enforcement".to_string(),
+                "Ties proposal completion to reference owner".to_string(),
+                ProposalType::ParameterChange,
+                Proposer::Human {
+                    trader_id: proposer.clone(),
+                },
+            )
+            .unwrap();
+
+        attach_policy_reference(&mut dao, &proposal_id);
+        dao.submit_proposal(&proposal_id).unwrap();
+        fast_forward_to_voting_end(&mut dao, &proposal_id);
+
+        dao.vote(&proposal_id, &proposer, true, 1_000, None)
+            .unwrap();
+
+        let err = dao.tally_votes(&proposal_id).unwrap_err();
+        assert!(matches!(
+            err,
+            GovernanceError::ReferenceOwnerAcknowledgementMissing
+        ));
+
+        dao.acknowledge_reference_owner(&proposal_id, "Security Governance Lead")
+            .expect("owner should acknowledge control");
+
+        let status = dao.tally_votes(&proposal_id).unwrap();
+        assert_eq!(status, ProposalStatus::Passed);
+    }
+
+    #[test]
+    fn test_governance_insights_surface_reference_metadata() {
+        let mut dao = GlobalDAO::new();
+        let proposer = "insights".to_string();
+        dao.add_member(proposer.clone(), 2_000, false);
+
+        let proposal_id = dao
+            .create_proposal(
+                "Insights".to_string(),
+                "Expose governance metadata".to_string(),
+                ProposalType::ParameterChange,
+                Proposer::Human {
+                    trader_id: proposer.clone(),
+                },
+            )
+            .unwrap();
+
+        attach_policy_reference(&mut dao, &proposal_id);
+        dao.submit_proposal(&proposal_id).unwrap();
+        dao.acknowledge_reference_owner(&proposal_id, "Security Governance Lead")
+            .expect("owner should be able to acknowledge");
+
+        let insights = dao.governance_insights();
+        let summary = insights
+            .proposals
+            .into_iter()
+            .find(|summary| summary.id == proposal_id)
+            .expect("summary should include proposal");
+        assert_eq!(
+            summary.reference_owner.as_deref(),
+            Some("Security Governance Lead")
+        );
+        assert!(summary.reference_acknowledged);
+        assert!(
+            insights
+                .control_metrics
+                .entries
+                .iter()
+                .any(|entry| entry.owner == "Security Governance Lead"),
+            "metrics should include enrichment owner"
+        );
     }
 
     #[test]
