@@ -83,11 +83,7 @@ impl OrderBook {
     /// Add an order to the orderbook and match it against existing orders
     /// This implements the Priority 1 feature from DEX-OS-V1.csv:
     /// "Core Trading,Orderbook,Orderbook,Price-Time Priority,Order Matching,High"
-    pub fn add_order(&mut self, order: Order) -> Result<Vec<Trade>, OrderBookError> {
-        // Store the order
-        let order_id = order.id;
-        self.orders.insert(order_id, order.clone());
-
+    pub fn add_order(&mut self, mut order: Order) -> Result<Vec<Trade>, OrderBookError> {
         // Add order to time priority queue
         // This implements the Priority 1 feature from DEX-OS-V1.csv:
         // "Core Trading,Orderbook,Orderbook,Heap,Time Priority Queue,High"
@@ -96,16 +92,28 @@ impl OrderBook {
             order_id: order.id,
         }));
 
-        // Try to match the order
+        // Try to match the order against existing book state
         let trades = self.match_order(&order);
 
-        // Add remaining order to the book if it wasn't fully filled
-        if order.quantity > 0 {
-            // Add to the appropriate side of the book
-            match order.side {
-                OrderSide::Buy => self.add_bid(order),
-                OrderSide::Sell => self.add_ask(order),
-            }
+        // Compute how much of the taker order was filled in this matching round
+        let filled_qty: Quantity = trades
+            .iter()
+            .filter(|t| t.taker_order_id == order.id)
+            .map(|t| t.quantity)
+            .sum();
+
+        if filled_qty >= order.quantity {
+            // Fully filled — do not add to the book or orders map
+            return Ok(trades);
+        }
+
+        // Partially filled — update remaining quantity and persist to the book
+        order.quantity -= filled_qty;
+        let updated = order.clone();
+        self.orders.insert(updated.id, updated.clone());
+        match updated.side {
+            OrderSide::Buy => self.add_bid(updated),
+            OrderSide::Sell => self.add_ask(updated),
         }
 
         Ok(trades)
@@ -179,7 +187,13 @@ impl OrderBook {
                             };
 
                             trades.push(trade);
-                            remaining_quantity -= trade_quantity;
+                            // Update remaining taker quantity
+                            remaining_quantity = remaining_quantity.saturating_sub(trade_quantity);
+
+                            // Decrement total quantity at this price level
+                            ask_level.total_quantity = ask_level
+                                .total_quantity
+                                .saturating_sub(trade_quantity);
 
                             // If the ask order is fully filled, mark it for removal
                             if trade_quantity >= ask_order.quantity {
@@ -187,7 +201,9 @@ impl OrderBook {
                             } else {
                                 // Update the remaining quantity of the ask order
                                 if let Some(ask_order_mut) = self.orders.get_mut(&ask_order_id) {
-                                    ask_order_mut.quantity -= trade_quantity;
+                                    ask_order_mut.quantity = ask_order_mut
+                                        .quantity
+                                        .saturating_sub(trade_quantity);
                                 }
                             }
 
@@ -201,8 +217,7 @@ impl OrderBook {
                     // Remove fully filled ask orders
                     for order_id in orders_to_remove {
                         ask_level.orders.retain(|&id| id != order_id);
-                        ask_level.total_quantity -=
-                            self.orders.get(&order_id).map(|o| o.quantity).unwrap_or(0);
+                        // Order was fully consumed — already deducted from total_quantity above
                         self.orders.remove(&order_id);
                     }
 
@@ -220,6 +235,8 @@ impl OrderBook {
                 // Remove empty ask price levels
                 for price in asks_to_remove {
                     self.asks.remove(&price);
+                    // Keep AVL tree in sync when a level becomes empty
+                    self.ask_price_levels.remove_price_level(&price);
                 }
             }
             OrderSide::Sell => {
@@ -259,7 +276,13 @@ impl OrderBook {
                             };
 
                             trades.push(trade);
-                            remaining_quantity -= trade_quantity;
+                            // Update remaining taker quantity
+                            remaining_quantity = remaining_quantity.saturating_sub(trade_quantity);
+
+                            // Decrement total quantity at this price level
+                            bid_level.total_quantity = bid_level
+                                .total_quantity
+                                .saturating_sub(trade_quantity);
 
                             // If the bid order is fully filled, mark it for removal
                             if trade_quantity >= bid_order.quantity {
@@ -267,7 +290,9 @@ impl OrderBook {
                             } else {
                                 // Update the remaining quantity of the bid order
                                 if let Some(bid_order_mut) = self.orders.get_mut(&bid_order_id) {
-                                    bid_order_mut.quantity -= trade_quantity;
+                                    bid_order_mut.quantity = bid_order_mut
+                                        .quantity
+                                        .saturating_sub(trade_quantity);
                                 }
                             }
 
@@ -281,8 +306,7 @@ impl OrderBook {
                     // Remove fully filled bid orders
                     for order_id in orders_to_remove {
                         bid_level.orders.retain(|&id| id != order_id);
-                        bid_level.total_quantity -=
-                            self.orders.get(&order_id).map(|o| o.quantity).unwrap_or(0);
+                        // Order was fully consumed — already deducted from total_quantity above
                         self.orders.remove(&order_id);
                     }
 
@@ -300,6 +324,8 @@ impl OrderBook {
                 // Remove empty bid price levels
                 for price in bids_to_remove {
                     self.bids.remove(&price);
+                    // Keep AVL tree in sync when a level becomes empty
+                    self.bid_price_levels.remove_price_level(&price);
                 }
             }
         }

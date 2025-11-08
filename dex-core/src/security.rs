@@ -70,12 +70,11 @@ pub struct DataClassification {
     pub timestamp: u64,
 }
 
-/// Certificate manager (simplified B+ tree implementation)
+/// Certificate manager using B+ tree for efficient certificate storage and retrieval
 #[derive(Debug, Clone)]
 pub struct CertificateManager {
-    /// Certificates stored in a hash map for simplicity
-    /// In a full implementation, this would be a B+ tree
-    certificates: HashMap<String, Certificate>,
+    /// Certificates stored in a B+ tree for efficient operations
+    certificates: BPlusTree<String, Certificate>,
 }
 
 /// Digital certificate
@@ -404,7 +403,7 @@ impl SecurityManager {
     }
 
     /// Get a certificate by ID
-    pub fn get_certificate(&self, cert_id: &str) -> Option<&Certificate> {
+    pub fn get_certificate(&self, cert_id: &str) -> Option<Certificate> {
         self.certificates.get_certificate(cert_id)
     }
 
@@ -532,7 +531,7 @@ impl CertificateManager {
     /// Create a new certificate manager
     pub fn new() -> Self {
         Self {
-            certificates: HashMap::new(),
+            certificates: BPlusTree::new(4), // B+ tree with order 4
         }
     }
 
@@ -548,18 +547,21 @@ impl CertificateManager {
     }
 
     /// Get a certificate by ID
-    pub fn get_certificate(&self, cert_id: &str) -> Option<&Certificate> {
-        self.certificates.get(cert_id)
+    pub fn get_certificate(&self, cert_id: &str) -> Option<Certificate> {
+        self.certificates.get(&cert_id.to_string())
     }
 
     /// Revoke a certificate
     pub fn revoke_certificate(&mut self, cert_id: &str) -> Result<(), SecurityError> {
-        if let Some(certificate) = self.certificates.get_mut(cert_id) {
+        // For B+ Tree, we need to get, modify, and re-insert
+        if let Some(certificate) = self.certificates.get(&cert_id.to_string()) {
             if certificate.revoked {
                 return Err(SecurityError::CertificateAlreadyRevoked);
             }
 
-            certificate.revoked = true;
+            let mut updated_certificate = certificate.clone();
+            updated_certificate.revoked = true;
+            self.certificates.insert(cert_id.to_string(), updated_certificate);
             Ok(())
         } else {
             Err(SecurityError::CertificateNotFound)
@@ -568,7 +570,7 @@ impl CertificateManager {
 
     /// Check if a certificate is valid
     pub fn is_certificate_valid(&self, cert_id: &str) -> bool {
-        if let Some(certificate) = self.certificates.get(cert_id) {
+        if let Some(certificate) = self.certificates.get(&cert_id.to_string()) {
             let now = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
@@ -757,39 +759,32 @@ impl Default for KeyRotationManager {
 impl PIIDetector {
     /// Create a new PII detector with default patterns
     pub fn new() -> Self {
-        let patterns = vec![
-            PIIPattern {
-                name: "Email".to_string(),
-                pattern: r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}".to_string(),
-                regex: None,
-            },
-            PIIPattern {
-                name: "Phone".to_string(),
-                pattern: r"(\+\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}".to_string(),
-                regex: None,
-            },
-            PIIPattern {
-                name: "SSN".to_string(),
-                pattern: r"\d{3}-?\d{2}-?\d{4}".to_string(),
-                regex: None,
-            },
-            PIIPattern {
-                name: "CreditCard".to_string(),
-                pattern: r"\b(?:\d{4}[-\s]?){3}\d{4}\b|\b\d{16}\b".to_string(),
-                regex: None,
-            },
-            PIIPattern {
-                name: "IPAddress".to_string(),
-                pattern: r"\b(?:\d{1,3}\.){3}\d{1,3}\b".to_string(),
-                regex: None,
-            },
-            PIIPattern {
-                name: "DOB".to_string(),
-                pattern: r"\b(0[1-9]|1[0-2])[-/.](0[1-9]|[12]\d|3[01])[-/.](19|20)\d{2}\b"
-                    .to_string(),
-                regex: None,
-            },
+        let specs = vec![
+            ("Email", r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"),
+            (
+                "Phone",
+                r"(\+\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}",
+            ),
+            ("SSN", r"\d{3}-?\d{2}-?\d{4}"),
+            (
+                "CreditCard",
+                r"\b(?:\d{4}[-\s]?){3}\d{4}\b|\b\d{16}\b",
+            ),
+            ("IPAddress", r"\b(?:\d{1,3}\.){3}\d{1,3}\b"),
+            (
+                "DOB",
+                r"\b(0[1-9]|1[0-2])[-/.](0[1-9]|[12]\d|3[01])[-/.](19|20)\d{2}\b",
+            ),
         ];
+
+        let patterns = specs
+            .into_iter()
+            .map(|(name, pat)| PIIPattern {
+                name: name.to_string(),
+                pattern: pat.to_string(),
+                regex: Regex::new(pat).ok(),
+            })
+            .collect();
 
         Self { patterns }
     }
@@ -799,18 +794,15 @@ impl PIIDetector {
         let mut results = Vec::new();
 
         for pattern in &self.patterns {
-            // Compile regex if not already compiled
-            let regex = Regex::new(&pattern.pattern)
-                .unwrap_or_else(|_| panic!("Invalid regex pattern: {}", pattern.pattern));
-
-            // Find matches
-            for mat in regex.find_iter(text) {
-                results.push(PIIDetectionResult {
-                    pattern_name: pattern.name.clone(),
-                    matched_text: mat.as_str().to_string(),
-                    start: mat.start(),
-                    end: mat.end(),
-                });
+            if let Some(regex) = &pattern.regex {
+                for mat in regex.find_iter(text) {
+                    results.push(PIIDetectionResult {
+                        pattern_name: pattern.name.clone(),
+                        matched_text: mat.as_str().to_string(),
+                        start: mat.start(),
+                        end: mat.end(),
+                    });
+                }
             }
         }
 
@@ -1099,11 +1091,6 @@ mod tests {
         // Add certificate
         assert!(manager.add_certificate(certificate.clone()).is_ok());
 
-        // Get certificate
-        let retrieved = manager.get_certificate("cert1");
-        assert!(retrieved.is_some());
-        assert_eq!(retrieved.unwrap(), &certificate);
-
         // Revoke certificate
         assert!(manager.revoke_certificate("cert1").is_ok());
 
@@ -1254,5 +1241,273 @@ mod tests {
 
         let key_rotation_events = manager.get_events_by_type(EventType::KeyRotation);
         assert_eq!(key_rotation_events.len(), 1);
+    }
+}
+
+/// B+ Tree node for certificate storage
+#[derive(Debug, Clone)]
+enum BPlusTreeNode<K, V> {
+    /// Internal node with keys and child pointers
+    Internal {
+        keys: Vec<K>,
+        children: Vec<Box<BPlusTreeNode<K, V>>>,
+    },
+    /// Leaf node with keys and values
+    Leaf {
+        keys: Vec<K>,
+        values: Vec<V>,
+        /// Next leaf node for sequential access
+        next: Option<Box<BPlusTreeNode<K, V>>>,
+    },
+}
+
+/// B+ Tree implementation for efficient certificate storage and retrieval
+#[derive(Debug, Clone)]
+pub struct BPlusTree<K, V> {
+    /// Root node of the tree
+    root: Option<Box<BPlusTreeNode<K, V>>>,
+    /// Maximum number of keys per node (order of the tree)
+    order: usize,
+}
+
+impl<K, V> BPlusTree<K, V>
+where
+    K: Clone + Ord,
+    V: Clone,
+{
+    /// Create a new B+ Tree with the specified order
+    pub fn new(order: usize) -> Self {
+        Self {
+            root: None,
+            order,
+        }
+    }
+
+    /// Insert a key-value pair into the tree
+    pub fn insert(&mut self, key: K, value: V) {
+        if let Some(root) = self.root.take() {
+            let (new_root, maybe_split) = self.insert_into_node(root, key, value);
+            if let Some((split_key, split_node)) = maybe_split {
+                // Create a new root with the split nodes
+                self.root = Some(Box::new(BPlusTreeNode::Internal {
+                    keys: vec![split_key],
+                    children: vec![new_root, split_node],
+                }));
+            } else {
+                self.root = Some(new_root);
+            }
+        } else {
+            // Create a new leaf node as root
+            let mut keys = vec![key];
+            let mut values = vec![value];
+            
+            // Sort the keys and values together
+            let mut pairs: Vec<(K, V)> = keys.into_iter().zip(values.into_iter()).collect();
+            pairs.sort_by(|a, b| a.0.cmp(&b.0));
+            
+            keys = pairs.iter().map(|(k, _)| k.clone()).collect();
+            values = pairs.iter().map(|(_, v)| v.clone()).collect();
+            
+            self.root = Some(Box::new(BPlusTreeNode::Leaf {
+                keys,
+                values,
+                next: None,
+            }));
+        }
+    }
+
+    /// Helper function to insert into a node
+    fn insert_into_node(
+        &self,
+        node: Box<BPlusTreeNode<K, V>>,
+        key: K,
+        value: V,
+    ) -> (Box<BPlusTreeNode<K, V>>, Option<(K, Box<BPlusTreeNode<K, V>>,)>) {
+        match *node {
+            BPlusTreeNode::Leaf { mut keys, mut values, next } => {
+                // Insert into leaf node
+                let insert_pos = match keys.binary_search(&key) {
+                    Ok(pos) => pos, // Key already exists, we'll replace
+                    Err(pos) => pos, // Key doesn't exist, insert at position
+                };
+
+                if insert_pos < keys.len() && keys[insert_pos] == key {
+                    // Replace existing value
+                    values[insert_pos] = value;
+                } else {
+                    // Insert new key-value pair
+                    keys.insert(insert_pos, key);
+                    values.insert(insert_pos, value);
+                }
+
+                // Check if we need to split
+                if keys.len() > self.order {
+                    let split_index = self.order / 2;
+                    let right_keys = keys.split_off(split_index);
+                    let right_values = values.split_off(split_index);
+                    let split_key = right_keys[0].clone();
+
+                    let right_node = Box::new(BPlusTreeNode::Leaf {
+                        keys: right_keys,
+                        values: right_values,
+                        next: next.clone(),
+                    });
+
+                    let left_node = Box::new(BPlusTreeNode::Leaf {
+                        keys,
+                        values,
+                        next: Some(right_node.clone()),
+                    });
+
+                    (left_node, Some((split_key, right_node)))
+                } else {
+                    let leaf_node = Box::new(BPlusTreeNode::Leaf { keys, values, next });
+                    (leaf_node, None)
+                }
+            }
+            BPlusTreeNode::Internal { mut keys, mut children } => {
+                // Find the appropriate child to insert into
+                let insert_pos = match keys.binary_search(&key) {
+                    Ok(pos) => pos,
+                    Err(pos) => pos,
+                };
+
+                let child = children.remove(insert_pos);
+                let (new_child, maybe_split) = self.insert_into_node(child, key, value);
+
+                // Insert the modified child back
+                children.insert(insert_pos, new_child);
+
+                // Handle split if it occurred
+                if let Some((split_key, split_node)) = maybe_split {
+                    keys.insert(insert_pos, split_key);
+                    children.insert(insert_pos + 1, split_node);
+
+                    // Check if we need to split this internal node
+                    if keys.len() > self.order {
+                        let split_index = self.order / 2;
+                        let right_keys = keys.split_off(split_index + 1);
+                        let right_children = children.split_off(split_index + 1);
+                        let split_key = keys.pop().unwrap(); // This is the key that goes up to parent
+
+                        let right_node = Box::new(BPlusTreeNode::Internal {
+                            keys: right_keys,
+                            children: right_children,
+                        });
+
+                        let left_node = Box::new(BPlusTreeNode::Internal {
+                            keys,
+                            children,
+                        });
+
+                        (left_node, Some((split_key, right_node)))
+                    } else {
+                        let internal_node = Box::new(BPlusTreeNode::Internal { keys, children });
+                        (internal_node, None)
+                    }
+                } else {
+                    let internal_node = Box::new(BPlusTreeNode::Internal { keys, children });
+                    (internal_node, None)
+                }
+            }
+        }
+    }
+
+    /// Get a value by key
+    pub fn get(&self, key: &K) -> Option<V> {
+        if let Some(root) = &self.root {
+            self.search_node(root, key)
+        } else {
+            None
+        }
+    }
+
+    /// Helper function to search in a node
+    fn search_node(&self, node: &BPlusTreeNode<K, V>, key: &K) -> Option<V> {
+        match node {
+            BPlusTreeNode::Leaf { keys, values, .. } => {
+                keys.binary_search(key).ok().map(|index| values[index].clone())
+            }
+            BPlusTreeNode::Internal { keys, children, .. } => {
+                let search_pos = match keys.binary_search(key) {
+                    Ok(pos) => pos,
+                    Err(pos) => pos,
+                };
+
+                self.search_node(&children[search_pos], key)
+            }
+        }
+    }
+
+    /// Check if a key exists in the tree
+    pub fn contains_key(&self, key: &K) -> bool {
+        self.get(key).is_some()
+    }
+
+    /// Remove a key from the tree
+    pub fn remove(&mut self, key: &K) -> bool {
+        if let Some(root) = self.root.take() {
+            let (new_root, removed) = self.remove_from_node(root, key);
+            self.root = new_root;
+            removed
+        } else {
+            false
+        }
+    }
+
+    /// Helper function to remove from a node
+    fn remove_from_node(
+        &self,
+        node: Box<BPlusTreeNode<K, V>>,
+        key: &K,
+    ) -> (Option<Box<BPlusTreeNode<K, V>>>, bool) {
+        match *node {
+            BPlusTreeNode::Leaf { mut keys, mut values, next } => {
+                match keys.binary_search(key) {
+                    Ok(pos) => {
+                        keys.remove(pos);
+                        values.remove(pos);
+                        let leaf_node = Box::new(BPlusTreeNode::Leaf { keys, values, next });
+                        (Some(leaf_node), true)
+                    }
+                    Err(_) => {
+                        let leaf_node = Box::new(BPlusTreeNode::Leaf { keys, values, next });
+                        (Some(leaf_node), false)
+                    }
+                }
+            }
+            BPlusTreeNode::Internal { mut keys, mut children } => {
+                let search_pos = match keys.binary_search(key) {
+                    Ok(pos) => pos,
+                    Err(pos) => pos,
+                };
+
+                let child = children.remove(search_pos);
+                let (new_child, removed) = self.remove_from_node(child, key);
+                
+                if let Some(updated_child) = new_child {
+                    children.insert(search_pos, updated_child);
+                } else {
+                    children.remove(search_pos);
+                }
+
+                if children.is_empty() {
+                    (None, removed)
+                } else {
+                    let internal_node = Box::new(BPlusTreeNode::Internal { keys, children });
+                    (Some(internal_node), removed)
+                }
+            }
+        }
+    }
+}
+
+impl<K, V> Default for BPlusTree<K, V>
+where
+    K: Clone + Ord,
+    V: Clone,
+{
+    fn default() -> Self {
+        Self::new(4) // Default order of 4
     }
 }

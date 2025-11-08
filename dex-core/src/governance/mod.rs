@@ -1,4 +1,4 @@
-//! AI Governance implementation for the DEX-OS core engine
+﻿//! AI Governance implementation for the DEX-OS core engine
 //!
 //! This module implements the Priority 3 features from DEX-OS-V2.csv:
 //! - AI Governance (AI Proposals, Global DAO)
@@ -7,11 +7,15 @@
 //! global decentralized autonomous organization (DAO) operations.
 
 pub mod reference;
+pub mod policy_engine;
+pub mod iam;
 
 pub use reference::{
     load_governance_reference, Enrichment, GovernanceComponent, GovernanceDomain,
     GovernanceReferenceError, GovernanceScenario,
 };
+pub use policy_engine::{policy_for, parse_checkpoint, parse_effect, Checkpoint, PolicyEffect};
+pub use iam::{ApprovalGatePolicy, RoleManagerPolicy, IamError};
 
 use crate::types::{TokenId, TraderId};
 use once_cell::sync::OnceCell;

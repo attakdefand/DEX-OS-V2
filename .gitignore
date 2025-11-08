@@ -47,3 +47,10 @@ Thumbs.db
 
 # Local GnuPG home (may contain private keys)
 .gnupg/
+
+# Docs: ignore compiled/binary artifacts checked into docs examples
+docs/*.exe
+docs/*.rcgu.o
+docs/*.o
+docs/hello
+docs/hello_test

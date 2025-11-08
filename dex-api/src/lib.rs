@@ -242,6 +242,11 @@ pub fn routes(
 
     let auth_endpoints = auth_routes(state.clone()).boxed();
 
+    let cors = warp::cors()
+        .allow_any_origin()
+        .allow_methods(vec!["GET", "POST"])
+        .allow_headers(vec!["content-type", "authorization"]);
+
     create_order
         .or(get_prices)
         .or(get_trades_for_order)
@@ -249,6 +254,7 @@ pub fn routes(
         .or(get_depth)
         .or(depth_ws)
         .or(auth_endpoints)
+        .with(cors)
         .recover(handle_rejection)
 }
 

@@ -1,5 +1,8 @@
 # DEX-OS V2
 
+[![Rust CI](https://github.com/attakdefand/DEX-OS-V2/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/attakdefand/DEX-OS-V2/actions/workflows/rust-ci.yml)
+[![Reference Validation](https://github.com/attakdefand/DEX-OS-V2/actions/workflows/reference-validation.yml/badge.svg)](https://github.com/attakdefand/DEX-OS-V2/actions/workflows/reference-validation.yml)
+
 A high-performance decentralized exchange core engine built with Rust, WebAssembly, and modern database technologies.
 
 ## Project Structure

@@ -2,8 +2,8 @@
 //!
 //! This module provides functionality for database schema evolution.
 
-use sqlx_core::{query::query, row::Row};
-use sqlx_postgres::PgPool;
+use sqlx::{query, Row};
+use sqlx::PgPool;
 
 /// Represents a database migration
 pub struct Migration {
@@ -67,7 +67,7 @@ pub fn get_migrations() -> Vec<Migration> {
 }
 
 /// Run all pending migrations
-pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx_core::error::Error> {
+pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {
     // Create migrations table if it doesn't exist
     query(
         r#"

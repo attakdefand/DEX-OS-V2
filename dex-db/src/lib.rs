@@ -4,8 +4,8 @@
 //! trades, and other DEX-related data with sharding capabilities.
 
 use dex_core::types::{Order, OrderId, Trade, TradeId, TraderId, TradingPair};
-use sqlx_core::{query::query, row::Row};
-use sqlx_postgres::{PgPool, PgPoolOptions};
+use sqlx::{query, Row};
+use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::collections::HashMap;
 use thiserror::Error;
 
@@ -559,7 +559,7 @@ pub struct ShardStatistics {
 #[derive(Debug, Error)]
 pub enum DatabaseError {
     #[error("Database error: {0}")]
-    SqlxError(#[from] sqlx_core::error::Error),
+    SqlxError(#[from] sqlx::Error),
     #[error("Data integrity error")]
     DataIntegrityError,
 }

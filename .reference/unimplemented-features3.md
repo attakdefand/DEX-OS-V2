@@ -39,6 +39,7 @@ Based on my analysis of the DEX-OS-V2.csv file, here are the unimplemented Prior
 9. **Security** - Digital Signatures for Evidence Integrity
 10. **Security** - Hash Map for Data Classification
 11. **Security** - B+ Tree for Certificate Management
+
 12. **Security** - Hash Map for Key Rotation
 13. **Security** - Regular Expressions for PII Detection
 14. **Security** - Bloom Filter (conceptual) for Access Control
