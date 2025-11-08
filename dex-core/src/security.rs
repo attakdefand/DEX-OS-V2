@@ -105,6 +105,10 @@ pub struct KeyRotationManager {
     rotation_history: HashMap<String, Vec<KeyPair>>,
     /// Rotation period in seconds
     rotation_period: u64,
+    /// Timestamp of last rotation
+    last_rotation: u64,
+    /// Key rotation policy
+    rotation_policy: RotationPolicy,
 }
 
 /// Key pair for cryptography
@@ -118,6 +122,50 @@ pub struct KeyPair {
     pub created_at: u64,
     /// Expiration timestamp
     pub expires_at: Option<u64>,
+    /// Key algorithm
+    pub algorithm: String,
+    /// Key usage
+    pub usage: KeyUsage,
+}
+/// Key usage types
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum KeyUsage {
+    /// Key used for signing
+    Signing,
+    /// Key used for encryption
+    Encryption,
+    /// Key used for both signing and encryption
+    Both,
+}
+
+/// Key rotation policy
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RotationPolicy {
+    /// Minimum rotation period in seconds
+    pub min_rotation_period: u64,
+    /// Maximum rotation period in seconds
+    pub max_rotation_period: u64,
+    /// Whether to automatically rotate keys
+    pub auto_rotate: bool,
+    /// Key algorithms allowed
+    pub allowed_algorithms: Vec<String>,
+}
+
+impl Default for KeyUsage {
+    fn default() -> Self {
+        KeyUsage::Signing
+    }
+}
+
+impl Default for RotationPolicy {
+    fn default() -> Self {
+        Self {
+            min_rotation_period: 3600,  // 1 hour
+            max_rotation_period: 86400, // 1 day
+            auto_rotate: true,
+            allowed_algorithms: vec!["Ed25519".to_string()],
+        }
+    }
 }
 
 /// PII (Personally Identifiable Information) detector
@@ -347,6 +395,11 @@ impl SecurityManager {
         self.key_rotation.rotate_keys(user_id)
     }
 
+    /// Inspect rotation history for a user (used for audit/reporting).
+    pub fn key_rotation_history(&self, user_id: &str) -> Option<&Vec<KeyPair>> {
+        self.key_rotation.get_rotation_history(user_id)
+    }
+
     /// Detect PII in text
     pub fn detect_pii(&self, text: &str) -> Vec<PIIDetectionResult> {
         self.pii_detector.detect(text)
@@ -473,18 +526,24 @@ impl Default for CertificateManager {
 impl KeyRotationManager {
     /// Create a new key rotation manager
     pub fn new(rotation_period: u64) -> Self {
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+
         Self {
             current_keys: HashMap::new(),
             rotation_history: HashMap::new(),
             rotation_period,
+            last_rotation: now,
+            rotation_policy: RotationPolicy::default(),
         }
     }
 
-    /// Rotate keys for a user
+    /// Rotate keys for a user with proper cryptographic implementation
     pub fn rotate_keys(&mut self, user_id: &str) -> Result<KeyPair, SecurityError> {
-        // Generate new key pair (simulated)
-        let public_key = vec![1u8; 32];
-        let private_key = vec![2u8; 32];
+        // Generate new Ed25519 key pair
+        let (private_key, public_key) = SecurityManager::generate_key_pair();
 
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -496,6 +555,8 @@ impl KeyRotationManager {
             private_key,
             created_at: now,
             expires_at: Some(now + self.rotation_period),
+            algorithm: "Ed25519".to_string(),
+            usage: KeyUsage::Signing,
         };
 
         // Store old key in history if it exists
@@ -510,7 +571,82 @@ impl KeyRotationManager {
         self.current_keys
             .insert(user_id.to_string(), new_keypair.clone());
 
+        self.last_rotation = now;
+
         Ok(new_keypair)
+    }
+
+    /// Rotate keys for a user with specific algorithm
+    pub fn rotate_keys_with_algorithm(
+        &mut self,
+        user_id: &str,
+        algorithm: &str,
+    ) -> Result<KeyPair, SecurityError> {
+        let (private_key, public_key) = match algorithm {
+            "Ed25519" => SecurityManager::generate_key_pair(),
+            _ => return Err(SecurityError::KeyRotationFailed),
+        };
+
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+
+        let key_usage = match algorithm {
+            "Ed25519" => KeyUsage::Signing,
+            _ => KeyUsage::Encryption,
+        };
+
+        let new_keypair = KeyPair {
+            public_key,
+            private_key,
+            created_at: now,
+            expires_at: Some(now + self.rotation_period),
+            algorithm: algorithm.to_string(),
+            usage: key_usage,
+        };
+
+        // Store old key in history if it exists
+        if let Some(old_keypair) = self.current_keys.remove(user_id) {
+            self.rotation_history
+                .entry(user_id.to_string())
+                .or_insert_with(Vec::new)
+                .push(old_keypair);
+        }
+
+        // Store new key as current
+        self.current_keys
+            .insert(user_id.to_string(), new_keypair.clone());
+
+        self.last_rotation = now;
+
+        Ok(new_keypair)
+    }
+
+    /// Automatic key rotation based on policy
+    pub fn auto_rotate_keys(&mut self) -> Result<Vec<(String, KeyPair)>, SecurityError> {
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+
+        // Check if it's time for rotation based on policy
+        if now < self.last_rotation + self.rotation_period {
+            return Ok(Vec::new());
+        }
+
+        let mut rotated_keys = Vec::new();
+
+        // Rotate all keys that need rotation
+        let user_ids: Vec<String> = self.current_keys.keys().cloned().collect();
+
+        for user_id in user_ids {
+            if let Ok(new_key) = self.rotate_keys(&user_id) {
+                rotated_keys.push((user_id, new_key));
+            }
+        }
+
+        Ok(rotated_keys)
     }
 
     /// Get current key for a user
@@ -521,6 +657,30 @@ impl KeyRotationManager {
     /// Get key rotation history for a user
     pub fn get_rotation_history(&self, user_id: &str) -> Option<&Vec<KeyPair>> {
         self.rotation_history.get(user_id)
+    }
+
+    /// Check if key rotation is needed for a user
+    pub fn is_rotation_needed(&self, user_id: &str) -> bool {
+        if let Some(keypair) = self.current_keys.get(user_id) {
+            if let Some(expires_at) = keypair.expires_at {
+                let now = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs();
+                return now >= expires_at;
+            }
+        }
+        false
+    }
+
+    /// Set rotation policy
+    pub fn set_rotation_policy(&mut self, policy: RotationPolicy) {
+        self.rotation_policy = policy;
+    }
+
+    /// Get rotation policy
+    pub fn get_rotation_policy(&self) -> &RotationPolicy {
+        &self.rotation_policy
     }
 }
 
@@ -547,6 +707,22 @@ impl PIIDetector {
             PIIPattern {
                 name: "SSN".to_string(),
                 pattern: r"\d{3}-?\d{2}-?\d{4}".to_string(),
+                regex: None,
+            },
+            PIIPattern {
+                name: "CreditCard".to_string(),
+                pattern: r"\b(?:\d{4}[-\s]?){3}\d{4}\b|\b\d{16}\b".to_string(),
+                regex: None,
+            },
+            PIIPattern {
+                name: "IPAddress".to_string(),
+                pattern: r"\b(?:\d{1,3}\.){3}\d{1,3}\b".to_string(),
+                regex: None,
+            },
+            PIIPattern {
+                name: "DOB".to_string(),
+                pattern: r"\b(0[1-9]|1[0-2])[-/.](0[1-9]|[12]\d|3[01])[-/.](19|20)\d{2}\b"
+                    .to_string(),
                 regex: None,
             },
         ];
@@ -681,6 +857,10 @@ pub enum SecurityError {
     KeyRotationFailed,
     #[error("Data not classified")]
     DataNotClassified,
+    #[error("Invalid key algorithm")]
+    InvalidKeyAlgorithm,
+    #[error("Key expired")]
+    KeyExpired,
 }
 
 #[cfg(test)]
@@ -845,6 +1025,15 @@ mod tests {
         let current = manager.key_rotation.get_current_key(user_id);
         assert!(current.is_some());
         assert_eq!(current.unwrap(), &keypair2);
+
+        // Test algorithm-specific rotation
+        let result = manager
+            .key_rotation
+            .rotate_keys_with_algorithm(user_id, "Ed25519");
+        assert!(result.is_ok());
+
+        // Test rotation needed
+        assert!(!manager.key_rotation.is_rotation_needed(user_id));
     }
 
     #[test]

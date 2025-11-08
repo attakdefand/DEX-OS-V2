@@ -16,7 +16,7 @@ pub use reference::{
 use crate::types::{TokenId, TraderId};
 use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use thiserror::Error;
@@ -65,7 +65,59 @@ pub enum ProposalType {
     ObservabilityUpgrade,
     AccessControlUpdate,
     ChangeManagementOverride,
+    EducationProgramRefresh,
     Other(String),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+enum ProposalTypeKind {
+    ParameterChange,
+    TreasuryAllocation,
+    ProtocolUpgrade,
+    NewMarketListing,
+    FeeStructureChange,
+    EmergencyPause,
+    TreasuryAutomation,
+    ObservabilityUpgrade,
+    AccessControlUpdate,
+    ChangeManagementOverride,
+    EducationProgramRefresh,
+    Other,
+}
+
+impl ProposalTypeKind {
+    const CONTROLLED: [ProposalTypeKind; 11] = [
+        ProposalTypeKind::ParameterChange,
+        ProposalTypeKind::TreasuryAllocation,
+        ProposalTypeKind::ProtocolUpgrade,
+        ProposalTypeKind::NewMarketListing,
+        ProposalTypeKind::FeeStructureChange,
+        ProposalTypeKind::EmergencyPause,
+        ProposalTypeKind::TreasuryAutomation,
+        ProposalTypeKind::ObservabilityUpgrade,
+        ProposalTypeKind::AccessControlUpdate,
+        ProposalTypeKind::ChangeManagementOverride,
+        ProposalTypeKind::EducationProgramRefresh,
+    ];
+}
+
+impl ProposalType {
+    fn kind(&self) -> ProposalTypeKind {
+        match self {
+            ProposalType::ParameterChange => ProposalTypeKind::ParameterChange,
+            ProposalType::TreasuryAllocation => ProposalTypeKind::TreasuryAllocation,
+            ProposalType::ProtocolUpgrade => ProposalTypeKind::ProtocolUpgrade,
+            ProposalType::NewMarketListing => ProposalTypeKind::NewMarketListing,
+            ProposalType::FeeStructureChange => ProposalTypeKind::FeeStructureChange,
+            ProposalType::EmergencyPause => ProposalTypeKind::EmergencyPause,
+            ProposalType::TreasuryAutomation => ProposalTypeKind::TreasuryAutomation,
+            ProposalType::ObservabilityUpgrade => ProposalTypeKind::ObservabilityUpgrade,
+            ProposalType::AccessControlUpdate => ProposalTypeKind::AccessControlUpdate,
+            ProposalType::ChangeManagementOverride => ProposalTypeKind::ChangeManagementOverride,
+            ProposalType::EducationProgramRefresh => ProposalTypeKind::EducationProgramRefresh,
+            ProposalType::Other(_) => ProposalTypeKind::Other,
+        }
+    }
 }
 
 /// Information about who proposed the governance action
@@ -380,6 +432,26 @@ impl From<&GovernanceScenario> for ReferenceKey {
 }
 
 #[derive(Debug, Clone)]
+pub struct ProposalContext {
+    pub proposal: Proposal,
+    pub reference: Option<GovernanceScenario>,
+}
+
+#[derive(Debug, Clone)]
+pub struct GovernanceControlMetrics {
+    pub total_reference_controls: usize,
+    pub entries: Vec<ControlMetricEntry>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ControlMetricEntry {
+    pub domain: GovernanceDomain,
+    pub component: GovernanceComponent,
+    pub owner: String,
+    pub proposal_ids: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
 struct RequiredReference {
     domain: GovernanceDomain,
     component: GovernanceComponent,
@@ -479,6 +551,44 @@ impl GlobalDAO {
         Ok(proposal.reference_control.as_ref())
     }
 
+    /// Returns a full proposal context including its attached governance control.
+    pub fn proposal_context(&self, proposal_id: &str) -> Result<ProposalContext, GovernanceError> {
+        let proposal = self
+            .proposals
+            .get(proposal_id)
+            .ok_or(GovernanceError::ProposalNotFound)?
+            .clone();
+        let reference = proposal.reference_control.clone();
+        Ok(ProposalContext {
+            proposal,
+            reference,
+        })
+    }
+
+    /// Aggregates proposal counts by governance control for dashboards/reporting.
+    pub fn governance_control_metrics(&self) -> GovernanceControlMetrics {
+        let mut accum: HashMap<(GovernanceDomain, GovernanceComponent), ControlMetricEntry> =
+            HashMap::new();
+
+        for proposal in self.proposals.values() {
+            if let Some(control) = &proposal.reference_control {
+                let key = (control.domain.clone(), control.component.clone());
+                let entry = accum.entry(key).or_insert_with(|| ControlMetricEntry {
+                    domain: control.domain.clone(),
+                    component: control.component.clone(),
+                    owner: control.enrichment.owner.clone(),
+                    proposal_ids: Vec::new(),
+                });
+                entry.proposal_ids.push(proposal.id.clone());
+            }
+        }
+
+        GovernanceControlMetrics {
+            total_reference_controls: self.reference_index.scenarios().len(),
+            entries: accum.into_values().collect(),
+        }
+    }
+
     fn enforce_reference_policy(proposal: &Proposal) -> Result<(), GovernanceError> {
         let Some(required) = Self::required_reference_for(&proposal.proposal_type) else {
             return Ok(());
@@ -497,48 +607,56 @@ impl GlobalDAO {
     }
 
     fn required_reference_for(proposal_type: &ProposalType) -> Option<RequiredReference> {
-        match proposal_type {
-            ProposalType::ParameterChange => Some(RequiredReference::new(
+        Self::required_reference_for_kind(proposal_type.kind())
+    }
+
+    fn required_reference_for_kind(kind: ProposalTypeKind) -> Option<RequiredReference> {
+        match kind {
+            ProposalTypeKind::ParameterChange => Some(RequiredReference::new(
                 GovernanceDomain::GovernancePolicyFramework,
                 GovernanceComponent::PolicyEngine,
             )),
-            ProposalType::TreasuryAllocation => Some(RequiredReference::new(
+            ProposalTypeKind::TreasuryAllocation => Some(RequiredReference::new(
                 GovernanceDomain::RiskExceptionManagement,
                 GovernanceComponent::RiskRegistry,
             )),
-            ProposalType::ProtocolUpgrade => Some(RequiredReference::new(
+            ProposalTypeKind::ProtocolUpgrade => Some(RequiredReference::new(
                 GovernanceDomain::AuditEvidenceManagement,
                 GovernanceComponent::AuditLogger,
             )),
-            ProposalType::EmergencyPause => Some(RequiredReference::new(
+            ProposalTypeKind::EmergencyPause => Some(RequiredReference::new(
                 GovernanceDomain::DaoOnChainGovernance,
                 GovernanceComponent::DaoGovernor,
             )),
-            ProposalType::NewMarketListing => Some(RequiredReference::new(
+            ProposalTypeKind::NewMarketListing => Some(RequiredReference::new(
                 GovernanceDomain::ComplianceRegulatoryAlignment,
                 GovernanceComponent::ComplianceMapper,
             )),
-            ProposalType::FeeStructureChange => Some(RequiredReference::new(
+            ProposalTypeKind::FeeStructureChange => Some(RequiredReference::new(
                 GovernanceDomain::PolicyAsCodeAutomation,
                 GovernanceComponent::RegoValidator,
             )),
-            ProposalType::TreasuryAutomation => Some(RequiredReference::new(
+            ProposalTypeKind::TreasuryAutomation => Some(RequiredReference::new(
                 GovernanceDomain::RiskExceptionManagement,
                 GovernanceComponent::RiskRegistry,
             )),
-            ProposalType::ObservabilityUpgrade => Some(RequiredReference::new(
+            ProposalTypeKind::ObservabilityUpgrade => Some(RequiredReference::new(
                 GovernanceDomain::TransparencyReporting,
                 GovernanceComponent::ReportDashboard,
             )),
-            ProposalType::AccessControlUpdate => Some(RequiredReference::new(
+            ProposalTypeKind::AccessControlUpdate => Some(RequiredReference::new(
                 GovernanceDomain::AccessAuthorizationGovernance,
                 GovernanceComponent::RoleManager,
             )),
-            ProposalType::ChangeManagementOverride => Some(RequiredReference::new(
+            ProposalTypeKind::ChangeManagementOverride => Some(RequiredReference::new(
                 GovernanceDomain::ChangeManagementApprovalFlow,
                 GovernanceComponent::ApprovalGate,
             )),
-            _ => None,
+            ProposalTypeKind::EducationProgramRefresh => Some(RequiredReference::new(
+                GovernanceDomain::EducationCultureAccountability,
+                GovernanceComponent::PolicyEngine,
+            )),
+            ProposalTypeKind::Other => None,
         }
     }
 
@@ -888,8 +1006,51 @@ pub enum GovernanceError {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashSet;
 
     const POLICY_REFERENCE_TEST: &str = "test_governance_compliance__governance_policy_and_framework__policy_engine__defines_policy__during_commit";
+    const EXPECTED_COMPONENT_COVERAGE: &[(GovernanceDomain, GovernanceComponent)] = &[
+        (
+            GovernanceDomain::GovernancePolicyFramework,
+            GovernanceComponent::PolicyEngine,
+        ),
+        (
+            GovernanceDomain::AccessAuthorizationGovernance,
+            GovernanceComponent::RoleManager,
+        ),
+        (
+            GovernanceDomain::ChangeManagementApprovalFlow,
+            GovernanceComponent::ApprovalGate,
+        ),
+        (
+            GovernanceDomain::ComplianceRegulatoryAlignment,
+            GovernanceComponent::ComplianceMapper,
+        ),
+        (
+            GovernanceDomain::RiskExceptionManagement,
+            GovernanceComponent::RiskRegistry,
+        ),
+        (
+            GovernanceDomain::AuditEvidenceManagement,
+            GovernanceComponent::AuditLogger,
+        ),
+        (
+            GovernanceDomain::PolicyAsCodeAutomation,
+            GovernanceComponent::RegoValidator,
+        ),
+        (
+            GovernanceDomain::TransparencyReporting,
+            GovernanceComponent::ReportDashboard,
+        ),
+        (
+            GovernanceDomain::DaoOnChainGovernance,
+            GovernanceComponent::DaoGovernor,
+        ),
+        (
+            GovernanceDomain::EducationCultureAccountability,
+            GovernanceComponent::PolicyEngine,
+        ),
+    ];
 
     fn attach_reference(
         dao: &mut GlobalDAO,
@@ -1474,5 +1635,53 @@ mod tests {
             GovernanceComponent::ApprovalGate,
         );
         assert!(dao.submit_proposal(&proposal_id).is_ok());
+    }
+
+    #[test]
+    fn test_education_program_refresh_requires_training_reference() {
+        let mut dao = GlobalDAO::new();
+        let trader_id = "education_refresh".to_string();
+        dao.add_member(trader_id.clone(), 2_000, false);
+
+        let proposal_id = dao
+            .create_proposal(
+                "Refresh security education program".to_string(),
+                "Update LMS modules and accountability checkpoints".to_string(),
+                ProposalType::EducationProgramRefresh,
+                Proposer::Human {
+                    trader_id: trader_id.clone(),
+                },
+            )
+            .unwrap();
+
+        let err = dao.submit_proposal(&proposal_id).unwrap_err();
+        assert!(matches!(err, GovernanceError::ReferenceControlMissing));
+
+        attach_reference(
+            &mut dao,
+            &proposal_id,
+            GovernanceDomain::EducationCultureAccountability,
+            GovernanceComponent::PolicyEngine,
+        );
+        assert!(dao.submit_proposal(&proposal_id).is_ok());
+    }
+
+    #[test]
+    fn test_required_reference_matrix_covers_expected_components() {
+        let mut coverage = HashSet::new();
+        for kind in ProposalTypeKind::CONTROLLED.iter().copied() {
+            let reference = GlobalDAO::required_reference_for_kind(kind)
+                .expect("controlled proposal kind should define a reference control");
+            coverage.insert((reference.domain, reference.component));
+        }
+
+        for (domain, component) in EXPECTED_COMPONENT_COVERAGE {
+            assert!(
+                coverage.contains(&(domain.clone(), component.clone())),
+                "missing governance coverage for {:?}/{:?}",
+                domain,
+                component
+            );
+        }
     }
 }
