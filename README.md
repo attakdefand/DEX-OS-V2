@@ -1,4 +1,4 @@
-# DEX-OS V1
+# DEX-OS V2
 
 A high-performance decentralized exchange core engine built with Rust, WebAssembly, and modern database technologies.
 
@@ -122,5 +122,6 @@ chmod +x init-and-push-to-github.sh
 For detailed instructions on installing Git, see [GIT-INSTALLATION-GUIDE.md](GIT-INSTALLATION-GUIDE.md).
 
 ## License
+
 
 This project is licensed under the MIT License.
