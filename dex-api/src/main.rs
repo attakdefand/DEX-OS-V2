@@ -43,7 +43,7 @@ async fn bootstrap() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Starting DEX-OS API server on port {}", config.server_port);
     warp::serve(routes)
-        .run(([127, 0, 0, 1], config.server_port))
+        .run(([0, 0, 0, 0], config.server_port))
         .await;
 
     Ok(())

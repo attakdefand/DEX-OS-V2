@@ -53,6 +53,27 @@
 
 A high-performance decentralized exchange core engine built with Rust, WebAssembly, and modern database technologies.
 
+## Run Anywhere (Docker)
+
+- Prerequisites: Docker Desktop (Windows/macOS) or Docker Engine + Docker Compose (Linux)
+- One command:
+  - Windows (PowerShell): `./scripts/run-docker.ps1`
+  - macOS/Linux: `bash scripts/run-docker.sh`
+- Services launched:
+  - `postgres:15-alpine` on port 5432
+  - `dex-api` on port 3030 (connect at `http://localhost:3030`)
+
+To stop: `docker compose down`
+
+Manual compose:
+
+```bash
+docker compose build
+docker compose up -d
+```
+
+The image also packages CLI tools in the container (`riskctl`, `compliance_report`).
+
 ## Project Structure
 
 - `dex-core/` - Core DEX engine logic (orderbook, AMM, etc.)

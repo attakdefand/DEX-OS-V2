@@ -242,6 +242,15 @@ pub fn routes(
 
     let auth_endpoints = auth_routes(state.clone()).boxed();
 
+    // Health endpoint
+    let health = warp::path("health")
+        .and(warp::get())
+        .map(|| {
+            let payload = serde_json::json!({ "status": "ok" });
+            warp::reply::with_status(warp::reply::json(&payload), StatusCode::OK)
+        })
+        .boxed();
+
     let cors = warp::cors()
         .allow_any_origin()
         .allow_methods(vec!["GET", "POST"])
@@ -254,6 +263,7 @@ pub fn routes(
         .or(get_depth)
         .or(depth_ws)
         .or(auth_endpoints)
+        .or(health)
         .with(cors)
         .recover(handle_rejection)
 }

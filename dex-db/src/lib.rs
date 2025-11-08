@@ -55,10 +55,11 @@ impl DatabaseManager {
             shard_pools.insert(shard_id, pool);
         }
 
+        let num_shards = shard_pools.len() as u64;
         Ok(Self {
             primary_pool,
             shard_pools,
-            num_shards: shard_pools.len() as u64,
+            num_shards,
         })
     }
 
@@ -73,10 +74,11 @@ impl DatabaseManager {
 
     /// Create a new database manager with sharding support
     pub fn new_with_shards(primary_pool: PgPool, shard_pools: HashMap<u64, PgPool>) -> Self {
+        let num_shards = shard_pools.len() as u64;
         Self {
             primary_pool,
             shard_pools,
-            num_shards: shard_pools.len() as u64,
+            num_shards,
         }
     }
 

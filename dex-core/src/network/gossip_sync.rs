@@ -245,7 +245,7 @@ impl GossipSyncNode {
 
         // In a real implementation, we would serialize the message and send it
         // over the network using TCP/UDP or another protocol
-        let message = GossipSyncMessage::Gossip { nodes };
+        let _message = GossipSyncMessage::Gossip { nodes };
 
         // Simulate network communication (omitted to avoid recursive scheduling in tests)
     }
@@ -318,7 +318,7 @@ impl GossipSyncNode {
         }
 
         // In a real implementation, we would send this response back to the requesting node
-        let response = GossipSyncMessage::SyncResponse {
+        let _response = GossipSyncMessage::SyncResponse {
             data: response_data,
         };
         
@@ -361,7 +361,7 @@ impl GossipSyncNode {
         let data: Vec<SyncData> = sync_data.values().cloned().collect();
         
         // In a real implementation, we would send this response back to the requesting node
-        let response = GossipSyncMessage::DataUpdateResponse { data };
+        let _response = GossipSyncMessage::DataUpdateResponse { data };
         
         // In this demo, skip re-entrant handling to avoid recursive futures
     }
