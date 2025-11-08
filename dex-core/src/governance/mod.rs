@@ -50,6 +50,8 @@ pub struct Proposal {
     pub ai_analysis: Option<AIAnalysis>,
     /// Optional governance control reference derived from the CSV dataset
     pub reference_control: Option<GovernanceScenario>,
+    /// Whether the designated owner acknowledged the reference control
+    pub reference_acknowledged: bool,
 }
 
 /// Types of governance proposals
@@ -432,24 +434,43 @@ impl From<&GovernanceScenario> for ReferenceKey {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ProposalContext {
     pub proposal: Proposal,
     pub reference: Option<GovernanceScenario>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct GovernanceControlMetrics {
     pub total_reference_controls: usize,
     pub entries: Vec<ControlMetricEntry>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ControlMetricEntry {
     pub domain: GovernanceDomain,
     pub component: GovernanceComponent,
     pub owner: String,
     pub proposal_ids: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct GovernanceInsights {
+    pub proposals: Vec<ProposalSummary>,
+    pub control_metrics: GovernanceControlMetrics,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ProposalSummary {
+    pub id: String,
+    pub title: String,
+    pub proposal_type: ProposalType,
+    pub status: ProposalStatus,
+    pub reference_owner: Option<String>,
+    pub reference_tool: Option<String>,
+    pub reference_metric: Option<String>,
+    pub reference_evidence: Option<String>,
+    pub reference_acknowledged: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -537,6 +558,7 @@ impl GlobalDAO {
             .get_mut(proposal_id)
             .ok_or(GovernanceError::ProposalNotFound)?;
         proposal.reference_control = Some(scenario);
+        proposal.reference_acknowledged = false;
         Ok(())
     }
 
@@ -566,6 +588,31 @@ impl GlobalDAO {
         })
     }
 
+    /// Marks that the designated owner has acknowledged the control backing a proposal.
+    pub fn acknowledge_reference_owner(
+        &mut self,
+        proposal_id: &str,
+        owner_name: &str,
+    ) -> Result<(), GovernanceError> {
+        let proposal = self
+            .proposals
+            .get_mut(proposal_id)
+            .ok_or(GovernanceError::ProposalNotFound)?;
+        let control = proposal
+            .reference_control
+            .as_ref()
+            .ok_or(GovernanceError::ReferenceControlMissing)?;
+
+        if !control.enrichment.owner.eq_ignore_ascii_case(owner_name) {
+            return Err(GovernanceError::ReferenceOwnerMismatch(
+                owner_name.to_string(),
+            ));
+        }
+
+        proposal.reference_acknowledged = true;
+        Ok(())
+    }
+
     /// Aggregates proposal counts by governance control for dashboards/reporting.
     pub fn governance_control_metrics(&self) -> GovernanceControlMetrics {
         let mut accum: HashMap<(GovernanceDomain, GovernanceComponent), ControlMetricEntry> =
@@ -587,6 +634,45 @@ impl GlobalDAO {
         GovernanceControlMetrics {
             total_reference_controls: self.reference_index.scenarios().len(),
             entries: accum.into_values().collect(),
+        }
+    }
+
+    /// Builds a snapshot suitable for APIs or dashboards with enriched metadata.
+    pub fn governance_insights(&self) -> GovernanceInsights {
+        let proposals = self
+            .proposals
+            .values()
+            .map(|proposal| {
+                let (owner, tool, metric, evidence) = proposal
+                    .reference_control
+                    .as_ref()
+                    .map(|control| {
+                        (
+                            Some(control.enrichment.owner.clone()),
+                            Some(control.enrichment.tool.clone()),
+                            Some(control.enrichment.metric.clone()),
+                            Some(control.enrichment.evidence.clone()),
+                        )
+                    })
+                    .unwrap_or((None, None, None, None));
+
+                ProposalSummary {
+                    id: proposal.id.clone(),
+                    title: proposal.title.clone(),
+                    proposal_type: proposal.proposal_type.clone(),
+                    status: proposal.status.clone(),
+                    reference_owner: owner,
+                    reference_tool: tool,
+                    reference_metric: metric,
+                    reference_evidence: evidence,
+                    reference_acknowledged: proposal.reference_acknowledged,
+                }
+            })
+            .collect();
+
+        GovernanceInsights {
+            proposals,
+            control_metrics: self.governance_control_metrics(),
         }
     }
 
@@ -722,6 +808,7 @@ impl GlobalDAO {
             execution_plan: None,
             ai_analysis: None,
             reference_control: None,
+            reference_acknowledged: false,
         };
 
         self.proposals.insert(proposal_id.clone(), proposal);
@@ -901,6 +988,9 @@ impl GlobalDAO {
         // Check threshold
         let threshold = (total_votes * self.parameters.threshold_percentage as u64) / 100;
         if yes_votes > threshold {
+            if proposal.reference_control.is_some() && !proposal.reference_acknowledged {
+                return Err(GovernanceError::ReferenceOwnerAcknowledgementMissing);
+            }
             proposal.status = ProposalStatus::Passed;
             Ok(ProposalStatus::Passed)
         } else {
@@ -1002,6 +1092,10 @@ pub enum GovernanceError {
     ReferenceControlMissing,
     #[error("attached governance reference control does not satisfy policy requirements")]
     ReferenceControlMismatch,
+    #[error("reference control owner acknowledgement missing")]
+    ReferenceOwnerAcknowledgementMissing,
+    #[error("owner {0} is not authorized to acknowledge this reference control")]
+    ReferenceOwnerMismatch(String),
 }
 
 #[cfg(test)]
