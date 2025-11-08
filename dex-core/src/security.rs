@@ -9,6 +9,8 @@
 //! - Security,Orderbook,Orderbook,Event Logging,Security Auditing,Medium
 
 use crate::types::{TokenId, TraderId};
+use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
+use rand::{rngs::OsRng, RngCore};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use sha3::{Digest, Sha3_256};
@@ -187,18 +189,17 @@ impl SecurityManager {
         }
     }
 
-    /// Sign data for evidence integrity
+    /// Sign data for evidence integrity using Ed25519
     pub fn sign_data(&mut self, data: &[u8], private_key: &[u8], public_key: &[u8]) -> String {
+        // Create signing key from private key bytes
+        let signing_key = SigningKey::from_bytes(private_key.as_ref().try_into().unwrap());
+
+        // Sign the data
+        let signature: Signature = signing_key.sign(data);
+
         let mut hasher = Sha3_256::new();
         hasher.update(data);
         let data_hash = hasher.finalize().to_vec();
-
-        // In a real implementation, this would use actual cryptographic signatures
-        // For now, we'll simulate with a hash of the data and private key
-        let mut signature_hasher = Sha3_256::new();
-        signature_hasher.update(&data_hash);
-        signature_hasher.update(private_key);
-        let signature = signature_hasher.finalize().to_vec();
 
         let timestamp = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -209,7 +210,7 @@ impl SecurityManager {
 
         let digital_signature = DigitalSignature {
             data_hash,
-            signature,
+            signature: signature.to_bytes().to_vec(),
             public_key: public_key.to_vec(),
             timestamp,
         };
@@ -219,7 +220,7 @@ impl SecurityManager {
         signature_id
     }
 
-    /// Verify a digital signature
+    /// Verify a digital signature using Ed25519
     pub fn verify_signature(&self, signature_id: &str, data: &[u8]) -> bool {
         if let Some(stored_signature) = self.signatures.get(signature_id) {
             let mut hasher = Sha3_256::new();
@@ -231,14 +232,19 @@ impl SecurityManager {
                 return false;
             }
 
-            // In a real implementation, this would verify the cryptographic signature
-            // For now, we'll simulate verification
-            let mut signature_hasher = Sha3_256::new();
-            signature_hasher.update(&data_hash);
-            signature_hasher.update(&stored_signature.signature); // Using signature as private key for simulation
-            let expected_signature = signature_hasher.finalize().to_vec();
+            // Verify the cryptographic signature
+            let verifying_key = VerifyingKey::from_bytes(
+                stored_signature.public_key.as_slice().try_into().unwrap(),
+            );
+            if verifying_key.is_err() {
+                return false;
+            }
 
-            stored_signature.signature == expected_signature
+            let verifying_key = verifying_key.unwrap();
+            let signature =
+                Signature::from_bytes(stored_signature.signature.as_slice().try_into().unwrap());
+
+            verifying_key.verify(data, &signature).is_ok()
         } else {
             false
         }
@@ -263,6 +269,46 @@ impl SecurityManager {
         };
 
         self.data_classification.insert(data_id, classification);
+    }
+
+    /// Update access control list for classified data
+    pub fn update_data_acl(
+        &mut self,
+        data_id: &str,
+        acl: Vec<TraderId>,
+    ) -> Result<(), SecurityError> {
+        if let Some(classification) = self.data_classification.get_mut(data_id) {
+            classification.acl = acl;
+            Ok(())
+        } else {
+            Err(SecurityError::DataNotClassified)
+        }
+    }
+
+    /// Add a user to the access control list for classified data
+    pub fn add_user_to_acl(&mut self, data_id: &str, user: TraderId) -> Result<(), SecurityError> {
+        if let Some(classification) = self.data_classification.get_mut(data_id) {
+            if !classification.acl.contains(&user) {
+                classification.acl.push(user);
+            }
+            Ok(())
+        } else {
+            Err(SecurityError::DataNotClassified)
+        }
+    }
+
+    /// Remove a user from the access control list for classified data
+    pub fn remove_user_from_acl(
+        &mut self,
+        data_id: &str,
+        user: &TraderId,
+    ) -> Result<(), SecurityError> {
+        if let Some(classification) = self.data_classification.get_mut(data_id) {
+            classification.acl.retain(|u| u != user);
+            Ok(())
+        } else {
+            Err(SecurityError::DataNotClassified)
+        }
     }
 
     /// Check if a user has access to classified data
@@ -326,11 +372,42 @@ impl SecurityManager {
     pub fn get_events_by_type(&self, event_type: EventType) -> Vec<&SecurityEvent> {
         self.event_logger.get_events_by_type(event_type)
     }
+
+    /// Generate a new Ed25519 key pair for digital signatures
+    pub fn generate_key_pair() -> (Vec<u8>, Vec<u8>) {
+        let mut csprng = OsRng;
+        let mut seed = [0u8; 32];
+        csprng.fill_bytes(&mut seed);
+        let signing_key = SigningKey::from_bytes(&seed);
+        let verifying_key = signing_key.verifying_key();
+
+        (
+            signing_key.to_bytes().to_vec(),
+            verifying_key.to_bytes().to_vec(),
+        )
+    }
 }
 
 impl Default for SecurityManager {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl DigitalSignature {
+    /// Create a new digital signature
+    pub fn new(data_hash: Vec<u8>, signature: Vec<u8>, public_key: Vec<u8>) -> Self {
+        let timestamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+
+        Self {
+            data_hash,
+            signature,
+            public_key,
+            timestamp,
+        }
     }
 }
 
@@ -602,6 +679,8 @@ pub enum SecurityError {
     CertificateAlreadyRevoked,
     #[error("Key rotation failed")]
     KeyRotationFailed,
+    #[error("Data not classified")]
+    DataNotClassified,
 }
 
 #[cfg(test)]
@@ -613,6 +692,24 @@ mod tests {
         let manager = SecurityManager::new();
         assert!(manager.signatures.is_empty());
         assert!(manager.data_classification.is_empty());
+    }
+
+    #[test]
+    fn test_digital_signature() {
+        let mut manager = SecurityManager::new();
+
+        // Generate a key pair
+        let (private_key, public_key) = SecurityManager::generate_key_pair();
+
+        // Sign some data
+        let data = b"test data for signing";
+        let signature_id = manager.sign_data(data, &private_key, &public_key);
+
+        // Verify the signature
+        assert!(manager.verify_signature(&signature_id, data));
+
+        // Verify with incorrect data should fail
+        assert!(!manager.verify_signature(&signature_id, b"different data"));
     }
 
     #[test]
@@ -654,6 +751,43 @@ mod tests {
 
         // Public data (not classified) should be accessible
         assert!(manager.check_data_access("public_data", &user1));
+    }
+
+    #[test]
+    fn test_data_acl_management() {
+        let mut manager = SecurityManager::new();
+        let owner = "owner".to_string();
+        let user1 = "user1".to_string();
+        let user2 = "user2".to_string();
+        let user3 = "user3".to_string();
+
+        // Classify data
+        manager.classify_data(
+            "data1".to_string(),
+            ClassificationLevel::Confidential,
+            owner.clone(),
+            vec![user1.clone()],
+        );
+
+        // Add user to ACL
+        assert!(manager.add_user_to_acl("data1", user2.clone()).is_ok());
+        assert!(manager.check_data_access("data1", &user2));
+
+        // Remove user from ACL
+        assert!(manager.remove_user_from_acl("data1", &user1).is_ok());
+        assert!(!manager.check_data_access("data1", &user1));
+
+        // Update entire ACL
+        assert!(manager
+            .update_data_acl("data1", vec![user3.clone()])
+            .is_ok());
+        assert!(manager.check_data_access("data1", &user3));
+        assert!(!manager.check_data_access("data1", &user2));
+
+        // Try to modify non-existent data
+        assert!(manager
+            .add_user_to_acl("nonexistent", user1.clone())
+            .is_err());
     }
 
     #[test]

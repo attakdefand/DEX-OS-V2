@@ -82,10 +82,10 @@ Development Priority,Category,Component,Algorithm/Data Structure,Feature,Task Pr
 3,Core Trading,Governance,Governance,Snapshot Mechanism,Off-chain Voting,Medium [IMPLEMENTED]
 3,Core Trading,Keeper,Keeper,Health Check,Service Monitoring,Medium [IMPLEMENTED]
 3,Core Trading,Indexer,Indexer,Filtering Engine,Selective Data Capture,Medium [IMPLEMENTED]
-3,Infrastructure,Database,Database,Sharding,Data Partitioning,Medium
-3,Infrastructure,Network,Network,Raft Consensus,Service Coordination,Medium
-3,Infrastructure,Network,Network,Gossip Protocol,Node Discovery,Medium
-3,Infrastructure,Indexer,Indexer,Materialized Views,Data Aggregation,Medium
+3,Infrastructure,Database,Database,Sharding,Data Partitioning,Medium [IMPLEMENTED]
+3,Infrastructure,Network,Network,Raft Consensus,Service Coordination,Medium [IMPLEMENTED]
+3,Infrastructure,Network,Network,Gossip Protocol,Node Discovery,Medium [IMPLEMENTED]
+3,Infrastructure,Indexer,Indexer,Materialized Views,Data Aggregation,Medium [IMPLEMENTED]
 
 3,Security,Security,Security,Digital Signatures,Evidence Integrity,Medium
 3,Security,Security,Security,Hash Map,Data Classification,Medium

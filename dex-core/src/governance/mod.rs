@@ -63,6 +63,8 @@ pub enum ProposalType {
     EmergencyPause,
     TreasuryAutomation,
     ObservabilityUpgrade,
+    AccessControlUpdate,
+    ChangeManagementOverride,
     Other(String),
 }
 
@@ -527,6 +529,14 @@ impl GlobalDAO {
             ProposalType::ObservabilityUpgrade => Some(RequiredReference::new(
                 GovernanceDomain::TransparencyReporting,
                 GovernanceComponent::ReportDashboard,
+            )),
+            ProposalType::AccessControlUpdate => Some(RequiredReference::new(
+                GovernanceDomain::AccessAuthorizationGovernance,
+                GovernanceComponent::RoleManager,
+            )),
+            ProposalType::ChangeManagementOverride => Some(RequiredReference::new(
+                GovernanceDomain::ChangeManagementApprovalFlow,
+                GovernanceComponent::ApprovalGate,
             )),
             _ => None,
         }
@@ -1404,6 +1414,64 @@ mod tests {
             &proposal_id,
             GovernanceDomain::TransparencyReporting,
             GovernanceComponent::ReportDashboard,
+        );
+        assert!(dao.submit_proposal(&proposal_id).is_ok());
+    }
+
+    #[test]
+    fn test_access_control_update_requires_role_manager_reference() {
+        let mut dao = GlobalDAO::new();
+        let trader_id = "access_control_reference".to_string();
+        dao.add_member(trader_id.clone(), 2_000, false);
+
+        let proposal_id = dao
+            .create_proposal(
+                "Update IAM policies".to_string(),
+                "Adjusts role hierarchy and RBAC mappings".to_string(),
+                ProposalType::AccessControlUpdate,
+                Proposer::Human {
+                    trader_id: trader_id.clone(),
+                },
+            )
+            .unwrap();
+
+        let err = dao.submit_proposal(&proposal_id).unwrap_err();
+        assert!(matches!(err, GovernanceError::ReferenceControlMissing));
+
+        attach_reference(
+            &mut dao,
+            &proposal_id,
+            GovernanceDomain::AccessAuthorizationGovernance,
+            GovernanceComponent::RoleManager,
+        );
+        assert!(dao.submit_proposal(&proposal_id).is_ok());
+    }
+
+    #[test]
+    fn test_change_management_override_requires_approval_gate_reference() {
+        let mut dao = GlobalDAO::new();
+        let trader_id = "change_override_reference".to_string();
+        dao.add_member(trader_id.clone(), 2_000, false);
+
+        let proposal_id = dao
+            .create_proposal(
+                "Override change freeze".to_string(),
+                "Bypass the normal approval gate for emergency fix".to_string(),
+                ProposalType::ChangeManagementOverride,
+                Proposer::Human {
+                    trader_id: trader_id.clone(),
+                },
+            )
+            .unwrap();
+
+        let err = dao.submit_proposal(&proposal_id).unwrap_err();
+        assert!(matches!(err, GovernanceError::ReferenceControlMissing));
+
+        attach_reference(
+            &mut dao,
+            &proposal_id,
+            GovernanceDomain::ChangeManagementApprovalFlow,
+            GovernanceComponent::ApprovalGate,
         );
         assert!(dao.submit_proposal(&proposal_id).is_ok());
     }

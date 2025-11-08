@@ -30,10 +30,10 @@ Based on my analysis of the DEX-OS-V2.csv file, here are the unimplemented Prior
 
 
 ### Infrastructure
-5. **Database** - Sharding for Data Partitioning
-6. **Network** - Raft Consensus for Service Coordination
-7. **Network** - Gossip Protocol for Node Discovery
-8. **Indexer** - Materialized Views for Data Aggregation
+5. **Database** - Sharding for Data Partitioning[implemented]
+6. **Network** - Raft Consensus for Service Coordination[implemented]
+7. **Network** - Gossip Protocol for Node Discovery[implemented]
+8. **Indexer** - Materialized Views for Data Aggregation[implemented]
 
 ### Security
 9. **Security** - Digital Signatures for Evidence Integrity

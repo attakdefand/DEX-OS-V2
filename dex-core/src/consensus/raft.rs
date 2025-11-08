@@ -264,6 +264,7 @@ impl RaftNode {
                 .persistent_state
                 .log
                 .get(self.volatile_state.last_applied as usize)
+                .cloned()
             {
                 self.apply_command(&entry.command);
             }
