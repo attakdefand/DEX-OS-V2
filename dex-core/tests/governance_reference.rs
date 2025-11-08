@@ -2,8 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use serde::Deserialize;
 
-mod reference_common;
-use reference_common::{reference_root, slugify};
+use dex_core::reference_common::{reference_root, slugify};
 
 #[derive(Debug, Deserialize)]
 struct GovernanceRow {

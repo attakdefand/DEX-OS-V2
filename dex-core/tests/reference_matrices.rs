@@ -1,7 +1,6 @@
 use std::collections::HashSet;
 
-mod reference_common;
-use reference_common::{reference_root, relaxed_slug, slugify};
+use dex_core::reference_common::{reference_root, relaxed_slug, slugify};
 
 struct ReferenceSpec {
     file_name: &'static str,

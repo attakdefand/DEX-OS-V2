@@ -6,6 +6,13 @@
 //! It provides functionality for AI-driven governance proposals and
 //! global decentralized autonomous organization (DAO) operations.
 
+pub mod reference;
+
+pub use reference::{
+    load_governance_reference, Enrichment, GovernanceComponent, GovernanceDomain,
+    GovernanceReferenceError, GovernanceScenario,
+};
+
 use crate::types::{TokenId, TraderId};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -39,6 +46,8 @@ pub struct Proposal {
     pub execution_plan: Option<ExecutionPlan>,
     /// AI analysis and recommendations
     pub ai_analysis: Option<AIAnalysis>,
+    /// Optional governance control reference derived from the CSV dataset
+    pub reference_control: Option<GovernanceScenario>,
 }
 
 /// Types of governance proposals
@@ -195,6 +204,8 @@ pub struct GlobalDAO {
     total_voting_power: u64,
     /// Governance parameters
     parameters: GovernanceParameters,
+    /// Governance control matrix derived from the reference dataset
+    reference_index: GovernanceReferenceIndex,
     /// AI models used for governance
     ai_models: HashMap<String, AIModel>,
     /// Emergency council members (with special powers)
@@ -257,10 +268,110 @@ pub struct ModelPerformance {
     pub avg_confidence: f32,
 }
 
+/// Reference control matrix built from the governance CSV dataset.
+#[derive(Debug, Clone)]
+pub struct GovernanceReferenceIndex {
+    scenarios: Vec<GovernanceScenario>,
+    key_index: HashMap<ReferenceKey, usize>,
+    test_index: HashMap<String, usize>,
+}
+
+impl GovernanceReferenceIndex {
+    /// Loads the governance reference CSV and builds a searchable index.
+    pub fn load() -> Result<Self, GovernanceReferenceError> {
+        let scenarios = load_governance_reference()?;
+        Ok(Self::from_scenarios(scenarios))
+    }
+
+    fn from_scenarios(scenarios: Vec<GovernanceScenario>) -> Self {
+        let mut key_index = HashMap::new();
+        let mut test_index = HashMap::new();
+
+        for (idx, scenario) in scenarios.iter().enumerate() {
+            key_index.insert(ReferenceKey::from(scenario), idx);
+            test_index.insert(scenario.test_name.clone(), idx);
+        }
+
+        Self {
+            scenarios,
+            key_index,
+            test_index,
+        }
+    }
+
+    /// Finds a control by its logical selector.
+    pub fn find(
+        &self,
+        domain: &GovernanceDomain,
+        component: &GovernanceComponent,
+        behavior: &str,
+        condition: &str,
+    ) -> Option<&GovernanceScenario> {
+        let key = ReferenceKey::new(domain, component, behavior, condition);
+        self.key_index
+            .get(&key)
+            .and_then(|idx| self.scenarios.get(*idx))
+    }
+
+    /// Finds a control by the canonical test name.
+    pub fn find_by_test_name(&self, test_name: &str) -> Option<&GovernanceScenario> {
+        self.test_index
+            .get(test_name)
+            .and_then(|idx| self.scenarios.get(*idx))
+    }
+
+    /// Returns all scenarios for consumers that need to iterate through them.
+    pub fn scenarios(&self) -> &[GovernanceScenario] {
+        &self.scenarios
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+struct ReferenceKey {
+    domain: GovernanceDomain,
+    component: GovernanceComponent,
+    behavior: String,
+    condition: String,
+}
+
+impl ReferenceKey {
+    fn new(
+        domain: &GovernanceDomain,
+        component: &GovernanceComponent,
+        behavior: &str,
+        condition: &str,
+    ) -> Self {
+        Self {
+            domain: domain.clone(),
+            component: component.clone(),
+            behavior: behavior.to_string(),
+            condition: condition.to_string(),
+        }
+    }
+}
+
+impl From<&GovernanceScenario> for ReferenceKey {
+    fn from(value: &GovernanceScenario) -> Self {
+        Self {
+            domain: value.domain.clone(),
+            component: value.component.clone(),
+            behavior: value.behavior.clone(),
+            condition: value.condition.clone(),
+        }
+    }
+}
+
 impl GlobalDAO {
     /// Create a new Global DAO with default parameters
     pub fn new() -> Self {
-        Self {
+        Self::with_reference_data().expect("failed to load governance reference data for GlobalDAO")
+    }
+
+    /// Create a new Global DAO wired to the governance reference dataset.
+    pub fn with_reference_data() -> Result<Self, GovernanceReferenceError> {
+        let reference_index = GovernanceReferenceIndex::load()?;
+
+        Ok(Self {
             proposals: HashMap::new(),
             members: HashMap::new(),
             total_voting_power: 0,
@@ -272,9 +383,10 @@ impl GlobalDAO {
                 execution_delay: 86400,   // 1 day
                 max_active_proposals: 10,
             },
+            reference_index,
             ai_models: HashMap::new(),
             emergency_council: Vec::new(),
-        }
+        })
     }
 
     /// Add a new member to the DAO
@@ -291,6 +403,46 @@ impl GlobalDAO {
 
         self.total_voting_power += voting_power;
         self.members.insert(trader_id, member);
+    }
+
+    /// Returns the immutable governance reference index.
+    pub fn reference_index(&self) -> &GovernanceReferenceIndex {
+        &self.reference_index
+    }
+
+    /// Attaches a governance reference control to an existing proposal.
+    pub fn attach_reference_control(
+        &mut self,
+        proposal_id: &str,
+        domain: GovernanceDomain,
+        component: GovernanceComponent,
+        behavior: &str,
+        condition: &str,
+    ) -> Result<(), GovernanceError> {
+        let scenario = self
+            .reference_index
+            .find(&domain, &component, behavior, condition)
+            .cloned()
+            .ok_or(GovernanceError::ReferenceScenarioNotFound)?;
+
+        let proposal = self
+            .proposals
+            .get_mut(proposal_id)
+            .ok_or(GovernanceError::ProposalNotFound)?;
+        proposal.reference_control = Some(scenario);
+        Ok(())
+    }
+
+    /// Retrieves the attached reference control for a proposal, if any.
+    pub fn proposal_reference_control(
+        &self,
+        proposal_id: &str,
+    ) -> Result<Option<&GovernanceScenario>, GovernanceError> {
+        let proposal = self
+            .proposals
+            .get(proposal_id)
+            .ok_or(GovernanceError::ProposalNotFound)?;
+        Ok(proposal.reference_control.as_ref())
     }
 
     /// Create a new governance proposal
@@ -353,6 +505,7 @@ impl GlobalDAO {
             },
             execution_plan: None,
             ai_analysis: None,
+            reference_control: None,
         };
 
         self.proposals.insert(proposal_id.clone(), proposal);
@@ -625,11 +778,15 @@ pub enum GovernanceError {
     TooManyActiveProposals,
     #[error("Not an emergency council member")]
     NotEmergencyCouncilMember,
+    #[error("reference scenario not found for the requested selector")]
+    ReferenceScenarioNotFound,
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const POLICY_REFERENCE_TEST: &str = "test_governance_compliance__governance_policy_and_framework__policy_engine__defines_policy__during_commit";
 
     #[test]
     fn test_global_dao_creation() {
@@ -637,6 +794,7 @@ mod tests {
         assert!(dao.proposals.is_empty());
         assert!(dao.members.is_empty());
         assert_eq!(dao.total_voting_power, 0);
+        assert!(!dao.reference_index().scenarios().is_empty());
     }
 
     #[test]
@@ -903,5 +1061,51 @@ mod tests {
 
         let hybrid_proposals = dao.get_proposals_by_type("Hybrid");
         assert_eq!(hybrid_proposals.len(), 0);
+    }
+
+    #[test]
+    fn test_attach_reference_control_to_proposal() {
+        let mut dao = GlobalDAO::new();
+        let trader_id = "trader_reference".to_string();
+
+        dao.add_member(trader_id.clone(), 2_000, false);
+        let proposal_id = dao
+            .create_proposal(
+                "Policy enforcement".to_string(),
+                "Ensure policy engine enforces definitions during commits".to_string(),
+                ProposalType::ParameterChange,
+                Proposer::Human {
+                    trader_id: trader_id.clone(),
+                },
+            )
+            .unwrap();
+
+        dao.attach_reference_control(
+            &proposal_id,
+            GovernanceDomain::GovernancePolicyFramework,
+            GovernanceComponent::PolicyEngine,
+            "defines_policy",
+            "during_commit",
+        )
+        .expect("failed to attach governance control");
+
+        let proposal = dao.get_proposal(&proposal_id).unwrap();
+        let reference = proposal
+            .reference_control
+            .as_ref()
+            .expect("missing reference control");
+
+        assert_eq!(reference.test_name, POLICY_REFERENCE_TEST);
+        assert_eq!(reference.enrichment.owner, "Security Governance Lead");
+        assert_eq!(
+            reference.enrichment.metric, "policy_coverage_pct",
+            "metric should mirror the CSV data"
+        );
+
+        let lookup = dao
+            .proposal_reference_control(&proposal_id)
+            .expect("proposal exists")
+            .expect("reference control should be present");
+        assert_eq!(lookup.test_name, reference.test_name);
     }
 }
