@@ -3,5 +3,22 @@ name = "test_coverage_demo"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "csv_test"
+path = "src/bin/csv_test.rs"
+
+[[bin]]
+name = "full_csv_test"
+path = "src/bin/full_csv_test.rs"
+
+[[bin]]
+name = "comprehensive_demo"
+path = "src/bin/comprehensive_demo.rs"
+
+[[bin]]
+name = "standalone_csv_test"
+path = "src/bin/standalone_csv_test.rs"
+
 [dependencies]
 sha3 = "0.10"
+dex-core = { path = "../dex-core" }

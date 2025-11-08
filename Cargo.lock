@@ -192,6 +192,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "bloom_filter_test_coverage_demo"
+version = "0.1.0"
+dependencies = [
+ "sha3",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2744,6 +2751,7 @@ dependencies = [
 name = "test_coverage_demo"
 version = "0.1.0"
 dependencies = [
+ "dex-core",
  "sha3",
 ]
 

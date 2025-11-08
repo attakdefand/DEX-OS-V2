@@ -10,7 +10,8 @@ pub mod reference;
 pub mod policy_engine;
 pub mod iam;
 pub mod compliance;
-pub mod risk;`npub mod audit;
+pub mod risk;
+pub mod audit;
 
 pub use reference::{
     load_governance_reference, Enrichment, GovernanceComponent, GovernanceDomain,
@@ -19,7 +20,8 @@ pub use reference::{
 pub use policy_engine::{policy_for, parse_checkpoint, parse_effect, Checkpoint, PolicyEffect};
 pub use iam::{ApprovalGatePolicy, RoleManagerPolicy, IamError};
 pub use compliance::{build_compliance_report, render_report_json, ComplianceReport, ComplianceEntry, FrameworkRef};
-pub use risk::{RiskRegistry, RiskRegistryState, RiskItem, ExceptionRequest, Notification, RiskError};`npub use audit::{AuditStore, EvidenceRecord, AuditError};
+pub use risk::{RiskRegistry, RiskRegistryState, RiskItem, ExceptionRequest, Notification, RiskError};
+pub use audit::{AuditStore, EvidenceRecord, AuditError};
 
 use crate::types::{TokenId, TraderId};
 use once_cell::sync::OnceCell;
@@ -456,7 +458,7 @@ pub struct ProposalContext {
     pub reference: Option<GovernanceScenario>,
 }
 
-#[derive(Debug, Clone, Serialize)]pub fn submit_proposal_with_risk(
+pub fn submit_proposal_with_risk(
         &mut self,
         proposal_id: &str,
         registry: &mut super::risk::RiskRegistry,
@@ -543,43 +545,6 @@ pub struct ProposalContext {
         }
 
         proposal.reference_acknowledged = true;
-        Ok(())
-    }pub fn submit_proposal_with_risk(
-        &mut self,
-        proposal_id: &str,
-        registry: &mut super::risk::RiskRegistry,
-        risk: RiskInputs,
-    ) -> Result<(), GovernanceError> {
-        let proposal = self
-            .proposals
-            .get_mut(proposal_id)
-            .ok_or(GovernanceError::ProposalNotFound)?;
-
-        if proposal.status != ProposalStatus::Draft {
-            return Err(GovernanceError::ProposalNotInDraft);
-        }
-
-        Self::enforce_reference_policy(proposal)?;
-
-        // If the proposal type requires RiskRegistry and reference is present, try approval
-        if let Some(required) = Self::required_reference_for(&proposal.proposal_type) {
-            if required.domain == GovernanceDomain::RiskExceptionManagement
-                && required.component == GovernanceComponent::RiskRegistry
-            {
-                if let (Some(id), Some(login), Some(role), Some(evidence)) = (
-                    risk.exception_id,
-                    risk.approver_login,
-                    risk.approver_role,
-                    risk.evidence_artifact,
-                ) {
-                    registry
-                        .approve_exception(&id, &login, &role, &evidence)
-                        .map_err(|_| GovernanceError::ReferenceControlMismatch)?;
-                }
-            }
-        }
-
-        proposal.status = ProposalStatus::Active;
         Ok(())
     }
 
@@ -800,43 +765,6 @@ pub struct ProposalContext {
 
         proposal.status = ProposalStatus::Active;
         Ok(())
-    }pub fn submit_proposal_with_risk(
-        &mut self,
-        proposal_id: &str,
-        registry: &mut super::risk::RiskRegistry,
-        risk: RiskInputs,
-    ) -> Result<(), GovernanceError> {
-        let proposal = self
-            .proposals
-            .get_mut(proposal_id)
-            .ok_or(GovernanceError::ProposalNotFound)?;
-
-        if proposal.status != ProposalStatus::Draft {
-            return Err(GovernanceError::ProposalNotInDraft);
-        }
-
-        Self::enforce_reference_policy(proposal)?;
-
-        // If the proposal type requires RiskRegistry and reference is present, try approval
-        if let Some(required) = Self::required_reference_for(&proposal.proposal_type) {
-            if required.domain == GovernanceDomain::RiskExceptionManagement
-                && required.component == GovernanceComponent::RiskRegistry
-            {
-                if let (Some(id), Some(login), Some(role), Some(evidence)) = (
-                    risk.exception_id,
-                    risk.approver_login,
-                    risk.approver_role,
-                    risk.evidence_artifact,
-                ) {
-                    registry
-                        .approve_exception(&id, &login, &role, &evidence)
-                        .map_err(|_| GovernanceError::ReferenceControlMismatch)?;
-                }
-            }
-        }
-
-        proposal.status = ProposalStatus::Active;
-        Ok(())
     }
 
     /// Vote on a proposal
@@ -894,43 +822,6 @@ pub struct ProposalContext {
 
         proposal.votes.total_voting_power += voting_power;
         Ok(())
-    }pub fn submit_proposal_with_risk(
-        &mut self,
-        proposal_id: &str,
-        registry: &mut super::risk::RiskRegistry,
-        risk: RiskInputs,
-    ) -> Result<(), GovernanceError> {
-        let proposal = self
-            .proposals
-            .get_mut(proposal_id)
-            .ok_or(GovernanceError::ProposalNotFound)?;
-
-        if proposal.status != ProposalStatus::Draft {
-            return Err(GovernanceError::ProposalNotInDraft);
-        }
-
-        Self::enforce_reference_policy(proposal)?;
-
-        // If the proposal type requires RiskRegistry and reference is present, try approval
-        if let Some(required) = Self::required_reference_for(&proposal.proposal_type) {
-            if required.domain == GovernanceDomain::RiskExceptionManagement
-                && required.component == GovernanceComponent::RiskRegistry
-            {
-                if let (Some(id), Some(login), Some(role), Some(evidence)) = (
-                    risk.exception_id,
-                    risk.approver_login,
-                    risk.approver_role,
-                    risk.evidence_artifact,
-                ) {
-                    registry
-                        .approve_exception(&id, &login, &role, &evidence)
-                        .map_err(|_| GovernanceError::ReferenceControlMismatch)?;
-                }
-            }
-        }
-
-        proposal.status = ProposalStatus::Active;
-        Ok(())
     }
 
     /// Cast an abstain vote
@@ -981,43 +872,6 @@ pub struct ProposalContext {
 
         proposal.votes.abstain_votes.insert(voter_id.clone(), vote);
         proposal.votes.total_voting_power += voting_power;
-        Ok(())
-    }pub fn submit_proposal_with_risk(
-        &mut self,
-        proposal_id: &str,
-        registry: &mut super::risk::RiskRegistry,
-        risk: RiskInputs,
-    ) -> Result<(), GovernanceError> {
-        let proposal = self
-            .proposals
-            .get_mut(proposal_id)
-            .ok_or(GovernanceError::ProposalNotFound)?;
-
-        if proposal.status != ProposalStatus::Draft {
-            return Err(GovernanceError::ProposalNotInDraft);
-        }
-
-        Self::enforce_reference_policy(proposal)?;
-
-        // If the proposal type requires RiskRegistry and reference is present, try approval
-        if let Some(required) = Self::required_reference_for(&proposal.proposal_type) {
-            if required.domain == GovernanceDomain::RiskExceptionManagement
-                && required.component == GovernanceComponent::RiskRegistry
-            {
-                if let (Some(id), Some(login), Some(role), Some(evidence)) = (
-                    risk.exception_id,
-                    risk.approver_login,
-                    risk.approver_role,
-                    risk.evidence_artifact,
-                ) {
-                    registry
-                        .approve_exception(&id, &login, &role, &evidence)
-                        .map_err(|_| GovernanceError::ReferenceControlMismatch)?;
-                }
-            }
-        }
-
-        proposal.status = ProposalStatus::Active;
         Ok(())
     }
 
@@ -1108,43 +962,6 @@ pub struct ProposalContext {
             .ok_or(GovernanceError::ProposalNotFound)?;
 
         proposal.status = ProposalStatus::Cancelled;
-        Ok(())
-    }pub fn submit_proposal_with_risk(
-        &mut self,
-        proposal_id: &str,
-        registry: &mut super::risk::RiskRegistry,
-        risk: RiskInputs,
-    ) -> Result<(), GovernanceError> {
-        let proposal = self
-            .proposals
-            .get_mut(proposal_id)
-            .ok_or(GovernanceError::ProposalNotFound)?;
-
-        if proposal.status != ProposalStatus::Draft {
-            return Err(GovernanceError::ProposalNotInDraft);
-        }
-
-        Self::enforce_reference_policy(proposal)?;
-
-        // If the proposal type requires RiskRegistry and reference is present, try approval
-        if let Some(required) = Self::required_reference_for(&proposal.proposal_type) {
-            if required.domain == GovernanceDomain::RiskExceptionManagement
-                && required.component == GovernanceComponent::RiskRegistry
-            {
-                if let (Some(id), Some(login), Some(role), Some(evidence)) = (
-                    risk.exception_id,
-                    risk.approver_login,
-                    risk.approver_role,
-                    risk.evidence_artifact,
-                ) {
-                    registry
-                        .approve_exception(&id, &login, &role, &evidence)
-                        .map_err(|_| GovernanceError::ReferenceControlMismatch)?;
-                }
-            }
-        }
-
-        proposal.status = ProposalStatus::Active;
         Ok(())
     }
 
@@ -1986,8 +1803,3 @@ mod tests {
         }
     }
 }
-
-
-
-
-

@@ -21,6 +21,7 @@ members = [
     "reference-tools",
     "run_certificate_security_tests",
     "test_coverage_demo",
+    "bloom_filter_test_coverage_demo",
 ]
 resolver = "2"
 
