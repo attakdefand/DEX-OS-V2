@@ -1,0 +1,30 @@
+Integration Layer,DEX-OS Component,RAMP Component,Algorithm/Data Structure,Integration Type,API Endpoint,Data Format
+DEX-OS Core Trading,Orderbook,P2P Orderbook,BTreeMap + Price-Time Priority,Direct Mapping,/api/orderbook,P2P Orderbook Request/Response
+DEX-OS Core Trading,AMM,DEX Swap,Constant Product (x*y=k),Direct Mapping,/api/amm/swap,Swap Request/Response
+DEX-OS Core Trading,DEX Aggregator,Cross-Ramp,Graph + Dijkstra's Algorithm,Direct Mapping,/api/aggregator/route,Route Request/Response
+DEX-OS Oracle,Oracle System,Price Oracles,Median Selection + TWAP,Direct Mapping,/api/oracle/price,Price Feed Response
+DEX-OS Bridge,Bridge,Cross-Chain Bridges,Merkle Tree + Multi-signature Wallets,Direct Mapping,/api/bridge/verify,Bridge Verification Response
+DEX-OS Core Components,Quantum Consensus,Cross-Chain Tx Manager,Rust + GPU + Quantum Consensus,Consensus Mapping,/api/consensus/finality,Finality Confirmation
+DEX-OS AMM,AMM Router,AMM Router,Dijkstra's Algorithm variant,Algorithm Alignment,/api/amm/route,Route Optimization Response
+DEX-OS Orderbook,Order ID Lookup,Order ID Lookup,Hash Map,Data Structure Mapping,/api/orderbook/lookup,Order Lookup Response
+DEX-OS AMM,StableSwap,Stablecoin Swap,Curve Fitting,Feature Mapping,/api/amm/stableswap,StableSwap Response
+DEX-OS DEX Aggregator,Bellman-Ford,Path Routing,Bellman-Ford,Algorithm Mapping,/api/aggregator/path,Path Routing Response
+DEX-OS Oracle,Kalman Filter,Price Prediction,Kalman Filter,Algorithm Mapping,/api/oracle/predict,Prediction Response
+DEX-OS Bridge,Proof Verification,Bridge Verifier,Merkle Tree,Data Structure Mapping,/api/bridge/proof,Proof Verification Response
+DEX-OS Security,Kyber Encryption,Encryption,Kyber Encryption,Security Alignment,/api/security/encrypt,Encrypted Response
+DEX-OS Security,Dilithium Signatures,3DS Implementation,Dilithium Signatures,Security Alignment,/api/security/sign,Signature Response
+DEX-OS Core Trading,Priority Queue,Withdrawal Queues,Priority Queue,Data Structure Mapping,/api/queue/withdrawal,Queue Management Response
+DEX-OS Core Trading,Heap,Treasury Management,Heap,Data Structure Mapping,/api/treasury/optimize,Optimization Response
+DEX-OS Core Trading,Hash Map,Risk Engine,Hash Map,Data Structure Mapping,/api/risk/analyze,Risk Analysis Response
+DEX-OS Core Trading,Graph,AML Monitoring,Graph,Data Structure Mapping,/api/aml/monitor,AML Report Response
+DEX-OS Oracle,TWAP Calculation,Price Locking Engine,TWAP Calculation,Algorithm Mapping,/api/oracle/lock,Price Lock Response
+DEX-OS Core Trading,Merkle Tree,Reconciliation Engine,Merkle Tree,Data Structure Mapping,/api/reconciliation/verify,Reconciliation Response
+RAMP Flow,On-Ramp Flow,On-Ramp Process,Queue + Heap + Hash Map,Flow Integration,/api/ramp/onramp,On-Ramp Process Response
+RAMP Flow,Off-Ramp Flow,Off-Ramp Process,Queue + Merkle Tree + Graph,Flow Integration,/api/ramp/offramp,Off-Ramp Process Response
+RAMP Flow,Cross-Ramp Flow,Cross-Ramp Process,Hash Map + Multi-signature Wallets,Flow Integration,/api/ramp/crossramp,Cross-Ramp Process Response
+RAMP Risk Management,Payment Fraud Protection,3DS Implementation,Cryptographic protocols,Security Integration,/api/risk/fraud,Fraud Protection Response
+RAMP Risk Management,AML Risk Management,Chainalysis Integration,Graph algorithms,Security Integration,/api/risk/aml,AML Response
+RAMP Risk Management,Slippage Protection,TWAP Implementation,TWAP Calculation,Algorithm Integration,/api/risk/slippage,Slippage Protection Response
+RPC Integration,JSON-RPC Schema,JSON-RPC Communication,JSON Schema,Protocol Integration,/api/rpc/schema,JSON-RPC Schema Definition
+RPC Integration,JSON-RPC Methods,JSON-RPC Endpoints,Method Definitions,Protocol Integration,/api/rpc/methods,JSON-RPC Method Definitions
+Security Layer,Defence Layers,JSON Security,Validation & Security,Defence Integration,See defence_layers_json.csv,Security and Validation Layers

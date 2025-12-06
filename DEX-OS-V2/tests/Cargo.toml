@@ -1,0 +1,136 @@
+[package]
+name = "dex-tests"
+version = "0.1.0"
+edition = "2021"
+
+[[test]]
+name = "access_control_bloom_tests"
+path = "access_control_bloom_tests.rs"
+
+[[test]]
+name = "bloom_filter_coverage_standalone"
+path = "bloom_filter_coverage_standalone.rs"
+
+[[test]]
+name = "bloom_filter_security_coverage_tests"
+path = "bloom_filter_security_coverage_tests.rs"
+
+[[test]]
+name = "bloom_filter_test_coverage_runner"
+path = "bloom_filter_test_coverage_runner.rs"
+
+[[test]]
+name = "bloom_filter_tests"
+path = "bloom_filter_tests.rs"
+
+[[test]]
+name = "bplus_tree_certificate_test"
+path = "bplus_tree_certificate_test.rs"
+
+[[test]]
+name = "core_components_integration_tests"
+path = "core_components_integration_tests.rs"
+
+[[test]]
+name = "device_did_tests"
+path = "device_did_tests.rs"
+
+[[test]]
+name = "global_identity_feature_tests"
+path = "global_identity_feature_tests.rs"
+
+[[test]]
+name = "global_identity_security_tests"
+path = "global_identity_security_tests.rs"
+
+[[test]]
+name = "integration_test"
+path = "integration_test.rs"
+
+[[test]]
+name = "load_balancer_tests"
+path = "load_balancer_tests.rs"
+
+[[test]]
+name = "lock_mint_mechanism_tests"
+path = "lock_mint_mechanism_tests.rs"
+
+[[test]]
+name = "network_security_tests"
+path = "network_security_tests.rs"
+
+[[test]]
+name = "quantum_consensus_test"
+path = "quantum_consensus_test.rs"
+
+[[test]]
+name = "realtime_updates_tests"
+path = "realtime_updates_tests.rs"
+
+[[test]]
+name = "security_bplus_tree_certificate_tests"
+path = "security_bplus_tree_certificate_tests.rs"
+
+[[test]]
+name = "security_comprehensive_tests"
+path = "security_comprehensive_tests.rs"
+
+[[test]]
+name = "security_event_logging_tests"
+path = "security_event_logging_tests.rs"
+
+[[test]]
+name = "security_gossip_sync_tests"
+path = "security_gossip_sync_tests.rs"
+
+[[test]]
+name = "security_test_coverage_tests"
+path = "security_test_coverage_tests.rs"
+
+[[test]]
+name = "security_zk_proof_tests"
+path = "security_zk_proof_tests.rs"
+
+[[test]]
+name = "session_management_tests"
+path = "session_management_tests.rs"
+
+[[test]]
+name = "simple_bloom_test"
+path = "simple_bloom_test.rs"
+
+[[test]]
+name = "test_coverage_integration_tests"
+path = "test_coverage_integration_tests.rs"
+
+[[test]]
+name = "test_runner"
+path = "test_runner.rs"
+
+[[test]]
+name = "testing_layer1_unit_tests"
+path = "testing_layer1_unit_tests.rs"
+
+[[test]]
+name = "testing_layer1_unit_tests_demo"
+path = "testing_layer1_unit_tests_demo.rs"
+
+[[test]]
+name = "testing_layer2_integration_tests"
+path = "testing_layer2_integration_tests.rs"
+
+[[test]]
+name = "testing_layer2_integration_tests_demo"
+path = "testing_layer2_integration_tests_demo.rs"
+
+[dependencies]
+dex-core = { path = "../dex-core" }
+dex-api = { path = "../dex-api" }
+dex-db = { path = "../dex-db" }
+sha3 = "0.10"
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+warp = "0.3"
+secrecy = "0.8"
+jsonwebtoken = "9"

@@ -1,0 +1,97 @@
+=== DEX-OS-V2 Error Report ===
+
+SUMMARY:
+  Total errors: 25
+
+ERRORS BY CATEGORY:
+  unknown: 25
+
+ERRORS BY FILE:
+
+dex-api\src\main.rs (1 errors):
+  unknown (1):
+    Line 7:  | |                     ^^^^^^^^^^^  ^^^^^^^^^^^^^^^ | = note: `#[warn(unused_imports)]` (part of `...
+
+dex-core\src\advanced_defi.rs (2 errors):
+  unknown (2):
+    Line 6:  | |                                                      ^^^^^
+    Line 8:  | |                                                                   ^^^^^^^^^^^^^^^^
+
+dex-core\src\bridge_subtypes_demo.rs (1 errors):
+  unknown (1):
+    Line 8:  | |                                                                     ^^^^^^^^^^^^^^^^^
+
+dex-core\src\chaos_engineering.rs (1 errors):
+  unknown (1):
+    Line 9:  | |                           ^^^^^^^
+
+dex-core\src\consistent_hashing.rs (1 errors):
+  unknown (1):
+    Line 7:  | |                                  ^^^^^^^
+
+dex-core\src\gas_abstraction.rs (1 errors):
+  unknown (1):
+    Line 9:  | |                    ^^^^^^^ | = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on b...
+
+dex-core\src\governance\hybrid_governance.rs (1 errors):
+  unknown (1):
+    Line 7:  | |                                                                  ^^^^^  ^^^^ |     ^^^^^^^^^^^^...
+
+dex-core\src\ibc_protocol.rs (1 errors):
+  unknown (1):
+    Line 9:  | |                                 ^^^^^^^^
+
+dex-core\src\network\firewall.rs (1 errors):
+  unknown (1):
+    Line 9:  | |                        ^^^^^^^^  ^^^^^^^^
+
+dex-core\src\network\ip_routing.rs (1 errors):
+  unknown (1):
+    Line 9:  | |                        ^^^^^^^^  ^^^^^^^^
+
+dex-core\src\payments.rs (1 errors):
+  unknown (1):
+    Line 6:  | |                              ^^^^^^^^^^^^^
+
+dex-core\src\security\self_healing.rs (1 errors):
+  unknown (1):
+    Line 7:  | |                                                                 ^^^^^^^^^^^^^^^^
+
+dex-core\src\security\threat_assessment.rs (1 errors):
+  unknown (1):
+    Line 1:  | |     ^^^^^^^^^^^^^^^^^^^^^^
+
+dex-core\src\security\whitelist_blacklist.rs (1 errors):
+  unknown (1):
+    Line 8:  | |     ^^^^^^^^^^^^^^^^
+
+dex-wasm\src\lib.rs (1 errors):
+  unknown (1):
+    Line 8:  | |                                    ^^^^^^^^^^ | = note: `#[warn(unused_imports)]` (part of `#[w...
+
+dex-wasm\src\mobile_session_manager.rs (2 errors):
+  unknown (2):
+    Line 6:  | |                                                     ^^^^^^^^^^^^^
+    Line 8:  | |             ^^^^^^^^^^^  ^^^^^^^^^
+
+dex-wasm\src\mobile_wallet.rs (1 errors):
+  unknown (1):
+    Line 8:  | |             ^^^^^^^^^^^  ^^^^^^^^^
+
+run_certificate_security_tests\src\security_bplus_tree_certificate_tests.rs (1 errors):
+  unknown (1):
+    Line 9:  | |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+run_security_tests\src\security_test_functions.rs (3 errors):
+  unknown (3):
+    Line 5:  | |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ | = note: `#[warn(unused_imports)]` (part of `#[warn(un...
+    Line 6:  | |                          ^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^  ^^^^^^^^^^^^^^^
+    Line 7:  | |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+test_coverage_demo\src\bin\comprehensive_demo.rs (1 errors):
+  unknown (1):
+    Line 2:  | |                               ^^^^^^^^^^^^^^^^^ | = note: `#[warn(unused_imports)]` (part of `#...
+
+test_coverage_demo\src\bin\full_csv_test.rs (1 errors):
+  unknown (1):
+    Line 2:  | |                               ^^^^^^^^^^^^^^^^^ | = note: `#[warn(unused_imports)]` (part of `#...

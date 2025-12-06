@@ -1,0 +1,17 @@
+==================================
+    DEX-OS Development Tools     
+==================================
+1. Check prerequisites
+2. Build project
+3. Run tests
+4. Build WASM module
+5. Run API server
+6. Check code formatting
+7. Run Clippy linter
+8. Run cargo-audit (security advisories)
+9. Run cargo-deny (dependency policies)
+10. Run tests with cargo-nextest
+11. Run all checks (build, test, format, clippy, audit, deny, nextest)
+0. Exit
+==================================
+Enter your choice: 

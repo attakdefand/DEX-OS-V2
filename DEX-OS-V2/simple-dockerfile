@@ -1,0 +1,19 @@
+# Simple Dockerfile to build and run the DEX-OS API
+FROM rust:1-bullseye AS builder
+WORKDIR /app
+COPY . .
+
+# Build the API
+WORKDIR /app/DEX-OS-V2
+RUN cargo build --release --bin dex-api
+
+# Runtime stage
+FROM debian:bullseye-slim AS runtime
+WORKDIR /app
+COPY --from=builder /app/DEX-OS-V2/target/release/dex-api /usr/local/bin/dex-api
+
+# Expose port
+EXPOSE 3030
+
+# Run the API
+CMD ["dex-api"]

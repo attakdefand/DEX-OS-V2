@@ -1,0 +1,320 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DEX-OS RAMP Data Exchange Schema",
+  "description": "Schemas for data exchange between DEX-OS and RAMP systems",
+  "type": "object",
+  "properties": {
+    "dataExchange": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "Schema version",
+          "examples": ["1.0.0"]
+        },
+        "common": {
+          "$ref": "#/definitions/commonDataStructures"
+        },
+        "rampSpecific": {
+          "$ref": "#/definitions/rampSpecificData"
+        },
+        "dexOsSpecific": {
+          "$ref": "#/definitions/dexOsSpecificData"
+        }
+      }
+    }
+  },
+  "definitions": {
+    "commonDataStructures": {
+      "type": "object",
+      "properties": {
+        "userProfile": {
+          "type": "object",
+          "properties": {
+            "userId": {
+              "type": "string",
+              "description": "Unique user identifier"
+            },
+            "kycLevel": {
+              "type": "string",
+              "enum": ["unverified", "basic", "advanced", "video"],
+              "description": "KYC verification level"
+            },
+            "riskScore": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "User risk score"
+            },
+            "preferences": {
+              "type": "object",
+              "properties": {
+                "preferredCurrency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$",
+                  "description": "User's preferred currency"
+                },
+                "language": {
+                  "type": "string",
+                  "description": "User's preferred language"
+                }
+              }
+            }
+          },
+          "required": ["userId", "kycLevel"]
+        },
+        "transaction": {
+          "type": "object",
+          "properties": {
+            "transactionId": {
+              "type": "string",
+              "description": "Unique transaction identifier"
+            },
+            "userId": {
+              "type": "string",
+              "description": "User identifier"
+            },
+            "timestamp": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Transaction timestamp"
+            },
+            "status": {
+              "type": "string",
+              "enum": ["pending", "processing", "completed", "failed", "cancelled"],
+              "description": "Transaction status"
+            },
+            "amount": {
+              "type": "number",
+              "description": "Transaction amount"
+            },
+            "currency": {
+              "type": "string",
+              "description": "Currency code"
+            }
+          },
+          "required": ["transactionId", "userId", "timestamp", "status", "amount", "currency"]
+        }
+      }
+    },
+    "rampSpecificData": {
+      "type": "object",
+      "properties": {
+        "onRampData": {
+          "type": "object",
+          "properties": {
+            "paymentMethod": {
+              "type": "string",
+              "enum": ["card", "bank_transfer", "ewallet", "cash"],
+              "description": "Payment method used"
+            },
+            "paymentProvider": {
+              "type": "string",
+              "description": "Payment provider name"
+            },
+            "fiatDetails": {
+              "$ref": "#/definitions/fiatDetails"
+            },
+            "cryptoDetails": {
+              "$ref": "#/definitions/cryptoDetails"
+            }
+          }
+        },
+        "offRampData": {
+          "type": "object",
+          "properties": {
+            "payoutMethod": {
+              "type": "string",
+              "enum": ["bank", "card", "mobile_money"],
+              "description": "Payout method used"
+            },
+            "payoutProvider": {
+              "type": "string",
+              "description": "Payout provider name"
+            },
+            "cryptoDetails": {
+              "$ref": "#/definitions/cryptoDetails"
+            },
+            "fiatDetails": {
+              "$ref": "#/definitions/fiatDetails"
+            }
+          }
+        },
+        "crossRampData": {
+          "type": "object",
+          "properties": {
+            "sourceChain": {
+              "type": "string",
+              "description": "Source blockchain"
+            },
+            "destinationChain": {
+              "type": "string",
+              "description": "Destination blockchain"
+            },
+            "bridgeProvider": {
+              "type": "string",
+              "description": "Bridge provider name"
+            },
+            "tokenDetails": {
+              "$ref": "#/definitions/tokenDetails"
+            }
+          }
+        }
+      }
+    },
+    "dexOsSpecificData": {
+      "type": "object",
+      "properties": {
+        "orderbookData": {
+          "type": "object",
+          "properties": {
+            "market": {
+              "type": "string",
+              "description": "Market pair (e.g., BTC/USD)"
+            },
+            "orderType": {
+              "type": "string",
+              "enum": ["limit", "market", "stop_limit"],
+              "description": "Order type"
+            },
+            "side": {
+              "type": "string",
+              "enum": ["buy", "sell"],
+              "description": "Order side"
+            },
+            "price": {
+              "type": "number",
+              "description": "Order price"
+            },
+            "quantity": {
+              "type": "number",
+              "description": "Order quantity"
+            }
+          }
+        },
+        "ammData": {
+          "type": "object",
+          "properties": {
+            "poolId": {
+              "type": "string",
+              "description": "AMM pool identifier"
+            },
+            "tokenA": {
+              "$ref": "#/definitions/tokenDetails"
+            },
+            "tokenB": {
+              "$ref": "#/definitions/tokenDetails"
+            },
+            "swapDetails": {
+              "type": "object",
+              "properties": {
+                "inputToken": {
+                  "type": "string",
+                  "description": "Input token symbol"
+                },
+                "outputToken": {
+                  "type": "string",
+                  "description": "Output token symbol"
+                },
+                "inputAmount": {
+                  "type": "number",
+                  "description": "Input amount"
+                },
+                "expectedOutputAmount": {
+                  "type": "number",
+                  "description": "Expected output amount"
+                }
+              }
+            }
+          }
+        },
+        "aggregatorData": {
+          "type": "object",
+          "properties": {
+            "route": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "dex": {
+                    "type": "string",
+                    "description": "DEX name"
+                  },
+                  "pair": {
+                    "type": "string",
+                    "description": "Token pair"
+                  },
+                  "amount": {
+                    "type": "number",
+                    "description": "Amount for this hop"
+                  }
+                }
+              }
+            },
+            "estimatedSlippage": {
+              "type": "number",
+              "description": "Estimated slippage percentage"
+            },
+            "estimatedGasFee": {
+              "type": "number",
+              "description": "Estimated gas fee"
+            }
+          }
+        }
+      }
+    },
+    "fiatDetails": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "number",
+          "description": "Fiat amount"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "description": "Fiat currency code"
+        },
+        "exchangeRate": {
+          "type": "number",
+          "description": "Exchange rate used"
+        }
+      }
+    },
+    "cryptoDetails": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "number",
+          "description": "Crypto amount"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3,5}$",
+          "description": "Crypto currency symbol"
+        },
+        "walletAddress": {
+          "type": "string",
+          "description": "Destination wallet address"
+        }
+      }
+    },
+    "tokenDetails": {
+      "type": "object",
+      "properties": {
+        "symbol": {
+          "type": "string",
+          "description": "Token symbol"
+        },
+        "address": {
+          "type": "string",
+          "description": "Token contract address"
+        },
+        "decimals": {
+          "type": "integer",
+          "description": "Token decimals"
+        }
+      }
+    }
+  }
+}

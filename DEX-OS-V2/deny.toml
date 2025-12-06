@@ -1,0 +1,47 @@
+[advisories]
+ignore = []
+
+[licenses]
+confidence-threshold = 0.8
+allow = [
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "MIT",
+    "Unicode-3.0",
+    "Zlib",
+]
+
+[[licenses.exceptions]]
+allow = ["Apache-2.0", "MIT"]
+name = "android_system_properties"
+
+[[licenses.exceptions]]
+allow = ["Apache-2.0", "MIT"]
+name = "allocator-api2"
+
+[[licenses.exceptions]]
+allow = ["Apache-2.0", "MIT"]
+name = "autocfg"
+
+[[licenses.exceptions]]
+allow = ["Apache-2.0", "MIT"]
+name = "base64"
+
+[[licenses.exceptions]]
+allow = ["Apache-2.0", "MIT"]
+name = "atoi"
+
+[[licenses.exceptions]]
+allow = ["CDLA-Permissive-2.0"]
+name = "webpki-roots"
+
+[bans]
+multiple-versions = "warn"
+wildcards = "warn"
+highlight = "all"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

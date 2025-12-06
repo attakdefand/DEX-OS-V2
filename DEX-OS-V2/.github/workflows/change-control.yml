@@ -1,0 +1,4 @@
+﻿            // Required approver logins from repo variables
+            const listVar = process.env.REQUIRED_APPROVERS || \x27\x27;
+            const list = listVar.split(\x27,\x27).map(s => s.trim()).filter(Boolean);
+            const required = [...list, process.env.RELEASE_MANAGER || \x27\x27, process.env.SECURITY_REVIEWER || \x27\x27].filter(Boolean);

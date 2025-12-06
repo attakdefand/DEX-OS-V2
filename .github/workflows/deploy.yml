@@ -1,0 +1,58 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build (optional)
+        run: |
+          echo "Simulating build..."
+
+      - name: Generate after-deploy evidence
+        id: evidence
+        shell: bash
+        run: |
+          mkdir -p after-deploy
+          ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          cat > after-deploy/after_deploy_approval.json <<EOF
+          {
+            "repository": "${{ github.repository }}",
+            "ref": "${{ github.ref }}",
+            "sha": "${{ github.sha }}",
+            "actor": "${{ github.actor }}",
+            "run_id": "${{ github.run_id }}",
+            "timestamp": "${ts}",
+            "status": "deployed"
+          }
+          EOF
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Keyless sign evidence (OIDC)
+        shell: bash
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          cosign sign-blob --yes \
+            --output-signature after-deploy/after_deploy_approval.json.sig \
+            --output-certificate after-deploy/cosign.crt \
+            after-deploy/after_deploy_approval.json
+
+      - name: Upload after-deploy artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: after-deploy-approval
+          path: after-deploy

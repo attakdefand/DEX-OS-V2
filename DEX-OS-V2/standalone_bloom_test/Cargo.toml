@@ -1,0 +1,11 @@
+[package]
+name = "standalone_bloom_test"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "standalone_bloom_test"
+path = "lib.rs"
+
+[dependencies]
+sha3 = "0.10"

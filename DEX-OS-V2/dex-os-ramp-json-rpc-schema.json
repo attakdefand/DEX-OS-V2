@@ -1,0 +1,355 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DEX-OS RAMP JSON-RPC 2.0 Schema",
+  "description": "JSON-RPC 2.0 Schema for API contracts between DEX-OS and RAMP systems",
+  "type": "object",
+  "properties": {
+    "jsonrpc": {
+      "type": "string",
+      "enum": ["2.0"],
+      "description": "JSON-RPC protocol version"
+    },
+    "method": {
+      "type": "string",
+      "description": "Name of the method to be invoked",
+      "examples": ["ramp.onRamp", "ramp.offRamp", "ramp.crossRamp", "dex.orderbook.create", "dex.amm.swap"]
+    },
+    "params": {
+      "type": ["object", "array"],
+      "description": "Parameter values to be used during the invocation of the method"
+    },
+    "id": {
+      "type": ["string", "integer", "null"],
+      "description": "Identifier established by the Client"
+    },
+    "result": {
+      "type": ["object", "array", "string", "number", "boolean", "null"],
+      "description": "Result of the method invocation"
+    },
+    "error": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "description": "Error code"
+        },
+        "message": {
+          "type": "string",
+          "description": "Error message"
+        },
+        "data": {
+          "type": ["object", "array", "string", "number", "boolean", "null"],
+          "description": "Additional error information"
+        }
+      },
+      "required": ["code", "message"]
+    }
+  },
+  "required": ["jsonrpc", "method"],
+  "oneOf": [
+    {
+      "required": ["params", "id"]
+    },
+    {
+      "required": ["id"]
+    }
+  ],
+  "definitions": {
+    "onRampRequest": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Unique identifier for the user"
+        },
+        "fiatAmount": {
+          "type": "number",
+          "description": "Amount of fiat currency to convert"
+        },
+        "fiatCurrency": {
+          "type": "string",
+          "description": "Currency code (e.g., USD, EUR)",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "cryptoCurrency": {
+          "type": "string",
+          "description": "Target cryptocurrency (e.g., BTC, ETH)",
+          "pattern": "^[A-Z]{3,5}$"
+        },
+        "paymentMethod": {
+          "type": "string",
+          "enum": ["card", "bank_transfer", "ewallet", "cash"],
+          "description": "Payment method for the fiat deposit"
+        },
+        "paymentDetails": {
+          "type": "object",
+          "description": "Details specific to the payment method"
+        }
+      },
+      "required": ["userId", "fiatAmount", "fiatCurrency", "cryptoCurrency", "paymentMethod"]
+    },
+    "onRampResponse": {
+      "type": "object",
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "description": "Unique identifier for the transaction"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "processing", "completed", "failed"],
+          "description": "Current status of the transaction"
+        },
+        "cryptoAmount": {
+          "type": "number",
+          "description": "Amount of cryptocurrency to be received"
+        },
+        "exchangeRate": {
+          "type": "number",
+          "description": "Exchange rate used for the conversion"
+        },
+        "fees": {
+          "type": "number",
+          "description": "Total fees applied to the transaction"
+        },
+        "estimatedCompletionTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Estimated time for completion"
+        }
+      },
+      "required": ["transactionId", "status"]
+    },
+    "offRampRequest": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Unique identifier for the user"
+        },
+        "cryptoAmount": {
+          "type": "number",
+          "description": "Amount of cryptocurrency to convert"
+        },
+        "cryptoCurrency": {
+          "type": "string",
+          "description": "Cryptocurrency to convert (e.g., BTC, ETH)",
+          "pattern": "^[A-Z]{3,5}$"
+        },
+        "fiatCurrency": {
+          "type": "string",
+          "description": "Target fiat currency (e.g., USD, EUR)",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "payoutMethod": {
+          "type": "string",
+          "enum": ["bank", "card", "mobile_money"],
+          "description": "Method for fiat payout"
+        },
+        "payoutDetails": {
+          "type": "object",
+          "description": "Details specific to the payout method"
+        }
+      },
+      "required": ["userId", "cryptoAmount", "cryptoCurrency", "fiatCurrency", "payoutMethod"]
+    },
+    "offRampResponse": {
+      "type": "object",
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "description": "Unique identifier for the transaction"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "processing", "completed", "failed"],
+          "description": "Current status of the transaction"
+        },
+        "fiatAmount": {
+          "type": "number",
+          "description": "Amount of fiat currency to be received"
+        },
+        "exchangeRate": {
+          "type": "number",
+          "description": "Exchange rate used for the conversion"
+        },
+        "fees": {
+          "type": "number",
+          "description": "Total fees applied to the transaction"
+        },
+        "estimatedCompletionTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Estimated time for completion"
+        }
+      },
+      "required": ["transactionId", "status"]
+    },
+    "crossRampRequest": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Unique identifier for the user"
+        },
+        "sourceChain": {
+          "type": "string",
+          "description": "Source blockchain network"
+        },
+        "sourceToken": {
+          "type": "string",
+          "description": "Token to be transferred from source chain"
+        },
+        "destinationChain": {
+          "type": "string",
+          "description": "Destination blockchain network"
+        },
+        "destinationToken": {
+          "type": "string",
+          "description": "Token to be received on destination chain"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount to be transferred"
+        }
+      },
+      "required": ["userId", "sourceChain", "sourceToken", "destinationChain", "destinationToken", "amount"]
+    },
+    "crossRampResponse": {
+      "type": "object",
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "description": "Unique identifier for the transaction"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "processing", "completed", "failed"],
+          "description": "Current status of the transaction"
+        },
+        "bridgeFee": {
+          "type": "number",
+          "description": "Fee charged by the bridge"
+        },
+        "estimatedGasFee": {
+          "type": "number",
+          "description": "Estimated gas fees for the transaction"
+        },
+        "estimatedCompletionTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Estimated time for completion"
+        },
+        "sourceTxHash": {
+          "type": "string",
+          "description": "Transaction hash on source chain"
+        },
+        "destinationTxHash": {
+          "type": "string",
+          "description": "Transaction hash on destination chain"
+        }
+      },
+      "required": ["transactionId", "status"]
+    },
+    "oneTapTransferRequest": {
+      "type": "object",
+      "properties": {
+        "fromUser": {
+          "type": "string",
+          "description": "Source user identifier"
+        },
+        "toUser": {
+          "type": "string",
+          "description": "Destination user identifier"
+        },
+        "tokenId": {
+          "type": "string",
+          "description": "Token to transfer"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount to transfer"
+        },
+        "paymentMethod": {
+          "type": "string",
+          "enum": ["card", "bank_transfer", "ewallet", "cash"],
+          "description": "Payment method for fiat conversion (optional)"
+        },
+        "fiatCurrency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "description": "Fiat currency code for conversion (optional)"
+        }
+      },
+      "required": ["fromUser", "toUser", "tokenId", "amount"]
+    },
+    "oneTapTransferResponse": {
+      "type": "object",
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "description": "Unique identifier for the transaction"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "processing", "completed", "failed"],
+          "description": "Current status of the transaction"
+        },
+        "fees": {
+          "type": "number",
+          "description": "Transaction fees applied"
+        },
+        "estimatedCompletionTime": {
+          "type": "number",
+          "description": "Estimated completion timestamp"
+        }
+      },
+      "required": ["transactionId", "status"]
+    },
+    "batchTransfersRequest": {
+      "type": "object",
+      "properties": {
+        "transfers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "fromUser": {
+                "type": "string"
+              },
+              "toUser": {
+                "type": "string"
+              },
+              "tokenId": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "number"
+              }
+            },
+            "required": ["fromUser", "toUser", "tokenId", "amount"]
+          }
+        }
+      },
+      "required": ["transfers"]
+    },
+    "batchTransfersResponse": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "transactionId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "processing", "completed", "failed"]
+          },
+          "fees": {
+            "type": "number"
+          }
+        }
+      }
+    }
+  }
+}

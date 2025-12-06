@@ -1,0 +1,40 @@
+﻿apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: dex-postgres
+spec:
+  serviceName: dex-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dex-postgres
+  template:
+    metadata:
+      labels:
+        app: dex-postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+          name: postgres
+        env:
+        - name: POSTGRES_USER
+          value: dex
+        - name: POSTGRES_PASSWORD
+          value: dexpass
+        - name: POSTGRES_DB
+          value: dex_os
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi

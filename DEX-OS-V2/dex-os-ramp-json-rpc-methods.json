@@ -1,0 +1,403 @@
+{
+  "jsonrpc": "2.0",
+  "methods": {
+    "ramp": {
+      "onRamp": {
+        "description": "Initiate a fiat to crypto on-ramp transaction",
+        "params": {
+          "$ref": "dex-os-ramp-json-rpc-schema.json#/definitions/onRampRequest"
+        },
+        "result": {
+          "$ref": "dex-os-ramp-json-rpc-schema.json#/definitions/onRampResponse"
+        }
+      },
+      "offRamp": {
+        "description": "Initiate a crypto to fiat off-ramp transaction",
+        "params": {
+          "$ref": "dex-os-ramp-json-rpc-schema.json#/definitions/offRampRequest"
+        },
+        "result": {
+          "$ref": "dex-os-ramp-json-rpc-schema.json#/definitions/offRampResponse"
+        }
+      },
+      "crossRamp": {
+        "description": "Initiate a cross-chain ramp transaction",
+        "params": {
+          "$ref": "dex-os-ramp-json-rpc-schema.json#/definitions/crossRampRequest"
+        },
+        "result": {
+          "$ref": "dex-os-ramp-json-rpc-schema.json#/definitions/crossRampResponse"
+        }
+      },
+      "getStatus": {
+        "description": "Get the status of a ramp transaction",
+        "params": {
+          "type": "object",
+          "properties": {
+            "transactionId": {
+              "type": "string",
+              "description": "Unique identifier for the transaction"
+            }
+          },
+          "required": ["transactionId"]
+        },
+        "result": {
+          "type": "object",
+          "properties": {
+            "transactionId": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string",
+              "enum": ["pending", "processing", "completed", "failed"]
+            },
+            "details": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "dex": {
+      "orderbook": {
+        "create": {
+          "description": "Create a new order in the orderbook",
+          "params": {
+            "type": "object",
+            "properties": {
+              "market": {
+                "type": "string",
+                "description": "Market pair (e.g., BTC/USD)"
+              },
+              "side": {
+                "type": "string",
+                "enum": ["buy", "sell"]
+              },
+              "price": {
+                "type": "number"
+              },
+              "quantity": {
+                "type": "number"
+              },
+              "orderType": {
+                "type": "string",
+                "enum": ["limit", "market", "stop_limit"]
+              }
+            },
+            "required": ["market", "side", "price", "quantity", "orderType"]
+          },
+          "result": {
+            "type": "object",
+            "properties": {
+              "orderId": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["created", "accepted", "rejected"]
+              }
+            }
+          }
+        },
+        "cancel": {
+          "description": "Cancel an existing order",
+          "params": {
+            "type": "object",
+            "properties": {
+              "orderId": {
+                "type": "string"
+              }
+            },
+            "required": ["orderId"]
+          },
+          "result": {
+            "type": "object",
+            "properties": {
+              "orderId": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["cancelled", "not_found"]
+              }
+            }
+          }
+        }
+      },
+      "payments": {
+        "oneTapTransfer": {
+          "description": "Execute a one-tap transfer with optional fiat/crypto conversion",
+          "params": {
+            "type": "object",
+            "properties": {
+              "fromUser": {
+                "type": "string",
+                "description": "Source user identifier"
+              },
+              "toUser": {
+                "type": "string",
+                "description": "Destination user identifier"
+              },
+              "tokenId": {
+                "type": "string",
+                "description": "Token to transfer"
+              },
+              "amount": {
+                "type": "number",
+                "description": "Amount to transfer"
+              },
+              "paymentMethod": {
+                "type": "string",
+                "enum": ["card", "bank_transfer", "ewallet", "cash"],
+                "description": "Payment method for fiat conversion (optional)"
+              },
+              "fiatCurrency": {
+                "type": "string",
+                "pattern": "^[A-Z]{3}$",
+                "description": "Fiat currency code for conversion (optional)"
+              }
+            },
+            "required": ["fromUser", "toUser", "tokenId", "amount"]
+          },
+          "result": {
+            "type": "object",
+            "properties": {
+              "transactionId": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["pending", "processing", "completed", "failed"]
+              },
+              "fees": {
+                "type": "number"
+              },
+              "estimatedCompletionTime": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "batchTransfers": {
+          "description": "Execute multiple transfers in a batch for cost efficiency",
+          "params": {
+            "type": "object",
+            "properties": {
+              "transfers": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "fromUser": {
+                      "type": "string"
+                    },
+                    "toUser": {
+                      "type": "string"
+                    },
+                    "tokenId": {
+                      "type": "string"
+                    },
+                    "amount": {
+                      "type": "number"
+                    }
+                  },
+                  "required": ["fromUser", "toUser", "tokenId", "amount"]
+                }
+              }
+            },
+            "required": ["transfers"]
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "transactionId": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": ["pending", "processing", "completed", "failed"]
+                },
+                "fees": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      },
+      "amm": {
+        "swap": {
+          "description": "Execute a swap through the AMM",
+          "params": {
+            "type": "object",
+            "properties": {
+              "poolId": {
+                "type": "string"
+              },
+              "inputToken": {
+                "type": "string"
+              },
+              "outputToken": {
+                "type": "string"
+              },
+              "inputAmount": {
+                "type": "number"
+              },
+              "minOutputAmount": {
+                "type": "number"
+              }
+            },
+            "required": ["poolId", "inputToken", "outputToken", "inputAmount"]
+          },
+          "result": {
+            "type": "object",
+            "properties": {
+              "transactionId": {
+                "type": "string"
+              },
+              "outputAmount": {
+                "type": "number"
+              },
+              "fee": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "addLiquidity": {
+          "description": "Add liquidity to an AMM pool",
+          "params": {
+            "type": "object",
+            "properties": {
+              "poolId": {
+                "type": "string"
+              },
+              "tokenA": {
+                "type": "object",
+                "properties": {
+                  "symbol": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "number"
+                  }
+                }
+              },
+              "tokenB": {
+                "type": "object",
+                "properties": {
+                  "symbol": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "number"
+                  }
+                }
+              }
+            },
+            "required": ["poolId", "tokenA", "tokenB"]
+          },
+          "result": {
+            "type": "object",
+            "properties": {
+              "liquidityTokens": {
+                "type": "number"
+              },
+              "transactionId": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "aggregator": {
+        "getBestRoute": {
+          "description": "Get the best route for a trade through the DEX aggregator",
+          "params": {
+            "type": "object",
+            "properties": {
+              "sourceToken": {
+                "type": "string"
+              },
+              "destinationToken": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "number"
+              }
+            },
+            "required": ["sourceToken", "destinationToken", "amount"]
+          },
+          "result": {
+            "type": "object",
+            "properties": {
+              "route": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "dex": {
+                      "type": "string"
+                    },
+                    "pair": {
+                      "type": "string"
+                    },
+                    "amount": {
+                      "type": "number"
+                    }
+                  }
+                }
+              },
+              "estimatedOutput": {
+                "type": "number"
+              },
+              "estimatedSlippage": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "notifications": {
+    "rampStatusUpdate": {
+      "description": "Notification sent when a ramp transaction status changes",
+      "params": {
+        "type": "object",
+        "properties": {
+          "transactionId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "processing", "completed", "failed"]
+          },
+          "details": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "priceUpdate": {
+      "description": "Notification sent when prices are updated",
+      "params": {
+        "type": "object",
+        "properties": {
+          "market": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  }
+}

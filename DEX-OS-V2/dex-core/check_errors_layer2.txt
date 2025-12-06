@@ -1,0 +1,903 @@
+﻿cargo :     Blocking 
+waiting for file lock on 
+build directory
+At line:1 char:1
++ cargo check --lib 2>&1 | 
+Out-File -FilePath 
+"check_errors_layer2.txt" 
+...
++ ~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          
+    : NotSpecified: (    B  
+  locking wa...build dire   
+ ctory:String) [], Remot    
+eException
+    + FullyQualifiedErrorId 
+    : NativeCommandError
+ 
+    Checking dex-core 
+v0.1.0 (D:\DEX-OS-V2\DEX-OS-
+V2\dex-core)
+warning: unused import: 
+`TokenId`
+ --> dex-core\src\gas_abstra
+ction.rs:9:20
+  |
+9 | use 
+crate::types::{TokenId, 
+TraderId, Transaction};
+  |                    
+^^^^^^^
+  |
+  = note: 
+`#[warn(unused_imports)]` 
+(part of `#[warn(unused)]`) 
+on by default
+
+warning: unused import: 
+`TokenId`
+ --> dex-core\src\identity.r
+s:9:20
+  |
+9 | use 
+crate::types::{TokenId, 
+TraderId};
+  |                    
+^^^^^^^
+
+warning: unused imports: 
+`Arc` and `Mutex`
+  --> dex-core\src\observabi
+lity.rs:10:17
+   |
+10 | use std::sync::{Arc, 
+Mutex};
+   |                 ^^^  
+^^^^^
+
+warning: unused import: 
+`hash_map::Entry`
+  --> dex-core\src\path_rout
+ing.rs:13:24
+   |
+13 | use std::collections::{
+hash_map::Entry, 
+BinaryHeap, HashMap, 
+VecDeque};
+   |                        
+^^^^^^^^^^^^^^^
+
+warning: unused import: 
+`MultiSigError`
+ --> dex-core\src\payments.r
+s:6:30
+  |
+6 | use crate::multisig_wall
+et::{MultiSigError, 
+MultiSigWallet};
+  |                         
+     ^^^^^^^^^^^^^
+
+warning: unused import: `cra
+te::security::ring_buffer::R
+ingBuffer`
+   --> dex-core\src\security
+\api_rate_limiter.rs:149:5
+    |
+149 | use crate::security::r
+ing_buffer::RingBuffer;
+    |     ^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: 
+`std::net::IpAddr`
+ --> dex-core\src\security\w
+hitelist_blacklist.rs:8:5
+  |
+8 | use std::net::IpAddr;
+  |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: 
+`crate::types::TraderId`
+ --> dex-core\src\security\t
+hreat_assessment.rs:1:5
+  |
+1 | use 
+crate::types::TraderId;
+  |     
+^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: 
+`std::net::IpAddr`
+  --> dex-core\src\security\
+request_throttling.rs:16:5
+   |
+16 | use std::net::IpAddr;
+   |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: 
+`TokenId`
+   --> dex-core\src\security
+.rs:103:20
+    |
+103 | use 
+crate::types::{TokenId, 
+TraderId};
+    |                    
+^^^^^^^
+
+warning: unused import: 
+`OsRng as AesOsRng`
+   --> dex-core\src\security
+.rs:113:27
+    |
+113 |     aead::{Aead, 
+KeyInit, OsRng as AesOsRng},
+    |                       
+    ^^^^^^^^^^^^^^^^^
+
+warning: unused import: 
+`PasswordHash`
+   --> dex-core\src\security
+.rs:117:29
+    |
+117 | use argon2::password_h
+ash::{PasswordHash, 
+SaltString};
+    |                       
+      ^^^^^^^^^^^^
+
+warning: unused import: 
+`tokio::time::sleep`
+  --> dex-core\src\consensus
+\two_phase_commit.rs:12:5
+   |
+12 | use tokio::time::sleep;
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: 
+`HashMap`
+ --> dex-core\src\consistent
+_hashing.rs:7:34
+  |
+7 | use std::collections::{B
+TreeMap, HashMap, HashSet};
+  |                         
+         ^^^^^^^
+
+warning: unused imports: 
+`Ipv4Addr` and `Ipv6Addr`
+ --> dex-core\src\network\fi
+rewall.rs:9:24
+  |
+9 | use std::net::{IpAddr, 
+Ipv4Addr, Ipv6Addr};
+  |                        
+^^^^^^^^  ^^^^^^^^
+
+warning: unused imports: 
+`Ipv4Addr` and `Ipv6Addr`
+ --> dex-core\src\network\ip
+_routing.rs:9:24
+  |
+9 | use std::net::{IpAddr, 
+Ipv4Addr, Ipv6Addr};
+  |                        
+^^^^^^^^  ^^^^^^^^
+
+warning: unused import: 
+`Instant`
+ --> dex-core\src\chaos_engi
+neering.rs:9:27
+  |
+9 | use 
+std::time::{Duration, 
+Instant, SystemTime, 
+UNIX_EPOCH};
+  |                         
+  ^^^^^^^
+
+warning: unused import: 
+`VecDeque`
+ --> dex-core\src\ibc_protoc
+ol.rs:9:33
+  |
+9 | use 
+std::collections::{HashMap, 
+VecDeque};
+  |                         
+        ^^^^^^^^
+
+warning: use of deprecated 
+function `base64::encode`: 
+Use Engine::encode
+  --> dex-core\src\security\
+client_protection.rs:70:29
+   |
+70 |         let token = bas
+e64::encode(&token_bytes);
+   |                        
+     ^^^^^^
+   |
+   = note: 
+`#[warn(deprecated)]` on by 
+default
+
+warning: use of deprecated 
+function `base64::encode`: 
+Use Engine::encode
+   --> dex-core\src\security
+\client_protection.rs:128:26
+    |
+128 |         let id = 
+base64::encode(&id_bytes);
+    |                       
+   ^^^^^^
+
+warning: use of deprecated 
+function `base64::encode`: 
+Use Engine::encode
+   --> dex-core\src\security
+\client_protection.rs:496:17
+    |
+496 |         
+base64::encode(&result)
+    |                 ^^^^^^
+
+warning: unused variable: 
+`prepare_request`
+   --> dex-core\src\consensu
+s\two_phase_commit.rs:357:13
+    |
+357 |         let 
+prepare_request = 
+PrepareRequest {
+    |             
+^^^^^^^^^^^^^^^ help: if 
+this is intentional, prefix 
+it with an underscore: 
+`_prepare_request`
+    |
+    = note: 
+`#[warn(unused_variables)]` 
+(part of `#[warn(unused)]`) 
+on by default
+
+warning: unused variable: 
+`participant_id`
+   --> dex-core\src\consensu
+s\two_phase_commit.rs:389:18
+    |
+389 |             for 
+(participant_id, _address) 
+in &self.config.participant_
+addresses {
+    |                  
+^^^^^^^^^^^^^^ help: if 
+this is intentional, prefix 
+it with an underscore: 
+`_participant_id`
+
+warning: unused variable: 
+`participant_id`
+   --> dex-core\src\consensu
+s\two_phase_commit.rs:408:18
+    |
+408 |             for 
+(participant_id, _address) 
+in &self.config.participant_
+addresses {
+    |                  
+^^^^^^^^^^^^^^ help: if 
+this is intentional, prefix 
+it with an underscore: 
+`_participant_id`
+
+error[E0689]: can't call 
+method `min` on ambiguous 
+numeric type `{float}`
+   --> dex-core\src\security
+\request_throttling.rs:145:3
+8
+    |
+145 |         
+self.suspicion_score = 
+score.min(100.0);
+    |                       
+               ^^^
+    |
+help: you must specify a 
+type for this binding, like 
+`f32`
+    |
+111 |         let mut 
+score: f32 = 0.0;
+    |                      
++++++
+
+error[E0308]: mismatched 
+types
+   --> dex-core\src\security
+\output_encoding.rs:118:36
+    |
+118 | ...                   
+return format!("&#{};", c 
+as u32);
+    |                       
+       
+^^^^^^^^^^^^^^^^^^^^^^^^^^ 
+expected `&str`, found 
+`String`
+    |
+note: return type inferred 
+to be `&str` here
+   --> dex-core\src\security
+\output_encoding.rs:118:36
+    |
+118 | ...                   
+return format!("&#{};", c 
+as u32);
+    |                       
+       
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: this error 
+originates in the macro 
+`format` (in Nightly 
+builds, run with -Z 
+macro-backtrace for more 
+info)
+
+error[E0308]: mismatched 
+types
+   --> dex-core\src\security
+\output_encoding.rs:122:36
+    |
+122 | ...                   
+return format!("&#{};", c 
+as u32);
+    |                       
+       
+^^^^^^^^^^^^^^^^^^^^^^^^^^ 
+expected `&str`, found 
+`String`
+    |
+note: return type inferred 
+to be `&str` here
+   --> dex-core\src\security
+\output_encoding.rs:118:36
+    |
+118 | ...                   
+return format!("&#{};", c 
+as u32);
+    |                       
+       
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: this error 
+originates in the macro 
+`format` (in Nightly 
+builds, run with -Z 
+macro-backtrace for more 
+info)
+
+error[E0308]: mismatched 
+types
+   --> dex-core\src\security
+\output_encoding.rs:124:32
+    |
+124 |                       
+  return c.to_string();
+    |                       
+         ^^^^^^^^^^^^^ 
+expected `&str`, found 
+`String`
+    |
+note: return type inferred 
+to be `&str` here
+   --> dex-core\src\security
+\output_encoding.rs:118:36
+    |
+118 | ...                   
+return format!("&#{};", c 
+as u32);
+    |                       
+       
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: this error 
+originates in the macro 
+`format` (in Nightly 
+builds, run with -Z 
+macro-backtrace for more 
+info)
+help: consider borrowing 
+here
+    |
+124 |                       
+  return &c.to_string();
+    |                       
+         +
+
+error[E0308]: mismatched 
+types
+   --> dex-core\src\security
+\output_encoding.rs:165:36
+    |
+165 | ...                   
+return format!("\\u{:04x}", 
+c as u32);
+    |                       
+       ^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^ expected `&str`, 
+found `String`
+    |
+note: return type inferred 
+to be `&str` here
+   --> dex-core\src\security
+\output_encoding.rs:165:36
+    |
+165 | ...                   
+return format!("\\u{:04x}", 
+c as u32);
+    |                       
+       ^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^
+    = note: this error 
+originates in the macro 
+`format` (in Nightly 
+builds, run with -Z 
+macro-backtrace for more 
+info)
+
+error[E0308]: mismatched 
+types
+   --> dex-core\src\security
+\output_encoding.rs:169:43
+    |
+169 | ...                   
+'<' => return 
+"\\u003c".to_string(),
+    |                       
+              
+^^^^^^^^^^^^^^^^^^^^^ 
+expected `&str`, found 
+`String`
+    |
+note: return type inferred 
+to be `&str` here
+   --> dex-core\src\security
+\output_encoding.rs:165:36
+    |
+165 | ...                   
+return format!("\\u{:04x}", 
+c as u32);
+    |                       
+       ^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^
+    = note: this error 
+originates in the macro 
+`format` (in Nightly 
+builds, run with -Z 
+macro-backtrace for more 
+info)
+help: try removing the 
+method call
+    |
+169 -                       
+      '<' => return 
+"\\u003c".to_string(),
+169 +                       
+      '<' => return 
+"\\u003c",
+    |
+
+warning: use of deprecated 
+associated function `sha2::d
+igest::generic_array::Generi
+cArray::<T, 
+N>::from_slice`: please 
+upgrade to generic-array 1.x
+   --> dex-core\src\security
+\data_encryption.rs:294:28
+    |
+294 |         let nonce = No
+nce::from_slice(&nonce_bytes
+);
+    |                       
+     ^^^^^^^^^^
+
+warning: use of deprecated 
+associated function `sha2::d
+igest::generic_array::Generi
+cArray::<T, 
+N>::from_slice`: please 
+upgrade to generic-array 1.x
+   --> dex-core\src\security
+\data_encryption.rs:345:28
+    |
+345 |         let nonce = No
+nce::from_slice(&encrypted.n
+once);
+    |                       
+     ^^^^^^^^^^
+
+error[E0308]: mismatched 
+types
+   --> dex-core\src\security
+\data_encryption.rs:368:16
+    |
+368 |         if let 
+Ok(old_key_id) = self.active
+_keys.read().unwrap().get(&a
+lgorithm).cloned() {
+    |                
+^^^^^^^^^^^^^^   -----------
+----------------------------
+------------------ this 
+expression has type `std::op
+tion::Option<std::string::St
+ring>`
+    |                |
+    |                
+expected `Option<String>`, 
+found `Result<_, _>`
+    |
+    = note: expected enum `s
+td::option::Option<std::stri
+ng::String>`
+               found enum 
+`Result<_, _>`
+
+warning: use of deprecated 
+associated function `sha2::d
+igest::generic_array::Generi
+cArray::<T, 
+N>::from_slice`: please 
+upgrade to generic-array 1.x
+   --> dex-core\src\security
+.rs:371:28
+    |
+371 |         let nonce = No
+nce::from_slice(&nonce_bytes
+);
+    |                       
+     ^^^^^^^^^^
+
+warning: use of deprecated 
+associated function `sha2::d
+igest::generic_array::Generi
+cArray::<T, 
+N>::from_slice`: please 
+upgrade to generic-array 1.x
+   --> dex-core\src\security
+.rs:400:28
+    |
+400 |         let nonce = No
+nce::from_slice(&encrypted.n
+once);
+    |                       
+     ^^^^^^^^^^
+
+warning: use of deprecated 
+associated function `secp256
+k1::Message::from_slice`: 
+use from_digest_slice 
+instead
+  --> 
+dex-core\src\wallet.rs:87:28
+   |
+87 |         let msg = Messa
+ge::from_slice(&message_hash
+).map_err(|_| WalletError::I
+nvalidSignature)?;
+   |                        
+    ^^^^^^^^^^
+
+warning: use of deprecated 
+associated function `secp256
+k1::Message::from_slice`: 
+use from_digest_slice 
+instead
+   --> dex-core\src\wallet.r
+s:124:28
+    |
+124 |         let msg = Mess
+age::from_slice(&message_has
+h).map_err(|_| WalletError::
+InvalidSignature)?;
+    |                       
+     ^^^^^^^^^^
+
+warning: unused variable: 
+`timestamp`
+   --> dex-core\src\analytic
+s.rs:334:9
+    |
+334 |         timestamp: 
+u64,
+    |         ^^^^^^^^^
+    |
+help: if this is 
+intentional, prefix it with 
+an underscore
+    |
+334 |         _timestamp: 
+u64,
+    |         +
+help: you might have meant 
+to pattern match on the 
+similarly named constant 
+`SECONDS_PER_YEAR`
+    |
+334 -         timestamp: 
+u64,
+334 +         yield_farming:
+:SECONDS_PER_YEAR: u64,
+    |
+
+warning: unused variable: 
+`sponsor_id`
+   --> dex-core\src\gas_abst
+raction.rs:289:21
+    |
+289 |         if let 
+Some(sponsor_id) = relayer {
+    |                     
+^^^^^^^^^^ help: if this is 
+intentional, prefix it with 
+an underscore: `_sponsor_id`
+
+warning: unused variable: 
+`tx_id`
+   --> dex-core\src\gas_abst
+raction.rs:390:35
+    |
+390 |     pub fn 
+get_transaction(&self, 
+tx_id: &str) -> Option<&Abst
+ractedTransaction> {
+    |                       
+            ^^^^^ help: if 
+this is intentional, prefix 
+it with an underscore: 
+`_tx_id`
+
+warning: unused variable: 
+`private_key`
+   --> dex-core\src\identity
+.rs:183:14
+    |
+183 |         let 
+(private_key, public_key) = 
+QuantumSecureCrypto::generat
+e_dilithium_keypair();
+    |              
+^^^^^^^^^^^ help: if this 
+is intentional, prefix it 
+with an underscore: 
+`_private_key`
+
+warning: unused variable: 
+`did`
+   --> dex-core\src\identity
+.rs:221:13
+    |
+221 |         let did = self
+.dids.get(did_id).ok_or(Iden
+tityError::DIDNotFound)?;
+    |             ^^^ help: 
+if this is intentional, 
+prefix it with an 
+underscore: `_did`
+
+warning: unused variable: 
+`transfer`
+   --> dex-core\src\payments
+.rs:181:9
+    |
+181 |         transfer: 
+&OneTapTransfer,
+    |         ^^^^^^^^ 
+help: if this is 
+intentional, prefix it with 
+an underscore: `_transfer`
+
+warning: unused variable: 
+`fiat_currency`
+   --> dex-core\src\payments
+.rs:183:9
+    |
+183 |         
+fiat_currency: &str,
+    |         ^^^^^^^^^^^^^ 
+help: if this is 
+intentional, prefix it with 
+an underscore: 
+`_fiat_currency`
+
+warning: variable does not 
+need to be mutable
+  --> dex-core\src\security\
+whitelist_blacklist.rs:53:13
+   |
+53 |         let mut 
+blacklists = self.blacklists
+.write().unwrap();
+   |             
+----^^^^^^^^^^
+   |             |
+   |             help: 
+remove this `mut`
+   |
+   = note: 
+`#[warn(unused_mut)]` (part 
+of `#[warn(unused)]`) on by 
+default
+
+warning: variable does not 
+need to be mutable
+  --> dex-core\src\security\
+whitelist_blacklist.rs:74:13
+   |
+74 |         let mut 
+whitelists = self.whitelists
+.write().unwrap();
+   |             
+----^^^^^^^^^^
+   |             |
+   |             help: 
+remove this `mut`
+
+warning: variable does not 
+need to be mutable
+   --> dex-core\src\security
+\client_protection.rs:372:13
+    |
+372 |         let mut 
+session = 
+Session::new(ttl_seconds);
+    |             
+----^^^^^^^
+    |             |
+    |             help: 
+remove this `mut`
+
+warning: variable does not 
+need to be mutable
+   --> dex-core\src\security
+\data_encryption.rs:132:13
+    |
+132 |         let mut 
+manager = Self {
+    |             
+----^^^^^^^
+    |             |
+    |             help: 
+remove this `mut`
+
+warning: variable does not 
+need to be mutable
+    --> dex-core\src\securit
+y.rs:2042:17
+     |
+2042 |                 mut 
+keys,
+     |                 
+----^^^^
+     |                 |
+     |                 
+help: remove this `mut`
+
+warning: unused variable: 
+`utxo_id`
+   --> dex-core\src\blockcha
+in_resilience.rs:490:17
+    |
+490 |             let 
+utxo_id = 
+format!("genesis_{}", 
+index);
+    |                 
+^^^^^^^ help: if this is 
+intentional, prefix it with 
+an underscore: `_utxo_id`
+
+warning: variable does not 
+need to be mutable
+   --> dex-core\src\blockcha
+in_resilience.rs:536:33
+    |
+536 |     pub fn 
+add_block(&mut self, mut 
+block: Block) -> Result<(), 
+String> {
+    |                       
+          ----^^^^^
+    |                       
+          |
+    |                       
+          help: remove this 
+`mut`
+
+warning: unused variable: 
+`leader_id`
+   --> dex-core\src\consensu
+s\raft.rs:501:9
+    |
+501 |         leader_id: 
+String,
+    |         ^^^^^^^^^ 
+help: if this is 
+intentional, prefix it with 
+an underscore: `_leader_id`
+
+warning: variable does not 
+need to be mutable
+   --> dex-core\src\distribu
+ted_systems.rs:464:9
+    |
+464 |         mut incoming: 
+NodeState,
+    |         ----^^^^^^^^
+    |         |
+    |         help: remove 
+this `mut`
+
+warning: unused variable: 
+`elapsed_ratio`
+   --> dex-core\src\canary_r
+elease.rs:163:13
+    |
+163 |         let 
+elapsed_ratio = elapsed as 
+f64 / (total_duration * 
+1000) as f64;
+    |             
+^^^^^^^^^^^^^
+    |
+help: if this is 
+intentional, prefix it with 
+an underscore
+    |
+163 |         let 
+_elapsed_ratio = elapsed as 
+f64 / (total_duration * 
+1000) as f64;
+    |             +
+help: you might have meant 
+to pattern match on the 
+similarly named constant 
+`BALANCE_TOLERANCE`
+    |
+163 -         let 
+elapsed_ratio = elapsed as 
+f64 / (total_duration * 
+1000) as f64;
+163 +         let impermanen
+t_loss_protection::BALANCE_T
+OLERANCE = elapsed as f64 / 
+(total_duration * 1000) as 
+f64;
+    |
+
+warning: unused variable: 
+`payment`
+   --> dex-core\src\tesla_in
+tegration.rs:290:9
+    |
+290 |         payment: 
+ServicePayment,
+    |         ^^^^^^^ help: 
+if this is intentional, 
+prefix it with an 
+underscore: `_payment`
+
+Some errors have detailed 
+explanations: E0308, E0689.
+For more information about 
+an error, try `rustc 
+--explain E0308`.
+warning: `dex-core` (lib) 
+generated 48 warnings
+error: could not compile 
+`dex-core` (lib) due to 7 
+previous errors; 48 
+warnings emitted

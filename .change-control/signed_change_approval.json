@@ -1,0 +1,16 @@
+{
+  "change_id": "CHG-0001",
+  "title": "Example PR Change Control Approval",
+  "description": "Describe the change, risk, rollback plan, and testing summary.",
+  "approvers": [
+    { "role": "Release Manager", "login": "<github-login>", "decision": "approve" },
+    { "role": "Security Reviewer", "login": "<github-login>", "decision": "approve" }
+  ],
+  "links": {
+    "pr": "https://github.com/<owner>/<repo>/pull/<number>",
+    "run": "https://github.com/<owner>/<repo>/actions/runs/<run_id>"
+  },
+  "timestamp": "2025-01-01T00:00:00Z",
+  "status": "approved"
+}
+

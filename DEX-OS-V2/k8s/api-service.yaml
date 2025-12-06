@@ -1,0 +1,12 @@
+﻿apiVersion: v1
+kind: Service
+metadata:
+  name: dex-api
+spec:
+  type: ClusterIP
+  selector:
+    app: dex-api
+  ports:
+  - port: 3030
+    targetPort: 3030
+    name: http

@@ -1,0 +1,11 @@
+[package]
+name = "advanced_defi_example"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "advanced_defi_example"
+path = "advanced_defi_example.rs"
+
+[dependencies]
+dex-core = { path = "../dex-core" }

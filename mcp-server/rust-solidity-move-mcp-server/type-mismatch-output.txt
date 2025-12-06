@@ -1,0 +1,1613 @@
+    Blocking waiting for file lock on build directory
+warning: unused import: `TokenId`
+ --> dex-core\src\gas_abstraction.rs:9:20
+  |
+9 | use crate::types::{TokenId, TraderId, Transaction};
+  |                    ^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused imports: `DAOMember`, `GovernanceAction`, `Vote`, and `Votes`
+ --> dex-core\src\governance\hybrid_governance.rs:7:66
+  |
+7 |     GlobalDAO, Proposal, ProposalType, Proposer, ProposalStatus, Votes, Vote,
+  |                                                                  ^^^^^  ^^^^
+8 |     GovernanceAction, AIAnalysis, ImpactAnalysis, HistoricalProposal,
+  |     ^^^^^^^^^^^^^^^^
+9 |     GovernanceError, DAOMember
+  |                      ^^^^^^^^^
+
+warning: unused import: `PredictionResult`
+  --> dex-core\src\governance\hybrid_governance.rs:11:65
+   |
+11 | use crate::prediction_engine::{MarketContext, PredictionEngine, PredictionResult};
+   |                                                                 ^^^^^^^^^^^^^^^^
+
+warning: unused imports: `Arc` and `Mutex`
+  --> dex-core\src\observability.rs:10:17
+   |
+10 | use std::sync::{Arc, Mutex};
+   |                 ^^^  ^^^^^
+
+warning: unused import: `hash_map::Entry`
+  --> dex-core\src\path_routing.rs:13:24
+   |
+13 | use std::collections::{hash_map::Entry, BinaryHeap, HashMap, VecDeque};
+   |                        ^^^^^^^^^^^^^^^
+
+warning: unused import: `MultiSigError`
+ --> dex-core\src\payments.rs:6:30
+  |
+6 | use crate::multisig_wallet::{MultiSigError, MultiSigWallet};
+  |                              ^^^^^^^^^^^^^
+
+warning: unused import: `crate::security::ring_buffer::RingBuffer`
+   --> dex-core\src\security\api_rate_limiter.rs:149:5
+    |
+149 | use crate::security::ring_buffer::RingBuffer;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::net::IpAddr`
+ --> dex-core\src\security\whitelist_blacklist.rs:8:5
+  |
+8 | use std::net::IpAddr;
+  |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::types::TraderId`
+ --> dex-core\src\security\threat_assessment.rs:1:5
+  |
+1 | use crate::types::TraderId;
+  |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::net::IpAddr`
+  --> dex-core\src\security\request_throttling.rs:16:5
+   |
+16 | use std::net::IpAddr;
+   |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: `PredictionResult`
+ --> dex-core\src\security\self_healing.rs:7:65
+  |
+7 | use crate::prediction_engine::{MarketContext, PredictionEngine, PredictionResult};
+  |                                                                 ^^^^^^^^^^^^^^^^
+
+warning: unused import: `TokenId`
+   --> dex-core\src\security.rs:121:20
+    |
+121 | use crate::types::{TokenId, TraderId};
+    |                    ^^^^^^^
+
+warning: unused import: `OsRng as AesOsRng`
+   --> dex-core\src\security.rs:132:27
+    |
+132 |     aead::{Aead, KeyInit, OsRng as AesOsRng},
+    |                           ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `PasswordHash`
+   --> dex-core\src\security.rs:136:29
+    |
+136 | use argon2::password_hash::{PasswordHash, SaltString};
+    |                             ^^^^^^^^^^^^
+
+warning: unused import: `tokio::time::sleep`
+  --> dex-core\src\consensus\two_phase_commit.rs:12:5
+   |
+12 | use tokio::time::sleep;
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `HashMap`
+ --> dex-core\src\consistent_hashing.rs:7:34
+  |
+7 | use std::collections::{BTreeMap, HashMap, HashSet};
+  |                                  ^^^^^^^
+
+warning: unused imports: `Ipv4Addr` and `Ipv6Addr`
+ --> dex-core\src\network\firewall.rs:9:24
+  |
+9 | use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+  |                        ^^^^^^^^  ^^^^^^^^
+
+warning: unused imports: `Ipv4Addr` and `Ipv6Addr`
+ --> dex-core\src\network\ip_routing.rs:9:24
+  |
+9 | use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+  |                        ^^^^^^^^  ^^^^^^^^
+
+warning: unused import: `VeNFT`
+ --> dex-core\src\advanced_defi.rs:6:54
+  |
+6 | use crate::governance::{VeNFTRegistry, vote_escrow::{VeNFT, VeNFTType}};
+  |                                                      ^^^^^
+
+warning: unused import: `ConcentratedPool`
+ --> dex-core\src\advanced_defi.rs:8:67
+  |
+8 | use crate::concentrated_liquidity::{ConcentratedLiquidityManager, ConcentratedPool, Amount};
+  |                                                                   ^^^^^^^^^^^^^^^^
+
+warning: unused import: `HashSet`
+  --> dex-core\src\federated_peg.rs:10:33
+   |
+10 | use std::collections::{HashMap, HashSet};
+   |                                 ^^^^^^^
+
+warning: unused import: `HashSet`
+  --> dex-core\src\mpc_threshold.rs:10:33
+   |
+10 | use std::collections::{HashMap, HashSet};
+   |                                 ^^^^^^^
+
+warning: unused import: `BridgeTransaction`
+ --> dex-core\src\bridge_subtypes_demo.rs:8:69
+  |
+8 | use crate::universal_bridge::{UniversalBridgeManager, BridgeConfig, BridgeTransaction};
+  |                                                                     ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Instant`
+ --> dex-core\src\chaos_engineering.rs:9:27
+  |
+9 | use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+  |                           ^^^^^^^
+
+warning: unused import: `VecDeque`
+ --> dex-core\src\ibc_protocol.rs:9:33
+  |
+9 | use std::collections::{HashMap, VecDeque};
+  |                                 ^^^^^^^^
+
+warning: use of deprecated function `base64::encode`: Use Engine::encode
+  --> dex-core\src\security\client_protection.rs:70:29
+   |
+70 |         let token = base64::encode(&token_bytes);
+   |                             ^^^^^^
+   |
+   = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated function `base64::encode`: Use Engine::encode
+   --> dex-core\src\security\client_protection.rs:128:26
+    |
+128 |         let id = base64::encode(&id_bytes);
+    |                          ^^^^^^
+
+warning: use of deprecated function `base64::encode`: Use Engine::encode
+   --> dex-core\src\security\client_protection.rs:496:17
+    |
+496 |         base64::encode(&result)
+    |                 ^^^^^^
+
+warning: unused variable: `prepare_request`
+   --> dex-core\src\consensus\two_phase_commit.rs:357:13
+    |
+357 |         let prepare_request = PrepareRequest {
+    |             ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_prepare_request`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `participant_id`
+   --> dex-core\src\consensus\two_phase_commit.rs:389:18
+    |
+389 |             for (participant_id, _address) in &self.config.participant_addresses {
+    |                  ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_participant_id`
+
+warning: unused variable: `participant_id`
+   --> dex-core\src\consensus\two_phase_commit.rs:408:18
+    |
+408 |             for (participant_id, _address) in &self.config.participant_addresses {
+    |                  ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_participant_id`
+
+warning: use of deprecated associated function `sha2::digest::generic_array::GenericArray::<T, N>::from_slice`: please upgrade to generic-array 1.x
+   --> dex-core\src\security\data_encryption.rs:294:28
+    |
+294 |         let nonce = Nonce::from_slice(&nonce_bytes);
+    |                            ^^^^^^^^^^
+
+warning: use of deprecated associated function `sha2::digest::generic_array::GenericArray::<T, N>::from_slice`: please upgrade to generic-array 1.x
+   --> dex-core\src\security\data_encryption.rs:345:28
+    |
+345 |         let nonce = Nonce::from_slice(&encrypted.nonce);
+    |                            ^^^^^^^^^^
+
+warning: use of deprecated associated function `sha2::digest::generic_array::GenericArray::<T, N>::from_slice`: please upgrade to generic-array 1.x
+   --> dex-core\src\security\kyber_encryption.rs:183:29
+    |
+183 |             .encrypt(Nonce::from_slice(&nonce), plaintext)
+    |                             ^^^^^^^^^^
+
+warning: use of deprecated associated function `sha2::digest::generic_array::GenericArray::<T, N>::from_slice`: please upgrade to generic-array 1.x
+   --> dex-core\src\security\kyber_encryption.rs:238:29
+    |
+238 |             .decrypt(Nonce::from_slice(&package.nonce), package.ciphertext.as_ref())
+    |                             ^^^^^^^^^^
+
+warning: use of deprecated associated function `sha2::digest::generic_array::GenericArray::<T, N>::from_slice`: please upgrade to generic-array 1.x
+   --> dex-core\src\security.rs:392:28
+    |
+392 |         let nonce = Nonce::from_slice(&nonce_bytes);
+    |                            ^^^^^^^^^^
+
+warning: use of deprecated associated function `sha2::digest::generic_array::GenericArray::<T, N>::from_slice`: please upgrade to generic-array 1.x
+   --> dex-core\src\security.rs:421:28
+    |
+421 |         let nonce = Nonce::from_slice(&encrypted.nonce);
+    |                            ^^^^^^^^^^
+
+warning: use of deprecated associated function `secp256k1::Message::from_slice`: use from_digest_slice instead
+  --> dex-core\src\wallet.rs:87:28
+   |
+87 |         let msg = Message::from_slice(&message_hash).map_err(|_| WalletError::InvalidSignature)?;
+   |                            ^^^^^^^^^^
+
+warning: use of deprecated associated function `secp256k1::Message::from_slice`: use from_digest_slice instead
+   --> dex-core\src\wallet.rs:124:28
+    |
+124 |         let msg = Message::from_slice(&message_hash).map_err(|_| WalletError::InvalidSignature)?;
+    |                            ^^^^^^^^^^
+
+warning: unused variable: `timestamp`
+   --> dex-core\src\analytics.rs:334:9
+    |
+334 |         timestamp: u64,
+    |         ^^^^^^^^^
+    |
+help: if this is intentional, prefix it with an underscore
+    |
+334 |         _timestamp: u64,
+    |         +
+help: you might have meant to pattern match on the similarly named constant `SECONDS_PER_YEAR`
+    |
+334 -         timestamp: u64,
+334 +         yield_farming::SECONDS_PER_YEAR: u64,
+    |
+
+warning: unused variable: `sponsor_id`
+   --> dex-core\src\gas_abstraction.rs:289:21
+    |
+289 |         if let Some(sponsor_id) = relayer {
+    |                     ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_sponsor_id`
+
+warning: unused variable: `tx_id`
+   --> dex-core\src\gas_abstraction.rs:390:35
+    |
+390 |     pub fn get_transaction(&self, tx_id: &str) -> Option<&AbstractedTransaction> {
+    |                                   ^^^^^ help: if this is intentional, prefix it with an underscore: `_tx_id`
+
+warning: unused variable: `proposal_text`
+   --> dex-core\src\governance\hybrid_governance.rs:123:13
+    |
+123 |         let proposal_text = format!("{} {}", title, description);
+    |             ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_proposal_text`
+
+warning: unused variable: `private_key`
+   --> dex-core\src\identity.rs:189:14
+    |
+189 |         let (private_key, public_key) = QuantumSecureCrypto::generate_dilithium_keypair();
+    |              ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_private_key`
+
+warning: unused variable: `did`
+   --> dex-core\src\identity.rs:227:13
+    |
+227 |         let did = self.dids.get(did_id).ok_or(IdentityError::DIDNotFound)?;
+    |             ^^^ help: if this is intentional, prefix it with an underscore: `_did`
+
+warning: unused variable: `transfer`
+   --> dex-core\src\payments.rs:191:9
+    |
+191 |         transfer: &OneTapTransfer,
+    |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_transfer`
+
+warning: unused variable: `fiat_currency`
+   --> dex-core\src\payments.rs:193:9
+    |
+193 |         fiat_currency: &str,
+    |         ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_fiat_currency`
+
+warning: unused variable: `message`
+   --> dex-core\src\quantum_consensus.rs:303:9
+    |
+303 |         message: &[u8],
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_message`
+
+warning: unused variable: `proposal`
+   --> dex-core\src\quantum_consensus.rs:494:9
+    |
+494 |         proposal: &[u8],
+    |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_proposal`
+
+warning: variable does not need to be mutable
+  --> dex-core\src\security\whitelist_blacklist.rs:53:13
+   |
+53 |         let mut blacklists = self.blacklists.write().unwrap();
+   |             ----^^^^^^^^^^
+   |             |
+   |             help: remove this `mut`
+   |
+   = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+  --> dex-core\src\security\whitelist_blacklist.rs:74:13
+   |
+74 |         let mut whitelists = self.whitelists.write().unwrap();
+   |             ----^^^^^^^^^^
+   |             |
+   |             help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> dex-core\src\security\client_protection.rs:372:13
+    |
+372 |         let mut session = Session::new(ttl_seconds);
+    |             ----^^^^^^^
+    |             |
+    |             help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> dex-core\src\security\data_encryption.rs:132:13
+    |
+132 |         let mut manager = Self {
+    |             ----^^^^^^^
+    |             |
+    |             help: remove this `mut`
+
+warning: unused variable: `new_key`
+   --> dex-core\src\security\data_encryption.rs:365:13
+    |
+365 |         let new_key = self.generate_key(new_key_id.clone(), algorithm)?;
+    |             ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_new_key`
+
+warning: variable does not need to be mutable
+    --> dex-core\src\security.rs:2131:17
+     |
+2131 |                 mut keys,
+     |                 ----^^^^
+     |                 |
+     |                 help: remove this `mut`
+
+warning: unused variable: `utxo_id`
+   --> dex-core\src\blockchain_resilience.rs:491:17
+    |
+491 |             let utxo_id = format!("genesis_{}", index);
+    |                 ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_utxo_id`
+
+warning: variable does not need to be mutable
+   --> dex-core\src\blockchain_resilience.rs:537:33
+    |
+537 |     pub fn add_block(&mut self, mut block: Block) -> Result<(), String> {
+    |                                 ----^^^^^
+    |                                 |
+    |                                 help: remove this `mut`
+
+warning: unused variable: `leader_id`
+   --> dex-core\src\consensus\raft.rs:501:9
+    |
+501 |         leader_id: String,
+    |         ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_leader_id`
+
+warning: variable does not need to be mutable
+   --> dex-core\src\distributed_systems.rs:464:9
+    |
+464 |         mut incoming: NodeState,
+    |         ----^^^^^^^^
+    |         |
+    |         help: remove this `mut`
+
+warning: unused variable: `tick_lower`
+   --> dex-core\src\concentrated_liquidity.rs:148:62
+    |
+148 |     fn calculate_liquidity(amount0: Amount, amount1: Amount, tick_lower: i32, tick_upper: i32) -> u128 {
+    |                                                              ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_tick_lower`
+
+warning: unused variable: `tick_upper`
+   --> dex-core\src\concentrated_liquidity.rs:148:79
+    |
+148 |     fn calculate_liquidity(amount0: Amount, amount1: Amount, tick_lower: i32, tick_upper: i32) -> u128 {
+    |                                                                               ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_tick_upper`
+
+warning: value assigned to `amount0` is never read
+   --> dex-core\src\concentrated_liquidity.rs:170:17
+    |
+170 |         let mut amount0 = 0i128;
+    |                 ^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+    = note: `#[warn(unused_assignments)]` (part of `#[warn(unused)]`) on by default
+
+warning: value assigned to `amount1` is never read
+   --> dex-core\src\concentrated_liquidity.rs:171:17
+    |
+171 |         let mut amount1 = 0i128;
+    |                 ^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+
+warning: unused variable: `elapsed_ratio`
+   --> dex-core\src\canary_release.rs:163:13
+    |
+163 |         let elapsed_ratio = elapsed as f64 / (total_duration * 1000) as f64;
+    |             ^^^^^^^^^^^^^
+    |
+help: if this is intentional, prefix it with an underscore
+    |
+163 |         let _elapsed_ratio = elapsed as f64 / (total_duration * 1000) as f64;
+    |             +
+help: you might have meant to pattern match on the similarly named constant `ULTRA_LOW_SLIPPAGE_TARGET_BPS`
+    |
+163 -         let elapsed_ratio = elapsed as f64 / (total_duration * 1000) as f64;
+163 +         let unified_liquidity_os::ULTRA_LOW_SLIPPAGE_TARGET_BPS = elapsed as f64 / (total_duration * 1000) as f64;
+    |
+
+warning: unused variable: `payment`
+   --> dex-core\src\tesla_integration.rs:290:9
+    |
+290 |         payment: ServicePayment,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_payment`
+
+warning: unused variable: `waiting_txn`
+   --> dex-core\src\database\transaction_manager.rs:166:33
+    |
+166 |                 while let Some((waiting_txn, waiting_lock_type)) = lock_info.waiters.front() {
+    |                                 ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_waiting_txn`
+
+warning: variable does not need to be mutable
+   --> dex-core\src\virtual_dom.rs:275:9
+    |
+275 |         mut path: Vec<usize>,
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+
+warning: type `TimePriorityOrder` is more private than the item `OrderBook::time_priority_queue`
+  --> dex-core\src\orderbook.rs:62:5
+   |
+62 |     pub time_priority_queue: BinaryHeap<Reverse<TimePriorityOrder>>,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ field `OrderBook::time_priority_queue` is reachable at visibility `pub`
+   |
+note: but type `TimePriorityOrder` is only usable at visibility `pub(crate)`
+  --> dex-core\src\orderbook.rs:19:1
+   |
+19 | pub(crate) struct TimePriorityOrder {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   = note: `#[warn(private_interfaces)]` on by default
+
+warning: constant `SIGNATURE_LENGTH` is never used
+  --> dex-core\src\iot_wallet.rs:27:7
+   |
+27 | const SIGNATURE_LENGTH: usize = 64;
+   |       ^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: method `invalidate_cache` is never used
+   --> dex-core\src\path_routing.rs:121:8
+    |
+ 68 | impl PathRouter {
+    | --------------- method in this implementation
+...
+121 |     fn invalidate_cache(&mut self) {
+    |        ^^^^^^^^^^^^^^^^
+
+warning: field `liquidity` is never read
+   --> dex-core\src\path_routing.rs:422:13
+    |
+418 |         struct DijkstraNode {
+    |                ------------ field in this struct
+...
+422 |             liquidity: Quantity,
+    |             ^^^^^^^^^
+    |
+    = note: `DijkstraNode` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `current_token` and `hops` are never read
+    --> dex-core\src\path_routing.rs:1096:5
+     |
+1091 | struct PathInfo {
+     |        -------- fields in this struct
+...
+1096 |     current_token: TokenId,
+     |     ^^^^^^^^^^^^^
+1097 |     hops: usize,
+     |     ^^^^
+     |
+     = note: `PathInfo` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: field `secret_key` is never read
+   --> dex-core\src\quantum_consensus.rs:372:5
+    |
+371 | pub struct QVRF {
+    |            ---- field in this struct
+372 |     secret_key: Vec<u8>,
+    |     ^^^^^^^^^^
+
+warning: field `master_key` is never read
+   --> dex-core\src\security.rs:310:5
+    |
+308 | pub struct EncryptionManager {
+    |            ----------------- field in this struct
+309 |     /// Master encryption key (32 bytes for AES-256)
+310 |     master_key: [u8; 32],
+    |     ^^^^^^^^^^
+    |
+    = note: `EncryptionManager` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+warning: fields `token`, `data_type`, and `created_at` are never read
+  --> dex-core\src\security\tokenization.rs:20:5
+   |
+19 | struct TokenEntry {
+   |        ---------- fields in this struct
+20 |     token: String,
+   |     ^^^^^
+21 |     original_data: Vec<u8>,
+22 |     data_type: TokenDataType,
+   |     ^^^^^^^^^
+23 |     created_at: u64,
+   |     ^^^^^^^^^^
+   |
+   = note: `TokenEntry` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: field `active_tests` is never read
+  --> dex-core\src\security\load_validation.rs:50:5
+   |
+46 | pub struct LoadValidationManager {
+   |            --------------------- field in this struct
+...
+50 |     active_tests: Arc<RwLock<HashMap<String, LoadTestConfig>>>,
+   |     ^^^^^^^^^^^^
+   |
+   = note: `LoadValidationManager` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `level` and `allowed_html_tags` are never read
+  --> dex-core\src\security\data_sanitization.rs:52:5
+   |
+51 | pub struct DataSanitizer {
+   |            ------------- fields in this struct
+52 |     level: SanitizationLevel,
+   |     ^^^^^
+...
+59 |     allowed_html_tags: HashSet<String>,
+   |     ^^^^^^^^^^^^^^^^^
+   |
+   = note: `DataSanitizer` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: field `cache_ttl` is never read
+   --> dex-core\src\security\access_control.rs:241:5
+    |
+233 | pub struct AccessControlManager {
+    |            -------------------- field in this struct
+...
+241 |     cache_ttl: u64,
+    |     ^^^^^^^^^
+    |
+    = note: `AccessControlManager` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: field `activated_at` is never read
+   --> dex-core\src\treasury.rs:174:5
+    |
+164 | struct QuantumSecurityState {
+    |        -------------------- field in this struct
+...
+174 |     activated_at: u64,
+    |     ^^^^^^^^^^^^
+    |
+    = note: `QuantumSecurityState` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: field `current_height` is never read
+   --> dex-core\src\blockchain_resilience.rs:155:5
+    |
+149 | pub struct UtxoModel {
+    |            --------- field in this struct
+...
+155 |     current_height: BlockHeight,
+    |     ^^^^^^^^^^^^^^
+
+warning: field `reveal_window` is never read
+   --> dex-core\src\blockchain_resilience.rs:646:5
+    |
+642 | pub struct CommitRevealScheme {
+    |            ------------------ field in this struct
+...
+646 |     reveal_window: u64,
+    |     ^^^^^^^^^^^^^
+
+warning: fields `proposer_state` and `timeout` are never read
+   --> dex-core\src\consensus\paxos.rs:236:5
+    |
+228 | pub struct PaxosNode {
+    |            --------- fields in this struct
+...
+236 |     proposer_state: Option<ProposerState>,
+    |     ^^^^^^^^^^^^^^
+...
+240 |     timeout: Duration,
+    |     ^^^^^^^
+
+warning: field `timeout` is never read
+   --> dex-core\src\consensus\two_phase_commit.rs:218:5
+    |
+208 | pub struct TwoPhaseCommitNode {
+    |            ------------------ field in this struct
+...
+218 |     timeout: Duration,
+    |     ^^^^^^^
+
+warning: method `handle_sync_request` is never used
+   --> dex-core\src\network\gossip_sync.rs:310:14
+    |
+110 | impl GossipSyncNode {
+    | ------------------- method in this implementation
+...
+310 |     async fn handle_sync_request(&self, data_ids: Vec<String>) {
+    |              ^^^^^^^^^^^^^^^^^^^
+
+warning: field `side` is never read
+   --> dex-core\src\cqrs.rs:107:5
+    |
+104 | struct OrderAggregate {
+    |        -------------- field in this struct
+...
+107 |     side: OrderSide,
+    |     ^^^^
+    |
+    = note: `OrderAggregate` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `asset_mapper` and `swap_manager` are never read
+   --> dex-core\src\universal_bridge.rs:151:5
+    |
+145 | pub struct UniversalBridgeManager {
+    |            ---------------------- fields in this struct
+...
+151 |     asset_mapper: CrossChainAssetMapper,
+    |     ^^^^^^^^^^^^
+152 |     /// Atomic swap manager for cross-chain swaps
+153 |     swap_manager: AtomicSwapManager,
+    |     ^^^^^^^^^^^^
+    |
+    = note: `UniversalBridgeManager` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: field `transaction_queue` is never read
+  --> dex-core\src\starlink_wallet.rs:97:5
+   |
+93 | pub struct StarlinkWalletManager {
+   |            --------------------- field in this struct
+...
+97 |     transaction_queue: Arc<RwLock<Vec<OfflineTransaction>>>,
+   |     ^^^^^^^^^^^^^^^^^
+   |
+   = note: `StarlinkWalletManager` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: field `chain_id` is never read
+   --> dex-core\src\ibc_protocol.rs:340:5
+    |
+333 | pub struct IBCManager {
+    |            ---------- field in this struct
+...
+340 |     chain_id: String,
+    |     ^^^^^^^^
+
+warning: field `next` is never read
+  --> dex-core\src\database\bplus_tree.rs:29:9
+   |
+26 |     Leaf {
+   |     ---- field in this variant
+...
+29 |         next: Option<Box<Node>>,
+   |         ^^^^
+   |
+   = note: `Node` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: variant `Internal` is never constructed
+  --> dex-core\src\database\bplus_tree.rs:22:5
+   |
+21 | enum Node {
+   |      ---- variant in this enum
+22 |     Internal {
+   |     ^^^^^^^^
+   |
+   = note: `Node` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: field `order` is never read
+   --> dex-core\src\database\bplus_tree.rs:204:5
+    |
+202 | pub struct BPlusTree<K: Ord + Clone, V: Clone> {
+    |            --------- field in this struct
+203 |     root: Arc<RwLock<BTreeNode<K, V>>>,
+204 |     order: usize,
+    |     ^^^^^
+
+warning: variant `Internal` is never constructed
+   --> dex-core\src\database\bplus_tree.rs:210:5
+    |
+209 | enum BTreeNode<K: Ord + Clone, V: Clone> {
+    |      --------- variant in this enum
+210 |     Internal {
+    |     ^^^^^^^^
+    |
+    = note: `BTreeNode` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+warning: fields `txn_id`, `operation`, and `timestamp` are never read
+   --> dex-core\src\database\transaction_manager.rs:273:5
+    |
+272 | struct LogEntry {
+    |        -------- fields in this struct
+273 |     txn_id: TransactionId,
+    |     ^^^^^^
+274 |     operation: Operation,
+    |     ^^^^^^^^^
+275 |     timestamp: Instant,
+    |     ^^^^^^^^^
+    |
+    = note: `LogEntry` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: method `validate_transaction` is never used
+   --> dex-core\src\database\transaction_manager.rs:464:8
+    |
+278 | impl TransactionManager {
+    | ----------------------- method in this implementation
+...
+464 |     fn validate_transaction(
+    |        ^^^^^^^^^^^^^^^^^^^^
+
+warning: module `gas_abstraction__meta_transactions_` should have a snake case name
+   --> dex-core\src\lib.rs:129:9
+    |
+129 | pub mod gas_abstraction__meta_transactions_;
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `gas_abstraction_meta_transactions`
+    |
+    = note: `#[warn(non_snake_case)]` (part of `#[warn(nonstandard_style)]`) on by default
+
+warning: module `real_time_charting__e_g__tradingview_api_` should have a snake case name
+   --> dex-core\src\lib.rs:135:9
+    |
+135 | pub mod real_time_charting__e_g__tradingview_api_;
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `real_time_charting_e_g_tradingview_api`
+
+warning: module `fee_distribution__0_3__per_swap_` should have a snake case name
+   --> dex-core\src\lib.rs:137:9
+    |
+137 | pub mod fee_distribution__0_3__per_swap_;
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `fee_distribution_0_3_per_swap`
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+  --> dex-core\src\database\connection_pool.rs:78:20
+   |
+78 |     pub fn acquire(&self) -> Result<PooledConnection, String> {
+   |                    ^^^^^            ^^^^^^^^^^^^^^^^ the same lifetime is hidden here
+   |                    |
+   |                    the lifetime is elided here
+   |
+   = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+   = note: `#[warn(mismatched_lifetime_syntaxes)]` on by default
+help: use `'_` for type paths
+   |
+78 |     pub fn acquire(&self) -> Result<PooledConnection<'_>, String> {
+   |                                                     ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+  --> dex-core\src\database\connection_pool.rs:83:28
+   |
+83 |     pub fn acquire_timeout(&self, timeout: Duration) -> Result<PooledConnection, String> {
+   |                            ^^^^^ the lifetime is elided here   ^^^^^^^^^^^^^^^^ the same lifetime is hidden here
+   |
+   = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+   |
+83 |     pub fn acquire_timeout(&self, timeout: Duration) -> Result<PooledConnection<'_>, String> {
+   |                                                                                ++++
+
+warning: `dex-core` (lib) generated 99 warnings (run `cargo fix --lib -p dex-core` to apply 37 suggestions)
+warning: unused import: `dex_core::identity::IdentityManager`
+ --> run_security_tests\src\security_test_functions.rs:5:5
+  |
+5 | use dex_core::identity::IdentityManager;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused imports: `ClassificationLevel`, `EventType`, and `SecurityManager`
+ --> run_security_tests\src\security_test_functions.rs:6:26
+  |
+6 | use dex_core::security::{ClassificationLevel, EventType, SecurityManager};
+  |                          ^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^  ^^^^^^^^^^^^^^^
+
+warning: unused import: `std::collections::HashMap`
+ --> run_security_tests\src\security_test_functions.rs:7:5
+  |
+7 | use std::collections::HashMap;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `dex_core::types::TraderId`
+  --> run_security_tests\src\security_test_functions.rs:12:9
+   |
+12 |     use dex_core::types::TraderId;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `dex_core::types::TraderId`
+  --> run_security_tests\src\security_test_functions.rs:49:9
+   |
+49 |     use dex_core::types::TraderId;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `dex_core::types::TraderId`
+   --> run_security_tests\src\security_test_functions.rs:112:9
+    |
+112 |     use dex_core::types::TraderId;
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `SnapshotMetadata`
+   --> run_security_tests\src\security_test_functions.rs:162:62
+    |
+162 |     use dex_core::snapshot::{SnapshotError, SnapshotManager, SnapshotMetadata};
+    |                                                              ^^^^^^^^^^^^^^^^
+
+warning: unused import: `dex_core::types::TraderId`
+   --> run_security_tests\src\security_test_functions.rs:163:9
+    |
+163 |     use dex_core::types::TraderId;
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::collections::HashMap`
+   --> run_security_tests\src\security_test_functions.rs:164:9
+    |
+164 |     use std::collections::HashMap;
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `dex_core::types::TraderId`
+   --> run_security_tests\src\security_test_functions.rs:182:9
+    |
+182 |     use dex_core::types::TraderId;
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `AlertConfig`
+   --> run_security_tests\src\security_test_functions.rs:265:28
+    |
+265 |     use dex_core::keeper::{AlertConfig, HealthStatus, KeeperService};
+    |                            ^^^^^^^^^^^
+
+warning: unused imports: `AlertConfig` and `KeeperError`
+   --> run_security_tests\src\security_test_functions.rs:295:28
+    |
+295 |     use dex_core::keeper::{AlertConfig, HealthStatus, KeeperError, KeeperService};
+    |                            ^^^^^^^^^^^                ^^^^^^^^^^^
+
+warning: unused import: `HealthStatus`
+   --> run_security_tests\src\security_test_functions.rs:314:41
+    |
+314 |     use dex_core::keeper::{AlertConfig, HealthStatus, KeeperService};
+    |                                         ^^^^^^^^^^^^
+
+warning: unused import: `std::collections::HashMap`
+   --> run_security_tests\src\security_test_functions.rs:315:9
+    |
+315 |     use std::collections::HashMap;
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `HealthStatus`
+   --> run_security_tests\src\security_test_functions.rs:354:28
+    |
+354 |     use dex_core::keeper::{HealthStatus, KeeperService};
+    |                            ^^^^^^^^^^^^
+
+warning: unused import: `std::collections::HashMap`
+   --> run_security_tests\src\security_test_functions.rs:355:9
+    |
+355 |     use std::collections::HashMap;
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::collections::HashMap`
+   --> run_security_tests\src\security_test_functions.rs:455:9
+    |
+455 |     use std::collections::HashMap;
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::collections::HashMap`
+   --> run_security_tests\src\security_test_functions.rs:488:9
+    |
+488 |     use std::collections::HashMap;
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::collections::HashMap`
+   --> run_security_tests\src\security_test_functions.rs:524:9
+    |
+524 |     use std::collections::HashMap;
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::collections::HashMap`
+   --> run_security_tests\src\security_test_functions.rs:577:9
+    |
+577 |     use std::collections::HashMap;
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `DataFilter` and `FilterCriteria`
+   --> run_security_tests\src\security_test_functions.rs:646:29
+    |
+646 |     use dex_core::indexer::{DataFilter, FilterCriteria, IndexerService};
+    |                             ^^^^^^^^^^  ^^^^^^^^^^^^^^
+
+warning: variable does not need to be mutable
+   --> run_security_tests\src\security_test_functions.rs:166:9
+    |
+166 |     let mut snapshot_manager = SnapshotManager::new();
+    |         ----^^^^^^^^^^^^^^^^
+    |         |
+    |         help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+   --> run_security_tests\src\security_test_functions.rs:357:9
+    |
+357 |     let mut keeper = KeeperService::new(100);
+    |         ----^^^^^^
+    |         |
+    |         help: remove this `mut`
+
+warning: function `test_security__governance_and_policy__snapshot__enforces__on_request` should have a snake case name
+  --> run_security_tests\src\security_test_functions.rs:10:8
+   |
+10 | pub fn test_security__governance_and_policy__snapshot__enforces__on_request() {
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_security_governance_and_policy_snapshot_enforces_on_request`
+   |
+   = note: `#[warn(non_snake_case)]` (part of `#[warn(nonstandard_style)]`) on by default
+
+warning: function `test_security__governance_and_policy__snapshot__validates__on_request` should have a snake case name
+  --> run_security_tests\src\security_test_functions.rs:46:8
+   |
+46 | pub fn test_security__governance_and_policy__snapshot__validates__on_request() {
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_security_governance_and_policy_snapshot_validates_on_request`
+
+warning: function `test_security__governance_and_policy__snapshot__rotates__on_request` should have a snake case name
+   --> run_security_tests\src\security_test_functions.rs:110:8
+    |
+110 | pub fn test_security__governance_and_policy__snapshot__rotates__on_request() {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_security_governance_and_policy_snapshot_rotates_on_request`
+
+warning: function `test_security__governance_and_policy__snapshot__blocks__on_request` should have a snake case name
+   --> run_security_tests\src\security_test_functions.rs:161:8
+    |
+161 | pub fn test_security__governance_and_policy__snapshot__blocks__on_request() {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_security_governance_and_policy_snapshot_blocks_on_request`
+
+warning: function `test_security__governance_and_policy__snapshot__detects__on_request` should have a snake case name
+   --> run_security_tests\src\security_test_functions.rs:180:8
+    |
+180 | pub fn test_security__governance_and_policy__snapshot__detects__on_request() {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_security_governance_and_policy_snapshot_detects_on_request`
+
+warning: function `test_security__governance_and_policy__snapshot__logs_evidence__on_request` should have a snake case name
+   --> run_security_tests\src\security_test_functions.rs:215:8
+    |
+215 | pub fn test_security__governance_and_policy__snapshot__logs_evidence__on_request() {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_security_governance_and_policy_snapshot_logs_evidence_on_request`
+
+warning: function `test_security__governance_and_policy__keeper__enforces__on_request` should have a snake case name
+   --> run_security_tests\src\security_test_functions.rs:264:8
+    |
+264 | pub fn test_security__governance_and_policy__keeper__enforces__on_request() {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_security_governance_and_policy_keeper_enforces_on_request`
+
+warning: function `test_security__governance_and_policy__keeper__validates__on_request` should have a snake case name
+   --> run_security_tests\src\security_test_functions.rs:294:8
+    |
+294 | pub fn test_security__governance_and_policy__keeper__validates__on_request() {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_security_governance_and_policy_keeper_validates_on_request`
+
+warning: function `test_security__governance_and_policy__keeper__rotates__on_request` should have a snake case name
+   --> run_security_tests\src\security_test_functions.rs:313:8
+    |
+313 | pub fn test_security__governance_and_policy__keeper__rotates__on_request() {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_security_governance_and_policy_keeper_rotates_on_request`
+
+warning: function `test_security__governance_and_policy__keeper__blocks__on_request` should have a snake case name
+   --> run_security_tests\src\security_test_functions.rs:353:8
+    |
+353 | pub fn test_security__governance_and_policy__keeper__blocks__on_request() {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_security_governance_and_policy_keeper_blocks_on_request`
+
+warning: function `test_security__governance_and_policy__keeper__detects__on_request` should have a snake case name
+   --> run_security_tests\src\security_test_functions.rs:366:8
+    |
+366 | pub fn test_security__governance_and_policy__keeper__detects__on_request() {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_security_governance_and_policy_keeper_detects_on_request`
+
+warning: function `test_security__governance_and_policy__keeper__logs_evidence__on_request` should have a snake case name
+   --> run_security_tests\src\security_test_functions.rs:407:8
+    |
+407 | pub fn test_security__governance_and_policy__keeper__logs_evidence__on_request() {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_security_governance_and_policy_keeper_logs_evidence_on_request`
+
+warning: function `test_security__governance_and_policy__indexer__enforces__on_request` should have a snake case name
+   --> run_security_tests\src\security_test_functions.rs:453:8
+    |
+453 | pub fn test_security__governance_and_policy__indexer__enforces__on_request() {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_security_governance_and_policy_indexer_enforces_on_request`
+
+warning: function `test_security__governance_and_policy__indexer__validates__on_request` should have a snake case name
+   --> run_security_tests\src\security_test_functions.rs:486:8
+    |
+486 | pub fn test_security__governance_and_policy__indexer__validates__on_request() {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_security_governance_and_policy_indexer_validates_on_request`
+
+warning: function `test_security__governance_and_policy__indexer__rotates__on_request` should have a snake case name
+   --> run_security_tests\src\security_test_functions.rs:522:8
+    |
+522 | pub fn test_security__governance_and_policy__indexer__rotates__on_request() {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_security_governance_and_policy_indexer_rotates_on_request`
+
+warning: function `test_security__governance_and_policy__indexer__blocks__on_request` should have a snake case name
+   --> run_security_tests\src\security_test_functions.rs:575:8
+    |
+575 | pub fn test_security__governance_and_policy__indexer__blocks__on_request() {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_security_governance_and_policy_indexer_blocks_on_request`
+
+warning: function `test_security__governance_and_policy__indexer__detects__on_request` should have a snake case name
+   --> run_security_tests\src\security_test_functions.rs:596:8
+    |
+596 | pub fn test_security__governance_and_policy__indexer__detects__on_request() {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_security_governance_and_policy_indexer_detects_on_request`
+
+warning: function `test_security__governance_and_policy__indexer__logs_evidence__on_request` should have a snake case name
+   --> run_security_tests\src\security_test_functions.rs:645:8
+    |
+645 | pub fn test_security__governance_and_policy__indexer__logs_evidence__on_request() {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_security_governance_and_policy_indexer_logs_evidence_on_request`
+
+warning: variable does not need to be mutable
+  --> dex-core\src\bin\riskctl.rs:23:9
+   |
+23 |     let mut registry = RiskRegistry::new(&index)?;
+   |         ----^^^^^^^^
+   |         |
+   |         help: remove this `mut`
+   |
+   = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `TestCoverageStats`
+ --> test_coverage_demo\src\bin\full_csv_test.rs:2:31
+  |
+2 | use dex_core::test_coverage::{TestCoverageStats, TestCoverageTracker};
+  |                               ^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `index`
+  --> test_coverage_demo\src\bin\full_csv_test.rs:17:10
+   |
+17 |     for (index, line_result) in reader.lines().enumerate().skip(1) {
+   |          ^^^^^ help: if this is intentional, prefix it with an underscore: `_index`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `test_security__security__security__bplus_tree__certificate_management__enforces__on_request` should have a snake case name
+ --> run_certificate_security_tests\src\security_bplus_tree_certificate_tests.rs:9:8
+  |
+9 | pub fn test_security__security__security__bplus_tree__certificate_management__enforces__on_request()
+  |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_security_security_security_bplus_tree_certificate_management_enforces_on_request`
+  |
+  = note: `#[warn(non_snake_case)]` (part of `#[warn(nonstandard_style)]`) on by default
+
+warning: function `test_security__security__security__bplus_tree__certificate_management__validates__on_request` should have a snake case name
+  --> run_certificate_security_tests\src\security_bplus_tree_certificate_tests.rs:37:8
+   |
+37 | pub fn test_security__security__security__bplus_tree__certificate_management__validates__on_request(
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_security_security_security_bplus_tree_certificate_management_validates_on_request`
+
+warning: function `test_security__security__security__bplus_tree__certificate_management__blocks__on_request` should have a snake case name
+  --> run_certificate_security_tests\src\security_bplus_tree_certificate_tests.rs:89:8
+   |
+89 | pub fn test_security__security__security__bplus_tree__certificate_management__blocks__on_request() {
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_security_security_security_bplus_tree_certificate_management_blocks_on_request`
+
+warning: function `test_security__security__security__bplus_tree__certificate_management__detects__on_request` should have a snake case name
+   --> run_certificate_security_tests\src\security_bplus_tree_certificate_tests.rs:147:8
+    |
+147 | pub fn test_security__security__security__bplus_tree__certificate_management__detects__on_request()
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_security_security_security_bplus_tree_certificate_management_detects_on_request`
+
+warning: function `test_security__security__security__bplus_tree__certificate_management__logs_evidence__on_request` should have a snake case name
+   --> run_certificate_security_tests\src\security_bplus_tree_certificate_tests.rs:198:8
+    |
+198 | pub fn test_security__security__security__bplus_tree__certificate_management__logs_evidence__on_request(
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_security_security_security_bplus_tree_certificate_management_logs_evidence_on_request`
+
+warning: function `test_security__security__security__bplus_tree__certificate_management__rotates__on_request` should have a snake case name
+   --> run_certificate_security_tests\src\security_bplus_tree_certificate_tests.rs:244:8
+    |
+244 | pub fn test_security__security__security__bplus_tree__certificate_management__rotates__on_request()
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_security_security_security_bplus_tree_certificate_management_rotates_on_request`
+
+warning: unused import: `TestCoverageStats`
+ --> test_coverage_demo\src\bin\comprehensive_demo.rs:2:31
+  |
+2 | use dex_core::test_coverage::{TestCoverageStats, TestCoverageTracker};
+  |                               ^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `index`
+  --> test_coverage_demo\src\bin\comprehensive_demo.rs:19:10
+   |
+19 |     for (index, line_result) in reader.lines().enumerate().skip(1) {
+   |          ^^^^^ help: if this is intentional, prefix it with an underscore: `_index`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `index`
+   --> test_coverage_demo\src\bin\standalone_csv_test.rs:164:10
+    |
+164 |     for (index, line_result) in reader.lines().enumerate().skip(1) {
+    |          ^^^^^ help: if this is intentional, prefix it with an underscore: `_index`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `run_security_tests` (bin "run_security_tests") generated 41 warnings (run `cargo fix --bin "run_security_tests"` to apply 23 suggestions)
+warning: `dex-core` (bin "riskctl") generated 1 warning (run `cargo fix --bin "riskctl"` to apply 1 suggestion)
+warning: `test_coverage_demo` (bin "full_csv_test") generated 2 warnings (run `cargo fix --bin "full_csv_test"` to apply 1 suggestion)
+warning: `run_certificate_security_tests` (bin "run_certificate_security_tests") generated 6 warnings
+warning: `test_coverage_demo` (bin "comprehensive_demo") generated 2 warnings (run `cargo fix --bin "comprehensive_demo"` to apply 1 suggestion)
+warning: `test_coverage_demo` (bin "standalone_csv_test") generated 1 warning
+warning: unused import: `IoTSegment`
+ --> dex-wasm\src\lib.rs:8:36
+  |
+8 |     iot_wallet::{IoTDeviceProfile, IoTSegment, IoTWalletRuntime},
+  |                                    ^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused imports: `Deserialize` and `Serialize`
+ --> dex-wasm\src\mobile_wallet.rs:8:13
+  |
+8 | use serde::{Deserialize, Serialize};
+  |             ^^^^^^^^^^^  ^^^^^^^^^
+
+warning: unused import: `WalletSession`
+ --> dex-wasm\src\mobile_session_manager.rs:6:53
+  |
+6 | use dex_core::wallet::{SessionManager, WalletError, WalletSession};
+  |                                                     ^^^^^^^^^^^^^
+
+warning: unused imports: `Deserialize` and `Serialize`
+ --> dex-wasm\src\mobile_session_manager.rs:8:13
+  |
+8 | use serde::{Deserialize, Serialize};
+  |             ^^^^^^^^^^^  ^^^^^^^^^
+
+warning: unused import: `std::str::FromStr`
+  --> dex-wasm\src\lib.rs:14:5
+   |
+14 | use std::str::FromStr;
+   |     ^^^^^^^^^^^^^^^^^
+
+warning: unused variable: `latitude`
+   --> dex-wasm\src\lib.rs:948:35
+    |
+948 |     fn is_location_allowed(&self, latitude: f64, longitude: f64, country_code: &str) -> bool {
+    |                                   ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_latitude`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `longitude`
+   --> dex-wasm\src\lib.rs:948:50
+    |
+948 |     fn is_location_allowed(&self, latitude: f64, longitude: f64, country_code: &str) -> bool {
+    |                                                  ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_longitude`
+
+warning: `dex-wasm` (lib) generated 7 warnings (run `cargo fix --lib -p dex-wasm` to apply 4 suggestions)
+warning: unused imports: `ProposalStatus`, `RateLimitConfig`, and `RateLimiter`
+  --> dex-api\src\lib.rs:20:77
+   |
+20 |         GovernanceError, GovernanceScenario, GlobalDAO, Proposer, Proposal, ProposalStatus,
+   |                                                                             ^^^^^^^^^^^^^^
+...
+25 |     rate_limiting::{RateLimiter, RateLimitConfig},
+   |                     ^^^^^^^^^^^  ^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `orderbook`
+   --> dex-api\src\lib.rs:196:9
+    |
+196 |     let orderbook = warp::path("orderbook");
+    |         ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_orderbook`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `dao_base`
+   --> dex-api\src\lib.rs:197:9
+    |
+197 |     let dao_base = warp::path("dao").and(warp::path("proposals"));
+    |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_dao_base`
+
+warning: variable does not need to be mutable
+   --> dex-api\src\lib.rs:486:9
+    |
+486 |     let mut order = validated.into_order(order_id, timestamp);
+    |         ----^^^^^
+    |         |
+    |         help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: struct `DepthQuery` is never constructed
+   --> dex-api\src\lib.rs:141:8
+    |
+141 | struct DepthQuery {
+    |        ^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: constant `DEFAULT_DEPTH_LEVELS` is never used
+   --> dex-api\src\lib.rs:145:7
+    |
+145 | const DEFAULT_DEPTH_LEVELS: usize = 10;
+    |       ^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `STREAM_DEPTH_LEVELS` is never used
+   --> dex-api\src\lib.rs:146:7
+    |
+146 | const STREAM_DEPTH_LEVELS: usize = 20;
+    |       ^^^^^^^^^^^^^^^^^^^
+
+warning: constant `MAX_DEPTH_LEVELS` is never used
+   --> dex-api\src\lib.rs:147:7
+    |
+147 | const MAX_DEPTH_LEVELS: usize = 100;
+    |       ^^^^^^^^^^^^^^^^
+
+warning: struct `SharedTokenRequest` is never constructed
+   --> dex-api\src\lib.rs:162:8
+    |
+162 | struct SharedTokenRequest {
+    |        ^^^^^^^^^^^^^^^^^^
+
+warning: struct `WalletChallengeRequest` is never constructed
+   --> dex-api\src\lib.rs:172:8
+    |
+172 | struct WalletChallengeRequest {
+    |        ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `WalletTokenRequest` is never constructed
+   --> dex-api\src\lib.rs:177:8
+    |
+177 | struct WalletTokenRequest {
+    |        ^^^^^^^^^^^^^^^^^^
+
+warning: function `auth_routes` is never used
+   --> dex-api\src\lib.rs:375:4
+    |
+375 | fn auth_routes(state: ApiState) -> warp::filters::BoxedFilter<(impl warp::Reply,)> {
+    |    ^^^^^^^^^^^
+
+warning: function `session_routes` is never used
+   --> dex-api\src\lib.rs:406:4
+    |
+406 | fn session_routes(state: ApiState) -> warp::filters::BoxedFilter<(impl warp::Reply,)> {
+    |    ^^^^^^^^^^^^^^
+
+warning: function `with_state` is never used
+   --> dex-api\src\lib.rs:453:4
+    |
+453 | fn with_state(state: ApiState) -> impl Filter<Extract = (ApiState,), Error = Infallible> + Clone {
+    |    ^^^^^^^^^^
+
+warning: function `authenticated` is never used
+   --> dex-api\src\lib.rs:457:4
+    |
+457 | fn authenticated(
+    |    ^^^^^^^^^^^^^
+
+warning: function `optional_depth_query` is never used
+   --> dex-api\src\lib.rs:471:4
+    |
+471 | fn optional_depth_query(
+    |    ^^^^^^^^^^^^^^^^^^^^
+
+warning: function `handle_create_order` is never used
+   --> dex-api\src\lib.rs:477:10
+    |
+477 | async fn handle_create_order(
+    |          ^^^^^^^^^^^^^^^^^^^
+
+warning: function `handle_get_prices` is never used
+   --> dex-api\src\lib.rs:567:10
+    |
+567 | async fn handle_get_prices(state: ApiState) -> Result<impl warp::Reply, warp::Rejection> {
+    |          ^^^^^^^^^^^^^^^^^
+
+warning: function `handle_get_depth` is never used
+   --> dex-api\src\lib.rs:576:10
+    |
+576 | async fn handle_get_depth(
+    |          ^^^^^^^^^^^^^^^^
+
+warning: function `handle_depth_ws` is never used
+   --> dex-api\src\lib.rs:588:10
+    |
+588 | async fn handle_depth_ws(
+    |          ^^^^^^^^^^^^^^^
+
+warning: struct `ApiCreateProposalRequest` is never constructed
+   --> dex-api\src\lib.rs:598:8
+    |
+598 | struct ApiCreateProposalRequest {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `ApiCreateProposalResponse` is never constructed
+   --> dex-api\src\lib.rs:610:8
+    |
+610 | struct ApiCreateProposalResponse {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `ApiReferenceControl` is never constructed
+   --> dex-api\src\lib.rs:615:8
+    |
+615 | struct ApiReferenceControl {
+    |        ^^^^^^^^^^^^^^^^^^^
+
+warning: struct `ApiProposal` is never constructed
+   --> dex-api\src\lib.rs:628:8
+    |
+628 | struct ApiProposal {
+    |        ^^^^^^^^^^^
+
+warning: struct `ApiVoteRequest` is never constructed
+   --> dex-api\src\lib.rs:648:8
+    |
+648 | struct ApiVoteRequest {
+    |        ^^^^^^^^^^^^^^
+
+warning: struct `ApiAbstainRequest` is never constructed
+   --> dex-api\src\lib.rs:655:8
+    |
+655 | struct ApiAbstainRequest {
+    |        ^^^^^^^^^^^^^^^^^
+
+warning: function `handle_list_proposals` is never used
+   --> dex-api\src\lib.rs:660:10
+    |
+660 | async fn handle_list_proposals(state: ApiState) -> Result<impl warp::Reply, warp::Rejection> {
+    |          ^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `handle_create_proposal` is never used
+   --> dex-api\src\lib.rs:670:10
+    |
+670 | async fn handle_create_proposal(
+    |          ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `handle_submit_proposal` is never used
+   --> dex-api\src\lib.rs:716:10
+    |
+716 | async fn handle_submit_proposal(
+    |          ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `handle_vote_on_proposal` is never used
+   --> dex-api\src\lib.rs:738:10
+    |
+738 | async fn handle_vote_on_proposal(
+    |          ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `handle_abstain_on_proposal` is never used
+   --> dex-api\src\lib.rs:775:10
+    |
+775 | async fn handle_abstain_on_proposal(
+    |          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `proposal_to_api` is never used
+   --> dex-api\src\lib.rs:806:4
+    |
+806 | fn proposal_to_api(proposal: &Proposal) -> ApiProposal {
+    |    ^^^^^^^^^^^^^^^
+
+warning: function `reference_control_to_api` is never used
+   --> dex-api\src\lib.rs:849:4
+    |
+849 | fn reference_control_to_api(control: &GovernanceScenario) -> ApiReferenceControl {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `proposer_kind_name` is never used
+   --> dex-api\src\lib.rs:863:4
+    |
+863 | fn proposer_kind_name(proposer: &Proposer) -> &'static str {
+    |    ^^^^^^^^^^^^^^^^^^
+
+warning: function `proposer_summary` is never used
+   --> dex-api\src\lib.rs:871:4
+    |
+871 | fn proposer_summary(proposer: &Proposer) -> String {
+    |    ^^^^^^^^^^^^^^^^
+
+warning: function `proposal_type_to_string` is never used
+   --> dex-api\src\lib.rs:897:4
+    |
+897 | fn proposal_type_to_string(proposal_type: &ProposalType) -> String {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `parse_proposal_type` is never used
+   --> dex-api\src\lib.rs:914:4
+    |
+914 | fn parse_proposal_type(value: &str) -> ProposalType {
+    |    ^^^^^^^^^^^^^^^^^^^
+
+warning: function `build_proposer` is never used
+   --> dex-api\src\lib.rs:947:4
+    |
+947 | fn build_proposer(
+    |    ^^^^^^^^^^^^^^
+
+warning: function `governance_error_reply` is never used
+   --> dex-api\src\lib.rs:992:4
+    |
+992 | fn governance_error_reply(err: GovernanceError) -> warp::reply::WithStatus<warp::reply::Json> {
+    |    ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `governance_error_status` is never used
+    --> dex-api\src\lib.rs:1000:4
+     |
+1000 | fn governance_error_status(err: &GovernanceError) -> StatusCode {
+     |    ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `handle_get_trades_for_order` is never used
+    --> dex-api\src\lib.rs:1014:10
+     |
+1014 | async fn handle_get_trades_for_order(
+     |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `handle_get_trades_for_trader` is never used
+    --> dex-api\src\lib.rs:1043:10
+     |
+1043 | async fn handle_get_trades_for_trader(
+     |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `handle_shared_token` is never used
+    --> dex-api\src\lib.rs:1078:10
+     |
+1078 | async fn handle_shared_token(
+     |          ^^^^^^^^^^^^^^^^^^^
+
+warning: function `handle_wallet_challenge` is never used
+    --> dex-api\src\lib.rs:1146:10
+     |
+1146 | async fn handle_wallet_challenge(
+     |          ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `handle_wallet_token` is never used
+    --> dex-api\src\lib.rs:1171:10
+     |
+1171 | async fn handle_wallet_token(
+     |          ^^^^^^^^^^^^^^^^^^^
+
+warning: function `depth_ws_session` is never used
+    --> dex-api\src\lib.rs:1244:10
+     |
+1244 | async fn depth_ws_session(socket: WebSocket, state: ApiState, levels: usize) {
+     |          ^^^^^^^^^^^^^^^^
+
+warning: function `send_depth_message` is never used
+    --> dex-api\src\lib.rs:1288:10
+     |
+1288 | async fn send_depth_message(
+     |          ^^^^^^^^^^^^^^^^^^
+
+warning: function `clamp_depth_levels` is never used
+    --> dex-api\src\lib.rs:1303:4
+     |
+1303 | fn clamp_depth_levels(levels: Option<usize>) -> usize {
+     |    ^^^^^^^^^^^^^^^^^^
+
+warning: function `parse_depth_levels` is never used
+    --> dex-api\src\lib.rs:1308:4
+     |
+1308 | fn parse_depth_levels(raw: Option<String>) -> usize {
+     |    ^^^^^^^^^^^^^^^^^^
+
+warning: function `depth_snapshot` is never used
+    --> dex-api\src\lib.rs:1324:4
+     |
+1324 | fn depth_snapshot(orderbook: &OrderBook, levels: usize) -> DepthSnapshot {
+     |    ^^^^^^^^^^^^^^
+
+warning: function `broadcast_depth_snapshot` is never used
+    --> dex-api\src\lib.rs:1356:10
+     |
+1356 | async fn broadcast_depth_snapshot(state: &ApiState) {
+     |          ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `current_unix_timestamp` is never used
+    --> dex-api\src\lib.rs:1441:4
+     |
+1441 | fn current_unix_timestamp() -> Result<u64, std::time::SystemTimeError> {
+     |    ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `ValidatedCreateOrder` is never constructed
+    --> dex-api\src\lib.rs:1466:16
+     |
+1466 |     pub struct ValidatedCreateOrder {
+     |                ^^^^^^^^^^^^^^^^^^^^
+
+warning: method `into_order` is never used
+    --> dex-api\src\lib.rs:1477:16
+     |
+1475 |     impl ValidatedCreateOrder {
+     |     ------------------------- method in this implementation
+1476 |         /// Convert the validated payload into a fully formed `Order`.
+1477 |         pub fn into_order(self, order_id: OrderId, timestamp: u64) -> Order {
+     |                ^^^^^^^^^^
+
+warning: multiple variants are never constructed
+    --> dex-api\src\lib.rs:1494:9
+     |
+1492 |     pub enum ValidationError {
+     |              --------------- variants in this enum
+1493 |         #[error("trader_id must be between 3 and 64 visible characters")]
+1494 |         InvalidTraderId,
+     |         ^^^^^^^^^^^^^^^
+1495 |         #[error("base_token must be 2-16 characters from [A-Za-z0-9_-]")]
+1496 |         InvalidBaseToken,
+     |         ^^^^^^^^^^^^^^^^
+1497 |         #[error("quote_token must be 2-16 characters from [A-Za-z0-9_-]")]
+1498 |         InvalidQuoteToken,
+     |         ^^^^^^^^^^^^^^^^^
+1499 |         #[error("base_token and quote_token must differ")]
+1500 |         IdenticalTokens,
+     |         ^^^^^^^^^^^^^^^
+1501 |         #[error("quantity must be greater than zero")]
+1502 |         InvalidQuantity,
+     |         ^^^^^^^^^^^^^^^
+1503 |         #[error("limit orders require a positive price")]
+1504 |         MissingLimitPrice,
+     |         ^^^^^^^^^^^^^^^^^
+1505 |         #[error("price must be greater than zero")]
+1506 |         InvalidPrice,
+     |         ^^^^^^^^^^^^
+1507 |         #[error("side must be `buy` or `sell`")]
+1508 |         InvalidSide,
+     |         ^^^^^^^^^^^
+1509 |         #[error("order_type must be `market` or `limit`")]
+1510 |         InvalidOrderType,
+     |         ^^^^^^^^^^^^^^^^
+     |
+     = note: `ValidationError` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: function `validate_create_order` is never used
+    --> dex-api\src\lib.rs:1514:12
+     |
+1514 |     pub fn validate_create_order(
+     |            ^^^^^^^^^^^^^^^^^^^^^
+
+warning: enum `TokenRole` is never used
+    --> dex-api\src\lib.rs:1561:10
+     |
+1561 |     enum TokenRole {
+     |          ^^^^^^^^^
+
+warning: function `normalize_trader_id` is never used
+    --> dex-api\src\lib.rs:1566:8
+     |
+1566 |     fn normalize_trader_id(raw: &str) -> Result<TraderId, ValidationError> {
+     |        ^^^^^^^^^^^^^^^^^^^
+
+warning: function `normalize_token` is never used
+    --> dex-api\src\lib.rs:1574:8
+     |
+1574 |     fn normalize_token(raw: &str, role: TokenRole) -> Result<String, ValidationError> {
+     |        ^^^^^^^^^^^^^^^
+
+warning: function `parse_side` is never used
+    --> dex-api\src\lib.rs:1590:8
+     |
+1590 |     fn parse_side(raw: &str) -> Result<OrderSide, ValidationError> {
+     |        ^^^^^^^^^^
+
+warning: function `parse_order_type` is never used
+    --> dex-api\src\lib.rs:1598:8
+     |
+1598 |     fn parse_order_type(raw: &str) -> Result<OrderType, ValidationError> {
+     |        ^^^^^^^^^^^^^^^^
+
+warning: `dex-api` (lib) generated 61 warnings (run `cargo fix --lib -p dex-api` to apply 2 suggestions)
+warning: unused imports: `RateLimitConfig` and `RateLimiter`
+ --> dex-api\src\main.rs:7:21
+  |
+7 |     rate_limiting::{RateLimiter, RateLimitConfig},
+  |                     ^^^^^^^^^^^  ^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `dex-api` (bin "dex-api") generated 1 warning (run `cargo fix --bin "dex-api"` to apply 1 suggestion)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 6.18s
