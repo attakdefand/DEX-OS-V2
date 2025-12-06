@@ -1,0 +1,37 @@
+{
+  "name": "rust-solidity-move-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP Server for CodeFix OS v1 - Fixes Rust, Solidity, and Move code errors",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "build-rust": "node build-rust-debug.js",
+    "start": "node dist/server.js",
+    "dev": "ts-node src/server.ts",
+    "dev-rust": "ts-node src/rust-debug-server.ts",
+    "test-rust": "node test-rust-debug.js",
+    "demo-rust": "node demo-rust-errors.js",
+    "demo": "node demo-fix.cjs",
+    "fix-demo": "node fix-demo.cjs",
+    "scan-project": "node scan-project.cjs",
+    "error-types-demo": "node error-types-demo.cjs",
+    "test-comprehensive": "node comprehensive-test.cjs",
+    "analyze-librs": "node analyze-librs.cjs",
+    "count-errors": "node count-errors.cjs",
+    "parse-compile-errors": "node parse-compile-errors.cjs",
+    "fix-type-mismatches": "node fix-type-mismatches.cjs",
+    "generate-error-report": "node generate-error-report.cjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.6.0",
+    "zod": "^3.23.8",
+    "child_process": "^1.0.2",
+    "path": "^0.12.7",
+    "fs": "^0.0.1-security"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

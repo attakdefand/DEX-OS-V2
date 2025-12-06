@@ -1,0 +1,101 @@
+name: After-Deploy Gate
+
+on:
+  workflow_run:
+    workflows: ["Deploy", "deploy"]
+    types: [completed]
+
+jobs:
+  verify-after-deploy:
+    if: ${{ vars.ENFORCE_AFTER_DEPLOY == 'true' && github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Download after-deploy artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ vars.AFTER_DEPLOY_ARTIFACT_NAME || 'after-deploy-approval' }}
+          path: after-deploy
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Resolve after-deploy evidence paths
+        id: paths
+        shell: bash
+        env:
+          EVIDENCE_FILE: ${{ vars.AFTER_DEPLOY_EVIDENCE_FILE || 'after_deploy_approval.json' }}
+          SIGNATURE_FILE: ${{ vars.AFTER_DEPLOY_SIGNATURE_FILE || 'after_deploy_approval.json.sig' }}
+        run: |
+          EVIDENCE="after-deploy/${EVIDENCE_FILE}"
+          SIG="after-deploy/${SIGNATURE_FILE}"
+          echo "Using evidence: $EVIDENCE"
+          echo "Using signature: $SIG"
+          if [ ! -f "$EVIDENCE" ]; then
+            echo "Evidence file not found: $EVIDENCE" >&2
+            ls -la after-deploy || true
+            exit 1
+          fi
+          if [ ! -f "$SIG" ]; then
+            echo "Signature file not found: $SIG" >&2
+            ls -la after-deploy || true
+            exit 1
+          fi
+          echo "EVIDENCE=$EVIDENCE" >> "$GITHUB_ENV"
+          echo "SIG=$SIG" >> "$GITHUB_ENV"
+
+      - name: Prepare verification materials (optional)
+        shell: bash
+        env:
+          COSIGN_PUBLIC_KEY: ${{ secrets.COSIGN_PUBLIC_KEY }}
+          COSIGN_CERT: ${{ secrets.COSIGN_CERT }}
+          COSIGN_CERT_CHAIN: ${{ secrets.COSIGN_CERT_CHAIN }}
+        run: |
+          if [ -n "${COSIGN_PUBLIC_KEY:-}" ]; then
+            printf "%s" "$COSIGN_PUBLIC_KEY" > cosign.pub
+          fi
+          if [ -n "${COSIGN_CERT:-}" ]; then
+            printf "%s" "$COSIGN_CERT" > cosign.crt
+          fi
+          if [ -n "${COSIGN_CERT_CHAIN:-}" ]; then
+            printf "%s" "$COSIGN_CERT_CHAIN" > fulcio.crt
+          fi
+
+      - name: Verify after-deploy approval signature
+        shell: bash
+        env:
+          COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
+          COSIGN_PUBLIC_KEY: ${{ secrets.COSIGN_PUBLIC_KEY }}
+          COSIGN_CERT_IDENTITY: ${{ vars.COSIGN_CERT_IDENTITY }}
+          COSIGN_CERT_ISSUER: ${{ vars.COSIGN_CERT_ISSUER }}
+        run: |
+          set -euo pipefail
+          if [ -n "${COSIGN_KEY:-}" ]; then
+            cosign verify-blob --key "$COSIGN_KEY" --signature "$SIG" "$EVIDENCE"
+            exit 0
+          fi
+          if [ -f cosign.pub ]; then
+            cosign verify-blob --key cosign.pub --signature "$SIG" "$EVIDENCE"
+            exit 0
+          fi
+          if [ -f cosign.crt ]; then
+            EXTRA=()
+            if [ -n "${COSIGN_CERT_IDENTITY:-}" ]; then
+              EXTRA+=("--certificate-identity" "$COSIGN_CERT_IDENTITY")
+            fi
+            if [ -n "${COSIGN_CERT_ISSUER:-}" ]; then
+              EXTRA+=("--certificate-oidc-issuer" "$COSIGN_CERT_ISSUER")
+            fi
+            # Use chain if present
+            if [ -f fulcio.crt ]; then
+              EXTRA+=("--cert-chain" "fulcio.crt")
+            fi
+            cosign verify-blob --certificate cosign.crt --signature "$SIG" "$EVIDENCE" "${EXTRA[@]}"
+            exit 0
+          fi
+          echo "No verification materials configured for after-deploy gate. Provide COSIGN_KEY (KMS), COSIGN_PUBLIC_KEY (static), or COSIGN_CERT/COSIGN_CERT_CHAIN (keyless)." >&2
+          exit 1

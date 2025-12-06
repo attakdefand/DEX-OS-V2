@@ -1,0 +1,31 @@
+{
+  "name": "mcp-server-gold-diamond",
+  "version": "1.0.0",
+  "description": "MCP Server for DEX-OS-V2 Gold Diamond Protection Tests",
+  "main": "dist/server.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsc && node dist/server.js",
+    "test-client": "node test-client.js",
+    "demo": "node demo-usage.js",
+    "client-example": "node client-example.js",
+    "workflow-demo": "node workflow-demo.js",
+    "integration-guide": "node integration-guide.js",
+    "check-status": "node check-gold-diamond-status.js",
+    "direct-status": "node direct-status-check.cjs",
+    "check-detection-response": "node ../check-detection-response-status.cjs",
+    "check-resilience-recovery": "node ../check-resilience-recovery-status.cjs",
+    "check-governance-compliance": "node ../check-governance-compliance-status.cjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.22.0",
+    "csv-parser": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}

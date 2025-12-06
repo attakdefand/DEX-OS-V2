@@ -1,0 +1,23 @@
+{
+  "name": "security-reference-layers-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP Server for DEX-OS-V2 Security Reference Layers",
+  "main": "dist/server.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsc && node dist/server.js",
+    "test-client": "node test-client.js",
+    "demo": "node demo-usage.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.22.0",
+    "csv-parser": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}

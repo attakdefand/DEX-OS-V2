@@ -1,0 +1,50 @@
+name: Rust CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+
+      - name: Cargo fmt (check)
+        run: cargo fmt --all -- --check
+
+      - name: Cargo clippy (deny warnings)
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Cargo check (workspace)
+        run: cargo check --workspace --all-targets
+
+      - name: Cargo test (workspace)
+        run: cargo test --workspace --all-targets --quiet
+
+      - name: Generate compliance report
+        run: COMPLIANCE_REPORT_PATH=compliance_report.json cargo run -p dex-core --bin compliance_report
+
+      - name: Upload compliance report
+        uses: actions/upload-artifact@v4
+        with:
+          name: compliance-report
+          path: compliance_report.json
+
+      - name: Upload exception register (if present)
+        if: ${{ hashFiles('exception_register.csv') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: exception-register
+          path: exception_register.csv
